@@ -48,52 +48,51 @@
 ```
 Rover                                    Nave-Mãe
   │                                         │
-  │─────── MSG_HELLO (disponível) ────────>│
+  │ <─────── MSG_HELLO (disponível) ────────│
   │                                         │ (regista rover)
-  │<──────── MSG_RESPONSE (ACK) ───────────│
+  │──────── MSG_RESPONSE (ACK) ───────────> │
   │                                         │
   │                                         │
-  │─── MSG_HELLO (keepalive periódico) ───>│
-  │<──────── MSG_RESPONSE (ACK) ───────────│
+  │─── MSG_HELLO (keepalive periódico) ───> │
+  │<──────── MSG_RESPONSE (ACK) ─────────── │
   │                                         │
 ```
 
 #### Fase 2: Atribuição de Missão
 ```
-Rover                                    Nave-Mãe
-  │                                         │
-  │                                         │ (decide atribuir missão)
-  │<────── MSG_MISSION (fragmento 1/N) ────│
-  │─────────── MSG_ACK (frag 1) ──────────>│
-  │                                         │
-  │<────── MSG_MISSION (fragmento 2/N) ────│
-  │─────────── MSG_ACK (frag 2) ──────────>│
-  │                                         │
-  │          ... (fragmentos 3 a N-1) ...  │
-  │                                         │
-  │<────── MSG_MISSION (fragmento N/N) ────│
-  │─────────── MSG_ACK (frag N) ──────────>│
-  │                                         │
-  │ (desfragmenta e inicia missão)         │
-  │                                         │
+Nave-Mãe                                    Rover
+    │                                         │
+    │── MSG_MISSION (frag 0/N, missao_id) ──> │
+    │── MSG_MISSION (frag 1/N, missao_id) ──> │
+    │── MSG_MISSION (frag 2/N, missao_id) ──> │
+    │── MSG_MISSION (frag 3/N, missao_id) ──> │
+    │          ...                            │
+    │── MSG_MISSION (frag N-1/N, missao_id)─> │
+    │                                         │ (verifica se tem todos)
+    │                                         │ (monta bitmap de recebidos)
+    │                                         │
+    │<─── MSG_ACK (COMPLETO/INCOMPLETO) ───── │
+    │                                         │
+    │  [Se INCOMPLETO: reenviar fragmentos]   │
+    │                                         │
 ```
 
 #### Fase 3: Execução de Missão
 ```
 Rover                                    Nave-Mãe
   │                                         │
-  │── MSG_ACK (progresso + telemetria) ───>│
-  │<──────── MSG_RESPONSE (ACK) ───────────│
+  │── MSG_ACK (progresso + telemetria) ───> │
+  │<──────── MSG_RESPONSE (ACK) ─────────── │
   │                                         │
-  │   (intervalo ou evento relevante)      │
+  │   (intervalo ou evento relevante)       │
   │                                         │
-  │── MSG_ACK (progresso + telemetria) ───>│
-  │<──────── MSG_RESPONSE (ACK) ───────────│
+  │── MSG_ACK (progresso + telemetria) ───> │
+  │<──────── MSG_RESPONSE (ACK) ─────────── │
   │                                         │
-  │── MSG_ACK (missão concluída) ─────────>│
-  │<──────── MSG_RESPONSE (ACK) ───────────│
+  │── MSG_ACK (missão concluída) ─────────> │
+  │<──────── MSG_RESPONSE (ACK) ─────────── │
   │                                         │
-  │─────── MSG_HELLO (disponível) ────────>│
+  │─────── MSG_HELLO (disponível) ────────> │
   │                                         │
 ```
 
@@ -138,6 +137,122 @@ void enviar_missao_confiavel(int socket, MissaoUDP *missao, struct sockaddr_in *
     if (!ack_recebido) {
         fprintf(stderr, "ERRO: Falha após %d tentativas\n", MAX_TENTATIVAS);
     }
+}
+```
+
+```c
+// Fragmenta e envia missão completa
+bool enviar_missao_fragmentada(int socket, PayloadNaveMae *payload, 
+                                struct sockaddr_in *rover_addr, uint32_t missao_id) {
+    
+    size_t tamanho_payload = sizeof(PayloadNaveMae);
+    size_t tamanho_fragmento = 512;
+    int total_fragmentos = (tamanho_payload + tamanho_fragmento - 1) / tamanho_fragmento;
+    
+    printf("[NAVE] Enviando missão %u em %d fragmentos\n", missao_id, total_fragmentos);
+    
+    // FASE 1: Enviar todos os fragmentos sequencialmente
+    uint8_t *data = (uint8_t*)payload;
+    for (int i = 0; i < total_fragmentos; i++) {
+        FragmentoUDP fragmento;
+        memset(&fragmento, 0, sizeof(fragmento));
+        
+        // Preenche header
+        fragmento.header.tipo = MSG_MISSION;
+        fragmento.header.id_emissor = ID_NAVE_MAE;
+        fragmento.header.seq_num = i;
+        fragmento.header.total_fragments = total_fragmentos;
+        fragmento.header.missao_id = missao_id;
+        fragmento.header.timestamp = time(NULL);
+        
+        // Copia dados do fragmento
+        size_t offset = i * tamanho_fragmento;
+        size_t tamanho = (i == total_fragmentos - 1) ? 
+                         (tamanho_payload - offset) : tamanho_fragmento;
+        memcpy(fragmento.payload, data + offset, tamanho);
+        
+        // Calcula checksum
+        fragmento.header.checksum = calcular_checksum(fragmento.payload, tamanho);
+        
+        // Envia fragmento
+        sendto(socket, &fragmento, sizeof(fragmento), 0,
+               (struct sockaddr*)rover_addr, sizeof(*rover_addr));
+        
+        printf("[NAVE] Fragmento %d/%d enviado\n", i+1, total_fragmentos);
+        
+        // Pequeno delay para evitar congestionamento (opcional)
+        usleep(5000); // 5ms
+    }
+    
+    // FASE 2: Aguardar ACK final com timeout
+    int MAX_TENTATIVAS = 3;
+    int tentativa = 0;
+    bool missao_completa = false;
+    
+    while (tentativa < MAX_TENTATIVAS && !missao_completa) {
+        fd_set readfds;
+        struct timeval tv = {.tv_sec = 5, .tv_usec = 0}; // 5 segundos timeout
+        FD_ZERO(&readfds);
+        FD_SET(socket, &readfds);
+        
+        int ret = select(socket + 1, &readfds, NULL, NULL, &tv);
+        
+        if (ret > 0) {
+            AckFinal ack;
+            recvfrom(socket, &ack, sizeof(ack), 0, NULL, NULL);
+            
+            if (ack.tipo == MSG_ACK && ack.missao_id == missao_id) {
+                
+                if (ack.status == STATUS_COMPLETO) {
+                    printf("[NAVE] ✓ Missão %u entregue com sucesso!\n", missao_id);
+                    missao_completa = true;
+                    
+                } else if (ack.status == STATUS_INCOMPLETO) {
+                    printf("[NAVE] ⚠ Fragmentos perdidos: ");
+                    
+                    // Retransmite fragmentos em falta
+                    for (int i = 0; i < ack.total_recebidos; i++) {
+                        uint16_t seq_perdido = ack.fragmentos_perdidos[i];
+                        if (seq_perdido == 0xFFFF) break; // Fim da lista
+                        
+                        printf("%d ", seq_perdido);
+                        
+                        // Reconstrói e reenvia fragmento
+                        FragmentoUDP fragmento;
+                        size_t offset = seq_perdido * tamanho_fragmento;
+                        size_t tamanho = (seq_perdido == total_fragmentos - 1) ? 
+                                         (tamanho_payload - offset) : tamanho_fragmento;
+                        
+                        fragmento.header.tipo = MSG_MISSION;
+                        fragmento.header.seq_num = seq_perdido;
+                        fragmento.header.total_fragments = total_fragmentos;
+                        fragmento.header.missao_id = missao_id;
+                        fragmento.header.timestamp = time(NULL);
+                        
+                        memcpy(fragmento.payload, data + offset, tamanho);
+                        fragmento.header.checksum = calcular_checksum(fragmento.payload, tamanho);
+                        
+                        sendto(socket, &fragmento, sizeof(fragmento), 0,
+                               (struct sockaddr*)rover_addr, sizeof(*rover_addr));
+                    }
+                    printf("\n[NAVE] Fragmentos retransmitidos\n");
+                }
+            }
+        } else {
+            tentativa++;
+            printf("[NAVE] Timeout! Tentativa %d/%d\n", tentativa, MAX_TENTATIVAS);
+            
+            // Retransmite TODA a missão
+            if (tentativa < MAX_TENTATIVAS) {
+                printf("[NAVE] Reenviando missão completa...\n");
+                for (int i = 0; i < total_fragmentos; i++) {
+                    // (código de reenvio similar ao loop inicial)
+                }
+            }
+        }
+    }
+    
+    return missao_completa;
 }
 ```
 
@@ -280,6 +395,178 @@ void maquina_estados_rover(EstadoRover *estado, MissaoUDP *msg_recebida) {
             tentar_recuperacao();
             break;
     }
+}
+
+typedef struct {
+    FragmentoUDP fragmentos[MAX_FRAGMENTOS];
+    bool recebido[MAX_FRAGMENTOS];  // Bitmap de fragmentos recebidos
+    int total_esperado;
+    int total_recebido;
+    uint32_t missao_id;
+    time_t timestamp_inicio;
+} BufferMissao;
+
+BufferMissao buffer_atual;
+
+// Inicializa buffer para nova missão
+void iniciar_recepcao_missao(uint32_t missao_id, int total_fragmentos) {
+    memset(&buffer_atual, 0, sizeof(buffer_atual));
+    buffer_atual.missao_id = missao_id;
+    buffer_atual.total_esperado = total_fragmentos;
+    buffer_atual.timestamp_inicio = time(NULL);
+    
+    printf("[ROVER] Iniciando recepção missão %u (%d fragmentos)\n", 
+           missao_id, total_fragmentos);
+}
+
+// Processa fragmento recebido
+bool processar_fragmento(FragmentoUDP *fragmento) {
+    uint16_t seq = fragmento->header.seq_num;
+    uint32_t missao_id = fragmento->header.missao_id;
+    
+    // Valida fragmento
+    if (seq >= MAX_FRAGMENTOS || seq >= fragmento->header.total_fragments) {
+        printf("[ROVER] ✗ Fragmento %d inválido\n", seq);
+        return false;
+    }
+    
+    // Verifica checksum
+    uint32_t checksum_calculado = calcular_checksum(fragmento->payload, 512);
+    if (checksum_calculado != fragmento->header.checksum) {
+        printf("[ROVER] ✗ Checksum inválido no fragmento %d\n", seq);
+        return false;
+    }
+    
+    // Primeira vez vendo esta missão?
+    if (buffer_atual.total_esperado == 0 || buffer_atual.missao_id != missao_id) {
+        iniciar_recepcao_missao(missao_id, fragmento->header.total_fragments);
+    }
+    
+    // Armazena fragmento se ainda não foi recebido
+    if (!buffer_atual.recebido[seq]) {
+        memcpy(&buffer_atual.fragmentos[seq], fragmento, sizeof(FragmentoUDP));
+        buffer_atual.recebido[seq] = true;
+        buffer_atual.total_recebido++;
+        
+        printf("[ROVER] ✓ Fragmento %d/%d recebido [%d/%d completos]\n", 
+               seq, buffer_atual.total_esperado,
+               buffer_atual.total_recebido, buffer_atual.total_esperado);
+    } else {
+        printf("[ROVER] ⚠ Fragmento %d duplicado (ignorado)\n", seq);
+    }
+    
+    return true;
+}
+
+// Verifica se missão está completa
+bool missao_completa() {
+    return buffer_atual.total_recebido == buffer_atual.total_esperado;
+}
+
+// Envia ACK final
+void enviar_ack_final(int socket, struct sockaddr_in *nave_addr) {
+    AckFinal ack;
+    memset(&ack, 0, sizeof(ack));
+    
+    ack.tipo = MSG_ACK;
+    ack.id_emissor = ID_ROVER;
+    ack.missao_id = buffer_atual.missao_id;
+    ack.timestamp = time(NULL);
+    
+    if (missao_completa()) {
+        ack.status = STATUS_COMPLETO;
+        ack.total_recebidos = buffer_atual.total_esperado;
+        printf("[ROVER] Enviando ACK: MISSÃO COMPLETA\n");
+        
+    } else {
+        ack.status = STATUS_INCOMPLETO;
+        
+        // Lista fragmentos em falta
+        int idx = 0;
+        for (int i = 0; i < buffer_atual.total_esperado && idx < MAX_FRAGMENTOS; i++) {
+            if (!buffer_atual.recebido[i]) {
+                ack.fragmentos_perdidos[idx++] = i;
+            }
+        }
+        ack.fragmentos_perdidos[idx] = 0xFFFF; // Marcador de fim
+        ack.total_recebidos = idx;
+        
+        printf("[ROVER] Enviando ACK: FALTAM %d fragmentos\n", idx);
+    }
+    
+    sendto(socket, &ack, sizeof(ack), 0, 
+           (struct sockaddr*)nave_addr, sizeof(*nave_addr));
+}
+
+// Reconstrói missão completa
+bool reconstruir_missao(PayloadNaveMae *payload_completo) {
+    if (!missao_completa()) {
+        return false;
+    }
+    
+    uint8_t *dest = (uint8_t*)payload_completo;
+    size_t tamanho_fragmento = 512;
+    
+    for (int i = 0; i < buffer_atual.total_esperado; i++) {
+        size_t offset = i * tamanho_fragmento;
+        size_t tamanho = (i == buffer_atual.total_esperado - 1) ? 
+                         (sizeof(PayloadNaveMae) - offset) : tamanho_fragmento;
+        
+        memcpy(dest + offset, buffer_atual.fragmentos[i].payload, tamanho);
+    }
+    
+    printf("[ROVER] ✓ Missão %u reconstruída com sucesso!\n", buffer_atual.missao_id);
+    return true;
+}
+
+void *thread_recepcao_udp(void *arg) {
+    RoverContext *ctx = (RoverContext*)arg;
+    int sock_udp = ctx->socket_udp;
+    struct sockaddr_in nave_addr;
+    socklen_t addr_len = sizeof(nave_addr);
+    
+    // Timeout para detecção de fim de transmissão
+    struct timeval tv = {.tv_sec = 3, .tv_usec = 0};
+    setsockopt(sock_udp, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    
+    while (ctx->ativo) {
+        FragmentoUDP fragmento;
+        ssize_t n = recvfrom(sock_udp, &fragmento, sizeof(fragmento), 0,
+                            (struct sockaddr*)&nave_addr, &addr_len);
+        
+        if (n > 0) {
+            if (fragmento.header.tipo == MSG_MISSION) {
+                processar_fragmento(&fragmento);
+                
+                // Se recebeu o último fragmento esperado, aguarda um pouco mais
+                // para garantir que não há fragmentos atrasados
+                if (missao_completa()) {
+                    usleep(500000); // 500ms de grace period
+                    
+                    // Envia ACK final
+                    enviar_ack_final(sock_udp, &nave_addr);
+                    
+                    // Reconstrói e processa missão
+                    PayloadNaveMae missao;
+                    if (reconstruir_missao(&missao)) {
+                        iniciar_execucao_missao(ctx, &missao);
+                    }
+                    
+                    // Reseta buffer
+                    memset(&buffer_atual, 0, sizeof(buffer_atual));
+                }
+            }
+            
+        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // Timeout - se já recebeu fragmentos, envia ACK parcial
+            if (buffer_atual.total_recebido > 0 && !missao_completa()) {
+                printf("[ROVER] Timeout - enviando ACK parcial\n");
+                enviar_ack_final(sock_udp, &nave_addr);
+            }
+        }
+    }
+    
+    return NULL;
 }
 ```
 
