@@ -24,7 +24,7 @@ pthread_mutex_t mutex_conexoes = PTHREAD_MUTEX_INITIALIZER;
 // Thread para cada rover
 void *thread_handler_rover(void *arg) {
     ConexaoRover *conn = (ConexaoRover*)arg;
-    MissaoTCP msg;
+    MensagemTCP msg;
     
     while (conn->ativo) {
         ssize_t n = recv(conn->socket, &msg, sizeof(msg), 0);
