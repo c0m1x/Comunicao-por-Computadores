@@ -1,7 +1,10 @@
 package lib.Mensagens;
 
 import java.io.Serializable;
+import java.sql.Time;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Calendar;
 
 
 public class Mensagens {
@@ -15,30 +18,70 @@ public class Mensagens {
         public final int value;
         TipoMensagem(int v) { value = v; }
     }
+    
+    /**
+     * Cabeçalho para mensagens UDP.
+     */
 
-    // --------- Payloads ---------
-    public static class PayloadMissao implements Serializable {
+    public static class CabecalhoUDP implements Serializable {
         private static final long serialVersionUID = 1L;
+        public TipoMensagem tipo;
+        public int idEmissor;
+        public int idRecetor;
         public int idMissao;
-        public float x1, y1, x2, y2;
-        public String tarefa = "";
-        public long duracaoMissaoSecs;
-        public long intervaloAtualizacaoSecs;
-        public long inicioMissaoEpoch;
-        public int prioridade;
+        public Time timestamp;
+        public int seq;
+        public int totalFragm;
+        public boolean flagSucesso;
+
+        public CabecalhoUDP() {
+            this.timestamp = Time.valueOf(Instant.now().toString());
+        }
 
         @Override
         public String toString() {
-            return String.format("Missao{id=%d, area=(%.2f,%.2f)-(%.2f,%.2f), tarefa=%s, dur=%ds, int=%ds, prio=%d}",
-                    idMissao, x1,y1,x2,y2, tarefa, duracaoMissaoSecs, intervaloAtualizacaoSecs, prioridade);
+            return String.format("CabecalhoUDP{tipo=%s, e=%d, r=%d, missao=%d, ts=%d, seq=%d/%d, ok=%b}",
+                    tipo, idEmissor, idRecetor, idMissao, timestamp.getTime(), seq, totalFragm, flagSucesso);
         }
     }
 
-    public static class PayloadTelemetria implements Serializable {
+    /**
+     * Cabeçalho para mensagens TCP.
+     */
+
+    public static class CabecalhoTCP implements Serializable {
         private static final long serialVersionUID = 1L;
+        public TipoMensagem tipo;
+        public int idEmissor;
+        public int idRecetor;
+        public int idMissao;
+        public Time timestamp;
+
+        public CabecalhoTCP() { 
+            this.timestamp = Time.valueOf(Instant.now().toString()); 
+        }
+
+        @Override
+        public String toString() {
+            return String.format("CabecalhoTCP{tipo=%s, e=%d, r=%d, missao=%d, ts=%d}",
+                    tipo, idEmissor, idRecetor, idMissao, timestamp.getTime());
+        }
+    }
+
+    /**
+     * Payloads relacionados com TCP.
+     */
+    public static abstract class PayloadTCP implements Serializable {
+
+    }
+
+    /**
+     * Payload da telemetria TCP.
+     */
+    public static class PayloadTelemetria extends PayloadTCP {
         public float posicaoX;
         public float posicaoY;
-        public String estadoOperacional = "";
+        public String estadoOperacional = ""; //VER O TIPO DE DADOS DISTO
         public float bateria;
         public float velocidade;
 
@@ -49,25 +92,102 @@ public class Mensagens {
         }
     }
 
-    // --------- Mensagem TCP (usada para telemetria) ---------
-    public static class MensagemTCP implements Serializable {
-        private static final long serialVersionUID = 1L;
+    /**
+     * Payloads relacionados com UDP.
+     */
+    public static abstract class PayloadUDP implements Serializable {
 
-        public TipoMensagem tipo;
-        public int idEmissor;
-        public int idRecetor;
+    }
+
+    /**
+     * Payload da missão UDP.
+     */
+    public static class PayloadMissao extends PayloadUDP {
         public int idMissao;
-        public long timestampEpoch;
-        public Object payload; // PayloadTelemetria or other
+        public float x1, y1, x2, y2;
+        public String tarefa = "";
+        public Calendar duracaoMissao; //NOTA: VER O TIPO DE DADOS DISTO
+        public Calendar intervaloAtualizacao; //em minutos
+        public Calendar inicioMissao;
+        public int prioridade; //1-5
 
-        public MensagemTCP() {
-            this.timestampEpoch = Instant.now().getEpochSecond();
+        @Override
+        public String toString() {
+            return String.format("Missao{id=%d, area=(%.2f,%.2f)-(%.2f,%.2f), tarefa=%s, dur=%dmin, int=%dmin, prio=%d}",
+                    idMissao, x1,y1,x2,y2, tarefa, duracaoMissao.get(Calendar.MINUTE), intervaloAtualizacao.get(Calendar.MINUTE), prioridade);
+        }
+    }
+
+    /**
+     * Payload do ACK UDP.
+     */
+
+    public static class PayloadAck extends PayloadUDP {
+        public int missingCount;
+        public int[] missing; // indice de fragmentos em falta
+
+        public PayloadAck() {
+            this.missing = new int[0];
         }
 
         @Override
         public String toString() {
-            return String.format("MensagemTCP{tipo=%s, emissor=%d, recetor=%d, missao=%d, ts=%d, payload=%s}",
-                    tipo, idEmissor, idRecetor, idMissao, timestampEpoch, payload);
+            return String.format("Ack{missingCount=%d, missing=%s}", missingCount, Arrays.toString(missing));
         }
     }
+
+    /**
+     * Payload do progresso UDP.
+     */
+
+    public static class PayloadProgresso extends PayloadUDP {
+        public int idMissao;
+        public Calendar tempoDecorrido;
+        public float progressoPercentagem; // 0.0 a 100.0
+
+        @Override
+        public String toString() {
+            return String.format("Progresso{missaoId=%d, tempoDecorrido=%dmin, progresso=%.2f%%}",
+                    idMissao, tempoDecorrido.get(Calendar.MINUTE), progressoPercentagem);
+        }
+    }
+
+    /**
+     * Mensagem UDP (cabeçalho + payload).
+     */
+
+    public static class MensagemUDP implements Serializable {
+        public CabecalhoUDP header;
+        public PayloadUDP payload; //isto esta sus, mas so nao teria o ponto se forem ficheiros separados, ver se ha maneira de nao ter
+
+        public MensagemUDP() {
+            this.header = new CabecalhoUDP();
+        }
+
+        @Override
+        public String toString() {
+            return String.format("MensagemUDP{header=%s, payload=%s}", header, payload);
+        }
+    }
+
+    /**
+     * Mensagem TCP (cabeçalho + payload).
+     */
+
+    public static class MensagemTCP implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public CabecalhoTCP header;
+        public PayloadTCP payload;
+
+        //NOTA: REVER O CONSTRUTOR E TALVEZ METER SETERS/GETTERS
+        public MensagemTCP() {
+            this.header = new CabecalhoTCP();
+        }
+
+        @Override
+        public String toString() {
+            return String.format("MensagemTCP{header=%s, payload=%s}", header, payload);
+        }
+    }
+
 }
