@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "NaveMae",
+      "request": "launch",
+      "mainClass": "nave.NaveMae",
+      "projectName": "Projeto-CC"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",

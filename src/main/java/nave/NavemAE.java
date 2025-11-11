@@ -1,7 +1,7 @@
 package nave;
 
-public class NavemAE {
+public class NaveMae {
     public static void main(String[] args) {
-        System.out.println("Hello World from NavemAE");
+        System.out.println("Hello World from NaveMae");
     }
 }

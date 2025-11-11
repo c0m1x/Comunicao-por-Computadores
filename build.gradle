@@ -30,9 +30,9 @@ tasks.register('runRover', JavaExec) {
     mainClass = 'rover.Rover'
 }
 
-tasks.register('runNavemAE', JavaExec) {
+tasks.register('runNaveMae', JavaExec) {
     group = 'application'
-    description = 'Run the NavemAE main class'
+    description = 'Run the NaveMae main class'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'nave.NavemAE'
+    mainClass = 'nave.NaveMae'
 }
