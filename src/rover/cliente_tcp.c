@@ -4,6 +4,7 @@
 #include <netinet/in.h>   
 #include <arpa/inet.h>    
 #include <mensagens.h>
+#include <maquina_estados.h>
 
 //ROVER establece conexão com a Nave Mãe para enviar telemetria via TCP
 int conectar_telemetria(const char *ip_nave, int porta) {
@@ -24,29 +25,34 @@ int conectar_telemetria(const char *ip_nave, int porta) {
 }
 
 void *thread_telemetria(void *arg) {
-    //FALTA MUDAR ISTO
     RoverContext *ctx = (RoverContext*)arg;
     int sock_tcp = ctx->socket_tcp;
-    
+
     while (ctx->ativo) {
-        MissaoTCP msg_telemetria;
-        msg_telemetria.header.tipo = MSG_ACK; // Reusa estrutura
+       
+        MensagemTCP msg_telemetria;
+        memset(&msg_telemetria, 0, sizeof(msg_telemetria));
+
+        
+        msg_telemetria.header.tipo = MSG_ACK; 
         msg_telemetria.header.id_emissor = ctx->id_rover;
+        msg_telemetria.header.id_recetor = ctx->id_nave;     
+        msg_telemetria.header.id_missao = ctx->id_missao_atual;
         msg_telemetria.header.timestamp = time(NULL);
-        
-        // Preenche dados de telemetria
-        obter_telemetria_atual(ctx, &msg_telemetria);
-        
-        // Envia via TCP (garantia de entrega)
-        if (send(sock_tcp, &msg_telemetria, sizeof(msg_telemetria), 0) < 0) {
-            perror("Erro ao enviar telemetria");
+
+        obter_telemetria_atual(ctx, &msg_telemetria.payload);
+
+        ssize_t bytes_enviados = send(sock_tcp, &msg_telemetria, sizeof(msg_telemetria), 0);
+        if (bytes_enviados < 0) {
+            perror("[ROVER] Erro ao enviar telemetria");
             break;
         }
-        
-        // Aguarda próximo intervalo ou evento
+
+        printf("[ROVER] Telemetria enviada (%zd bytes)\n", bytes_enviados);
+
         aguardar_proximo_envio(ctx);
     }
-    
+
     close(sock_tcp);
     return NULL;
 }
