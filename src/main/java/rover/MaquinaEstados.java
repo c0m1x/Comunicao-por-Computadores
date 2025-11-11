@@ -1,6 +1,7 @@
 package rover;
 
 import java.time.Instant;
+import lib.Mensagens.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**

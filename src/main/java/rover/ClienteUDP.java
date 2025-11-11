@@ -1,5 +1,5 @@
-package main.java.rover;
+package rover;
 
 public class ClienteUDP {
-    
+
 }

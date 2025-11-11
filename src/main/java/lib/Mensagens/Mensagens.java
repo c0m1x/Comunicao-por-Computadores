@@ -1,4 +1,4 @@
-package main.java.lib.Mensagens;
+package lib.Mensagens;
 
 import java.io.Serializable;
 import java.time.Instant;

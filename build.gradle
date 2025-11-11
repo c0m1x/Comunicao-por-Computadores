@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // No external dependencies for the simple hello-world mains
+}
+
+application {
+    // default main (can be overridden by running specific tasks below)
+    mainClass = 'rover.Rover'
+}
+
+// Tasks to run each main class
+tasks.register('runRover', JavaExec) {
+    group = 'application'
+    description = 'Run the Rover main class'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rover.Rover'
+}
+
+tasks.register('runNavemAE', JavaExec) {
+    group = 'application'
+    description = 'Run the NavemAE main class'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'nave.NavemAE'
+}

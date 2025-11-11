@@ -1,5 +1,5 @@
-package main.java.nave;
+package nave;
 
 public class servidor_udp {
-    
+
 }
