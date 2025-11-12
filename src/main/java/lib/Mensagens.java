@@ -1,4 +1,4 @@
-package lib.Mensagens;
+package lib;
 
 import java.io.Serializable;
 import java.sql.Time;
