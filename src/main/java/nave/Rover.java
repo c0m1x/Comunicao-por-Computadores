@@ -12,6 +12,7 @@ public class Rover {
     public float velocidade;
     public String estadoOperacional; //rever este tipo de dados
     public int idMissaoAtual;
+    public float progressoMissao;
     public boolean temMissao;
 
     public Rover(int id, float x, float y) {
@@ -22,6 +23,7 @@ public class Rover {
         this.velocidade = 0.0f;
         estadoOperacional = "INICIAL";
         idMissaoAtual = -1;
+        progressoMissao = 0.0f;
         temMissao = false;
     }
 
