@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import rover.Rover;
 
 /**
  * Gestão de estado central (armazenamento de rovers e missões).

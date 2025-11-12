@@ -6,7 +6,7 @@ import lib.Mensagens;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.time.Instant;
-
+import rover.MaquinaEstados.ContextoRover;
 
 public class ClienteTCP implements Runnable {
  
