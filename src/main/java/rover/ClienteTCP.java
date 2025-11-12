@@ -1,7 +1,8 @@
 package rover;
 
 import java.io.ObjectOutputStream;
-import lib.Mensagens.*;
+
+import lib.Mensagens;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.time.Instant;
