@@ -212,6 +212,7 @@ private void trataPacoteRecebido(DatagramPacket packet) {
 			oos.flush();
 			byte[] data = baos.toByteArray();
 			DatagramPacket packet = new DatagramPacket(data, data.length, addr.getAddress(), addr.getPort());
+            //TODO: nao mandar em broadcast, mandar so para o rover
 			socket.send(packet);
 		}
 	}
