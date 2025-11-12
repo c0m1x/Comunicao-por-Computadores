@@ -1,5 +1,11 @@
 package rover;
 
+import rover.MaquinaEstados.ContextoRover;
+
+
+//DUVIDA: esta classe esta a ser usada pela nave mae, mas nao deveria estar tambem no pacote nave? 
+//sem usar a cena do contexto, pois a nave na teoria nao teria acesso a isto 
+
 /**
  * Representação simples do Rover para a Nave-Mãe.
  * Contém apenas os campos básicos necessários à gestão e observação.
