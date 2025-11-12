@@ -33,6 +33,9 @@ public class ClienteUDP implements Runnable {
 		this.localPort = localPort;
 	}
 
+
+    //Nota: isto está completamente na merda depois vejo
+
 	@Override
 	public void run() {
 		try {
@@ -88,9 +91,11 @@ public class ClienteUDP implements Runnable {
 			System.out.println("[Rover] Recebido MISSION (id=" + msg.header.idMissao + ")");
 			if (msg.payload instanceof PayloadMissao) {
 				PayloadMissao m = (PayloadMissao) msg.payload;
+
 				// aceitar missão
 				ctx.receberMissao(m, msg.header.idMissao);
 
+                //TODO: verificar se recebemos os fragmentos todos para saber como enviar o ack
 				// enviar ACK (assume sem fragmentos em falta)
 				try {
 					MensagemUDP ack = new MensagemUDP();
