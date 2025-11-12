@@ -86,4 +86,14 @@ public class gestaoEstado {
 		return rovers.putIfAbsent(id, ctx) == null;
 	}
 
+    /** Devolve uma missão que ainda não tenha sido atribuida. */
+	public Missao obterMissaoNaoAtribuida() {
+		for (Missao missao : missoes.values()) {
+			if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
+				return missao;
+			}
+		}
+		return null;
+	}
+
 }
