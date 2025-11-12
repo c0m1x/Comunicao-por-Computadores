@@ -1,10 +1,4 @@
-package rover;
-
-import rover.MaquinaEstados.ContextoRover;
-
-
-//DUVIDA: esta classe esta a ser usada pela nave mae, mas nao deveria estar tambem no pacote nave? 
-//sem usar a cena do contexto, pois a nave na teoria nao teria acesso a isto 
+package nave;
 
 /**
  * Representação simples do Rover para a Nave-Mãe.
@@ -17,8 +11,8 @@ public class Rover {
     public float bateria;
     public float velocidade;
     public String estadoOperacional; //rever este tipo de dados
-    public int idMissaoAtual = -1;
-    public boolean temMissao = false;
+    public int idMissaoAtual;
+    public boolean temMissao;
 
     public Rover(int id, float x, float y) {
         this.idRover = id;
@@ -27,20 +21,8 @@ public class Rover {
         this.bateria = 100.0f;
         this.velocidade = 0.0f;
         estadoOperacional = "INICIAL";
-    }
-
-    /** Construtor a partir de um ContextoRover (cópia dos campos públicos relevantes). */
-    public Rover (ContextoRover ctx) {
-        if (ctx == null) return;
-        this.idRover = ctx.idRover;
-        this.posicaoX = ctx.posicaoX;
-        this.posicaoY = ctx.posicaoY;
-        this.bateria = ctx.bateria;
-        this.velocidade = ctx.velocidade;
-        this.estadoOperacional = ctx.estadoOperacional;
-        this.idMissaoAtual = ctx.idMissaoAtual;
-        this.temMissao = ctx.temMissao;
-
+        idMissaoAtual = -1;
+        temMissao = false;
     }
 
     @Override
