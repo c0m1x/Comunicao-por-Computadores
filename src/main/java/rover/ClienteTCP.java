@@ -10,12 +10,12 @@ import java.time.Instant;
 
 public class ClienteTCP implements Runnable {
  
-    private final MaquinaEstados.RoverContext ctx;
+    private final ContextoRover ctx;
     private final String serverIp;
     private final int serverPort;
     private volatile boolean running = true;
 
-    public ClienteTCP(MaquinaEstados.RoverContext ctx, String serverIp, int serverPort) {
+    public ClienteTCP(ContextoRover ctx, String serverIp, int serverPort) {
         this.ctx = ctx;   
         this.serverIp = serverIp;
         this.serverPort = serverPort;
@@ -32,11 +32,12 @@ public class ClienteTCP implements Runnable {
                 while (running && ctx.ativo) {
                     if (ctx.deveEnviarTelemetria()) {
                         Mensagens.MensagemTCP msg = new Mensagens.MensagemTCP();
-                        msg.tipo = Mensagens.TipoMensagem.MSG_ACK; // conforme o C
-                        msg.idEmissor = ctx.idRover;
-                        msg.idRecetor = ctx.idNave;
-                        msg.idMissao = ctx.getMissaoId();
-                        msg.timestampEpoch = Instant.now().getEpochSecond();
+                        // preencher header
+                        msg.header.tipo = Mensagens.TipoMensagem.MSG_ACK; // conforme o C
+                        msg.header.idEmissor = ctx.idRover;
+                        msg.header.idRecetor = ctx.idNave;
+                        msg.header.idMissao = ctx.getMissaoId();
+                        msg.header.timestamp = java.sql.Time.valueOf(Instant.now().toString());
                         msg.payload = ctx.getTelemetria();
 
                         oos.writeObject(msg);
