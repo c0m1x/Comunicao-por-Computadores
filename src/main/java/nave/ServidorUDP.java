@@ -8,6 +8,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -60,6 +61,7 @@ public class ServidorUDP {
 
 		// Iniciar o listener principal
 		listeners.submit(this::runListener);
+        //TODO: ver se tem missoes para atribuir, e atribuir a um rover que esteja disponível
 }
 
 	private void runListener() {
@@ -94,6 +96,7 @@ private void trataPacoteRecebido(DatagramPacket packet) {
     }
 }
 
+
 	/**
 	 * Atribui uma missão a um rover (endereço do rover + id) — executa o protocolo HELLO/RESPONSE/MISSION/ACK
 	 * em background e passa a processar mensagens de progresso desse rover.
@@ -116,7 +119,6 @@ private void trataPacoteRecebido(DatagramPacket packet) {
         System.out.println("[NM->R" + roverId + "] HELLO (missao=" + missao.idMissao + ")");
 
         // 2) Esperar RESPONSE
-
         MensagemUDP resp = pollPorTipo(q, TipoMensagem.MSG_RESPONSE, 5000);
         if (resp == null) {
             System.out.println("Nenhuma RESPONSE do rover " + roverId + " — abortando atribuição");
@@ -125,6 +127,7 @@ private void trataPacoteRecebido(DatagramPacket packet) {
         System.out.println("[R" + roverId + "->NM] RESPONSE recebido");
 
         // 3) Enviar MISSION
+        //TODO: fragmentação
         MensagemUDP missionMsg = new MensagemUDP();
         missionMsg.header.tipo = TipoMensagem.MSG_MISSION;
         missionMsg.header.idEmissor = 1;
@@ -146,13 +149,13 @@ private void trataPacoteRecebido(DatagramPacket packet) {
             if (ack.missingCount == 0) {
                 System.out.println("ACK completo do rover " + roverId + " — missão atribuída com sucesso");
             } else {
+                //TODO: retransmitir pacotes em falta
                 System.out.println("ACK do rover " + roverId + " indica missing=" + ack.missingCount + " — retransmitindo");
                 sendUdp(missionMsg, roverAddr);
             }
         }
 
-        // 5) Registar e iniciar processamento de progresso
-        estado.adicionarMissao(missao.idMissao, missao);
+        // 5) Iniciar processamento de progresso
         listeners.submit(() -> processarProgressos(roverId, q, missao));
 
     } catch (Exception e) {
@@ -160,13 +163,13 @@ private void trataPacoteRecebido(DatagramPacket packet) {
     }
 }
 
-	private void processarProgressos(int roverId, BlockingQueue<MensagemUDP> q, nave.Missao missao) {
+	private void processarProgressos(int roverId, BlockingQueue<MensagemUDP> q, Missao missao) {
 		System.out.println("Iniciado processador de progresso para rover " + roverId + " (missao=" + missao.idMissao + ")");
 		long intervaloMinutos = 0;
-		try {
-			if (missao.intervaloAtualizacao != null) intervaloMinutos = missao.intervaloAtualizacao.get(java.util.Calendar.MINUTE);
-		} catch (Exception e) { /* ignore */ }
 
+		if (missao.intervaloAtualizacao != null) intervaloMinutos = missao.intervaloAtualizacao.get(Calendar.MINUTE);
+
+        //TODO: ler mensagens de progresso enquanto a missão estiver ativa e não enquanto running
 		while (running) {
 			try {
 				MensagemUDP m = q.poll( (intervaloMinutos > 0 ? intervaloMinutos : 5) , TimeUnit.SECONDS);
@@ -186,7 +189,6 @@ private void trataPacoteRecebido(DatagramPacket packet) {
 					}
 					r.idMissaoAtual = p.idMissao;
 					r.progressoMissao = p.progressoPercentagem;
-					// poderias também guardar timestamp, etc.
 				}
 			} catch (Exception e) {
 				System.err.println("Erro no processador de progressos do rover " + roverId + ": " + e.getMessage());
