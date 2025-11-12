@@ -19,20 +19,20 @@ dependencies {
 
 application {
     // default main (can be overridden by running specific tasks below)
-    mainClass = 'rover.Rover'
+    mainClass = 'rover.RoverApp'
 }
 
 // Tasks to run each main class
-tasks.register('runRover', JavaExec) {
+tasks.register('runRoverApp', JavaExec) {
     group = 'application'
-    description = 'Run the Rover main class'
+    description = 'Run the RoverApp main class'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'rover.Rover'
+    mainClass = 'rover.RoverApp'
 }
 
-tasks.register('runNaveMae', JavaExec) {
+tasks.register('runNaveMaeApp', JavaExec) {
     group = 'application'
-    description = 'Run the NaveMae main class'
+    description = 'Run the NaveMaeApp main class'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'nave.NaveMae'
+    mainClass = 'nave.NaveMaeApp'
 }
