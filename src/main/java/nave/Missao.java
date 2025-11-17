@@ -32,6 +32,15 @@ public class Missao implements Serializable {
     public Missao() {
         // vazio
     }
+    public Missao(int idMissao, String tarefa, EstadoMissao estadoMissao) {
+        this.idMissao = idMissao;
+        this.tarefa = tarefa;
+        this.estadoMissao = estadoMissao;
+        this.x1 = 0.0f; this.y1 = 0.0f; this.x2 = 0.0f; this.y2 = 0.0f;
+        this.duracaoMissao = Calendar.getInstance();
+        this.intervaloAtualizacao = Calendar.getInstance();
+        this.inicioMissao = Calendar.getInstance();
+    }
 
     /** Constrói uma Missao a partir de um PayloadMissao. */
     public Missao(PayloadMissao p) {
