@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 import java.time.Instant;
 
 import lib.Mensagens;
-import nave.gestaoEstado;
+import nave.GestaoEstado;
 import nave.Rover;
 import nave.Missao;
 
@@ -17,7 +17,7 @@ public class ServidorTCP {
     private final int port;
     private final ExecutorService pool;
     private volatile boolean running = true;
-    private final gestaoEstado estado;
+    private final GestaoEstado estado;
     
 
     public interface TelemetriaCallback {
@@ -29,7 +29,7 @@ public class ServidorTCP {
     
     private TelemetriaCallback callback;
 
-    public ServidorTCP(int port, gestaoEstado estado) {
+    public ServidorTCP(int port, GestaoEstado estado) {
         this.port = port;
         this.estado = estado;
         this.pool = Executors.newCachedThreadPool();
