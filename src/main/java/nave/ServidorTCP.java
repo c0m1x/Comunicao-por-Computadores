@@ -10,6 +10,7 @@ import java.time.Instant;
 import lib.mensagens.payloads.*;
 import lib.mensagens.*;
 import nave.GestaoEstado;
+import lib.*;
 
 public class ServidorTCP {
 
@@ -116,8 +117,8 @@ public class ServidorTCP {
 
         switch (msg.header.tipo) {
             case MSG_TELEMETRY:
-                if (msg.payload instanceof Mensagens.PayloadTelemetria) {
-                    processarTelemetria(idRover, msg.header, (Mensagens.PayloadTelemetria) msg.payload);
+                if (msg.payload instanceof PayloadTelemetria) {
+                    processarTelemetria(idRover, msg.header, (PayloadTelemetria) msg.payload);
                 }
                 break;
                 
