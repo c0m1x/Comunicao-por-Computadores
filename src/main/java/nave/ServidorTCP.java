@@ -7,11 +7,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.time.Instant;
 
-import lib.mensagens.payloads.*;
-import lib.mensagens.*;
+import lib.Mensagens;
+import lib.Missao;
+import lib.Rover;
 import nave.GestaoEstado;
-import nave.Rover;
-import nave.Missao;
 
 public class ServidorTCP {
 

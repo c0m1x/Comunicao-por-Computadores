@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lib.Missao;
+import lib.Rover;
+
 /**
  * Gestão de estado central (armazenamento de rovers e missões).
  * Armazenamento thread-safe usando ConcurrentHashMap porque a Nave-Mãe
