@@ -1,10 +1,26 @@
 package nave;
 
-import lib.Mensagens.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import lib.Mensagens.MensagemUDP;
+import lib.Mensagens.PayloadAck;
+import lib.Mensagens.PayloadMissao;
+import lib.Mensagens.PayloadProgresso;
+import lib.Mensagens.PayloadUDP;
+import lib.Mensagens.TipoMensagem;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -30,7 +46,7 @@ public class ServidorUDP implements Runnable {
     private GestaoEstado estado;
     private boolean running = true;
     
-    // Controle de sessões ativas (idRover -> sessão)
+    // Controlo de sessões ativas (idRover -> sessão)
     private ConcurrentHashMap<Integer, SessaoServidorMissionLink> sessoesAtivas;
     
     public ServidorUDP(GestaoEstado estado) {
@@ -96,19 +112,13 @@ public class ServidorUDP implements Runnable {
                 }
                 
                 System.out.println("[ServidorUDP] Missão pendente encontrada: " + missao);
-            
-                // Procurar rover disponível (sem missão ativa) 
-                //TODO: PASSAR ISO PARA UMA FUNÇÃO NO GESTAO ESTADOS
-                Rover roverDisponivel = null;
-                for (Rover r : estado.listarRovers()) {
-                    //TODO: verificar estado operacional antes
-                    if (!r.temMissao) {
-                        roverDisponivel = r;
-                        break;
-                    }
-                }
-                
-                if (roverDisponivel != null) {
+
+                // Procurar rover disponível
+                Rover roverDisponivel = estado.obterRoverDisponivel();
+                if (roverDisponivel == null) {
+                    System.out.println("[ServidorUDP] Nenhum rover disponível no momento.");
+                    continue;
+                } else {
                     System.out.println("[ServidorUDP] Atribuindo missão " + missao.idMissao + " ao rover " + roverDisponivel.idRover);
                     iniciarEnvioMissao(roverDisponivel, missao);
                 }
@@ -121,9 +131,9 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Inicia o processo de envio de missão para um rover.
-     * Envia HELLO e aguarda RESPONSE.
      */
     private void iniciarEnvioMissao(Rover rover, Missao missao) {
+
         // Verificar se já existe sessão ativa para este rover
         if (sessoesAtivas.containsKey(rover.idRover)) {
             System.out.println("[ServidorUDP] Rover " + rover.idRover + " já tem sessão ativa! Possivel problema no ML.");
@@ -134,7 +144,7 @@ public class ServidorUDP implements Runnable {
         SessaoServidorMissionLink sessao = new SessaoServidorMissionLink(rover, missao);
         sessoesAtivas.put(rover.idRover, sessao);
         
-        // Enviar HELLO em thread separada
+        // Enviar mensagens em thread separada
         Thread t = new Thread(() -> executarSessaoMissao(sessao));
         t.setDaemon(true);
         t.start();
@@ -172,6 +182,12 @@ public class ServidorUDP implements Runnable {
                 finalizarSessao(sessao, false);
                 return;
             }
+
+            //TODO: continuar aqui o resto em vez de ser so no processar mensagens, para que nao finalize a sessao antes do COMPLETED
+
+            //Passo 5: Aguarda PROGRESS (processado em processarMensagemRecebida)
+
+            //Passo 6: Aguarda COMPLETED (processado em processarMensagemRecebida)
             
             // Sucesso!
             System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
@@ -222,6 +238,7 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Fragmenta e envia todos os fragmentos da missão.
+     * TODO: REVER para ver se está a fragmentar corretamente como tinhamos decidido.
      */
     private boolean enviarFragmentosMissao(SessaoServidorMissionLink sessao) {
         try {
@@ -296,7 +313,7 @@ public class ServidorUDP implements Runnable {
         while (tentativas < MAX_RETRIES) {
             long inicio = System.currentTimeMillis();
             
-            while (System.currentTimeMillis() - inicio < TIMEOUT_MS) {
+            while (System.currentTimeMillis() - inicio < TIMEOUT_MS) { //TODO: REVER se aqui não temos que usar outro timeout
                 if (sessao.ackRecebido) {
                     if (sessao.fragmentosPerdidos.isEmpty()) {
                         // ACK completo!
@@ -393,7 +410,7 @@ public class ServidorUDP implements Runnable {
     }
     
     /**
-     * Processa mensagem PROGRESS do rover (Fase 2).
+     * Processa mensagem PROGRESS do rover.
      */
     private void processarProgress(MensagemUDP msg, int idRover, DatagramPacket pacote) {
         if (msg.payload instanceof PayloadProgresso) {
@@ -416,7 +433,7 @@ public class ServidorUDP implements Runnable {
     }
     
     /**
-     * Processa mensagem COMPLETED do rover (Fase 2).
+     * Processa mensagem COMPLETED do rover.
      */
     private void processarCompleted(MensagemUDP msg, int idRover, DatagramPacket pacote) {
         System.out.println("[ServidorUDP] COMPLETED recebido do rover " + idRover + 
@@ -436,7 +453,6 @@ public class ServidorUDP implements Runnable {
                 System.out.println("[ServidorUDP] Missão " + msg.header.idMissao + " marcada como CANCELADA (falha)");
             }
             
-            // Liberar rover
             rover.temMissao = false;
             rover.idMissaoAtual = -1;
             rover.estadoOperacional = "disponivel";
@@ -444,6 +460,7 @@ public class ServidorUDP implements Runnable {
         }
         
         // Enviar ACK
+        //TODO: VER se deixamos aqui ou se metemos no executar sessao missao
         enviarAckParaRover(msg, pacote.getAddress(), pacote.getPort());
     }
     
@@ -461,6 +478,7 @@ public class ServidorUDP implements Runnable {
         ack.header.flagSucesso = true;
         ack.payload = null;
         
+        //TODO: usar a enviar mensagem para nao repetir codigo
         try {
             byte[] dados = serializarObjeto(ack);
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
@@ -544,7 +562,6 @@ public class ServidorUDP implements Runnable {
      */
     private static class FragmentoPayload extends PayloadUDP {
         private static final long serialVersionUID = 1L;
-        @SuppressWarnings("unused") // usado via reflexão no ClienteUDP
         public byte[] dados;
     }
     
@@ -559,6 +576,8 @@ public class ServidorUDP implements Runnable {
         boolean responseRecebido = false;
         boolean responseSucesso = false;
         boolean ackRecebido = false;
+
+        //adicionar aqui o resto das variaveis que precisamos para controlar a sessao (progresso, completed)
         
         // Fragmentação
         int totalFragmentos = 0;
