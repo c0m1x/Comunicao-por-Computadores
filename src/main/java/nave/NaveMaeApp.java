@@ -10,8 +10,6 @@ public class NaveMaeApp {
             
             // Iniciar os 3 servidores
             ServidorUDP servidorUDP = new ServidorUDP(estado);
-
-            //TODO: iniciar os outros servidores aqui 
             ServidorTCP servidorTCP = new ServidorTCP(5001, estado);
             //ServidorHTTP servidorHTTP = new ServidorHTTP(estado);
             
