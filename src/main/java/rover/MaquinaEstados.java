@@ -342,7 +342,7 @@ public class MaquinaEstados {
      * Retorna o estado atual do rover.
      */
     public EstadoRover getEstadoAtual() {
-        return contexto.estadoAtual;
+        return contexto.getEstado();
     }
     
     /**

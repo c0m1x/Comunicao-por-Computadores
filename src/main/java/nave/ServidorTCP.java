@@ -117,9 +117,9 @@ public class ServidorTCP {
         int idRover = msg.header.idEmissor;
 
         switch (msg.header.tipo) {
-            case MSG_RESPONSE:
-                if (msg.payload instanceof PayloadTelemetria) {
-                    processarTelemetria(idRover, msg.header, (PayloadTelemetria) msg.payload);
+            case MSG_TELEMETRY:
+                if (msg.payload instanceof Mensagens.PayloadTelemetria) {
+                    processarTelemetria(idRover, msg.header, (Mensagens.PayloadTelemetria) msg.payload);
                 }
                 break;
                 
@@ -180,28 +180,8 @@ public class ServidorTCP {
         }
     }
 
-    
-    public int getNumeroRoversAtivos() {
-        return estado.listarRovers().size();
-    }
-    
-    public void imprimirEstadoRovers() {
-        System.out.println("\n========== Estado dos Rovers ==========");
-        var rovers = estado.listarRovers();
-        
-        if (rovers.isEmpty()) {
-            System.out.println("Nenhum rover registrado");
-        } else {
-            for (Rover r : rovers) {
-                String status = (r.bateria > 20.0f) ? "ATIVO" : "BATERIA BAIXA";
-                
-                System.out.printf("  [%s] Rover %d: pos=(%.2f,%.2f) bat=%.1f%% estado=%s missao=%d\n",
-                    status, r.idRover, r.posicaoX, r.posicaoY, r.bateria, 
-                    r.estadoOperacional, r.idMissaoAtual);
-            }
-        }
-        System.out.println("=======================================\n");
-    }
+
+
 
     public void stop() { 
         running = false;
