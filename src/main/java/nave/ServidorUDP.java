@@ -19,6 +19,7 @@ import lib.mensagens.*;
 import lib.mensagens.payloads.*;
 import lib.TipoMensagem;
 import lib.*;
+import lib.Rover.EstadoRover;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -453,7 +454,7 @@ public class ServidorUDP implements Runnable {
             
             rover.temMissao = false;
             rover.idMissaoAtual = -1;
-            rover.estadoOperacional = "disponivel";
+            rover.estadoRover = EstadoRover.ESTADO_DISPONIVEL;
             System.out.println("[ServidorUDP] Rover " + idRover + " agora está disponível");
         }
         
@@ -497,7 +498,7 @@ public class ServidorUDP implements Runnable {
             sessao.missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
             sessao.rover.temMissao = true;
             sessao.rover.idMissaoAtual = sessao.missao.idMissao;
-            sessao.rover.estadoOperacional = "em_missao";
+            sessao.rover.estadoRover = EstadoRover.ESTADO_EM_MISSAO;
         }
         
         sessoesAtivas.remove(sessao.rover.idRover);

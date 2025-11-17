@@ -20,7 +20,7 @@ public class Rover {
     public float posicaoY;
     public float bateria;
     public float velocidade;
-    public String estadoOperacional; //rever este tipo de dados
+    public EstadoRover estadoRover;
     public int idMissaoAtual;
     public float progressoMissao;
     public boolean temMissao;
@@ -31,7 +31,7 @@ public class Rover {
         this.posicaoY = y;
         this.bateria = 100.0f;
         this.velocidade = 0.0f;
-        estadoOperacional = "DISPONIVEL"; //TODO: trocar este tipo de dados para o EstadoRover
+        this.estadoRover = EstadoRover.ESTADO_INICIAL;
         idMissaoAtual = -1;
         progressoMissao = 0.0f;
         temMissao = false;
@@ -39,7 +39,7 @@ public class Rover {
 
     @Override
     public String toString() {
-        return String.format("Rover{id=%d, pos=(%.2f,%.2f), bat=%.1f, vel=%.2f, missao=%d}",
-                idRover, posicaoX, posicaoY, bateria, velocidade, idMissaoAtual);
+        return String.format("Rover{id=%d, pos=(%.2f,%.2f), bat=%.1f%%, vel=%.2fm/s, estado=%s, missao=%d, progresso=%.1f%%}",
+                idRover, posicaoX, posicaoY, bateria, velocidade, estadoRover, idMissaoAtual, progressoMissao);
     }
 }

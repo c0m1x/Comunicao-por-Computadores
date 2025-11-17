@@ -53,7 +53,6 @@ public class MaquinaEstados {
         public volatile float posicaoY;
         public volatile float bateria;
         public volatile float velocidade;
-        public volatile String estadoOperacional = "INITIAL";
         // timing / eventos
         public volatile long ultimoHelloEpoch = 0;
         public volatile long ultimoEnvioTelemetriaEpoch = 0;
@@ -104,10 +103,10 @@ public class MaquinaEstados {
             }
         }
 
-        public void atualizarEstadoOperacional(String estado) {
+        public void atualizarEstadoOperacional(EstadoRover estado) {
             lock.lock();
             try {
-                this.estadoOperacional = estado;
+                this.estadoAtual = estado;
             } finally {
                 lock.unlock();
             }
@@ -118,7 +117,7 @@ public class MaquinaEstados {
             EstadoRover e = getEstado();
             switch (e) {
                 case ESTADO_INICIAL:
-                    atualizarEstadoOperacional("ACTIVE");
+                    atualizarEstadoOperacional(EstadoRover.ESTADO_INICIAL);
                     transicionarEstado(EstadoRover.ESTADO_DISPONIVEL);
                     break;
                 case ESTADO_DISPONIVEL:
@@ -130,7 +129,7 @@ public class MaquinaEstados {
                 case ESTADO_EM_MISSAO:
                     executarPassoMissao();
                     if (missaoConcluida()) {
-                        atualizarEstadoOperacional("SUCCESS");
+                        atualizarEstadoOperacional(EstadoRover.ESTADO_CONCLUIDO);
                         lock.lock();
                         try {
                             eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
@@ -149,7 +148,7 @@ public class MaquinaEstados {
                     } finally {
                         lock.unlock();
                     }
-                    atualizarEstadoOperacional("ACTIVE");
+                    atualizarEstadoOperacional(EstadoRover.ESTADO_INICIAL);
                     transicionarEstado(EstadoRover.ESTADO_DISPONIVEL);
                     break;
                 case ESTADO_FALHA:
@@ -159,7 +158,7 @@ public class MaquinaEstados {
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                     }
-                    atualizarEstadoOperacional("ACTIVE");
+                    atualizarEstadoOperacional(EstadoRover.ESTADO_INICIAL);
                     transicionarEstado(EstadoRover.ESTADO_DISPONIVEL);
                     break;
             }
@@ -305,7 +304,7 @@ public class MaquinaEstados {
             } finally {
                 lock.unlock();
             }
-            atualizarEstadoOperacional("IN_MISSION");
+            atualizarEstadoOperacional(EstadoRover.ESTADO_EM_MISSAO);
             transicionarEstado(EstadoRover.ESTADO_EM_MISSAO);
         }
 
@@ -316,7 +315,7 @@ public class MaquinaEstados {
             try {
                 p.posicaoX = posicaoX;
                 p.posicaoY = posicaoY;
-                p.estadoOperacional = estadoOperacional;
+                p.estadoOperacional = estadoAtual;
                 p.bateria = bateria;
                 p.velocidade = velocidade;
             } finally {
