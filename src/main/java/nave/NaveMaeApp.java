@@ -6,7 +6,7 @@ public class NaveMaeApp {
         
         try {
             // Criar gestão de estado partilhada
-            gestaoEstado estado = new gestaoEstado();
+            GestaoEstado estado = new GestaoEstado();
             
             // Iniciar os 3 servidores
             ServidorUDP servidorUDP = new ServidorUDP(estado);

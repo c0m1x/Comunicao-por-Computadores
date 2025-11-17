@@ -27,13 +27,13 @@ public class ServidorUDP implements Runnable {
     private static final int TAMANHO_FRAGMENTO = 512; // bytes por fragmento
     
     private DatagramSocket socket;
-    private gestaoEstado estado;
+    private GestaoEstado estado;
     private boolean running = true;
     
     // Controle de sessões ativas (idRover -> sessão)
     private ConcurrentHashMap<Integer, SessaoServidorMissionLink> sessoesAtivas;
     
-    public ServidorUDP(gestaoEstado estado) {
+    public ServidorUDP(GestaoEstado estado) {
         this.estado = estado;
         this.sessoesAtivas = new ConcurrentHashMap<>();
     }
@@ -402,7 +402,7 @@ public class ServidorUDP implements Runnable {
                              " (seq=" + msg.header.seq + ", missão=" + progresso.idMissao + 
                              ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
             
-            // Atualizar estado da missão no gestaoEstado
+            // Atualizar estado da missão no GestaoEstado
             Rover rover = estado.obterRover(idRover);
             if (rover != null) {
                 // TODO: atualizar progresso da missão no estado

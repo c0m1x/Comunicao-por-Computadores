@@ -4,18 +4,17 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 /**
  * Gestão de estado central (armazenamento de rovers e missões).
  * Armazenamento thread-safe usando ConcurrentHashMap porque a Nave-Mãe
  * acede e modifica estes mapas a partir de várias threads.
  */
-public class gestaoEstado {
+public class GestaoEstado {
 
     private ConcurrentHashMap<Integer, Rover> rovers;
     private ConcurrentHashMap<Integer, Missao> missoes;
 
-    public gestaoEstado(){
+    public GestaoEstado(){
         this.rovers = new ConcurrentHashMap <>();
         this.missoes = new ConcurrentHashMap<>();
 
