@@ -10,7 +10,7 @@ public class NaveMaeApp {
             
             // Iniciar os 3 servidores
             ServidorUDP servidorUDP = new ServidorUDP(estado);
-            ServidorTCP servidorTCP = new ServidorTCP(5001, estado);
+            ServidorTCP servidorTCP = new ServidorTCP(estado);
             //ServidorHTTP servidorHTTP = new ServidorHTTP(estado);
             
             // Arrancar servidores em threads separadas
@@ -25,7 +25,7 @@ public class NaveMaeApp {
              
             new Thread(() -> {
                 try {
-                    servidorTCP.start();
+                    servidorTCP.run();
                 } catch (Exception e) {
                     System.err.println("Erro no servidor TCP: " + e.getMessage());
                 }
