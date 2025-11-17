@@ -15,9 +15,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lib.mensagens.*;
-import lib.mensagens.payloads.*;
-import lib.TipoMensagem;
+import lib.*;
+import lib.Mensagens.*;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -562,29 +561,6 @@ public class ServidorUDP implements Runnable {
         public byte[] dados;
     }
     
-    /**
-     * Classe que representa uma sessão de envio de missão no servidor.
-     */
-    private static class SessaoServidorMissionLink {
-        Rover rover;
-        Missao missao;
-        
-        // Estado da comunicação
-        boolean responseRecebido = false;
-        boolean responseSucesso = false;
-        boolean ackRecebido = false;
-
-        //adicionar aqui o resto das variaveis que precisamos para controlar a sessao (progresso, completed)
-        
-        // Fragmentação
-        int totalFragmentos = 0;
-        byte[][] fragmentos;
-        Set<Integer> fragmentosPerdidos = new HashSet<>();
-        
-        SessaoServidorMissionLink(Rover rover, Missao missao) {
-            this.rover = rover;
-            this.missao = missao;
-        }
-    }
+   
 }
 
