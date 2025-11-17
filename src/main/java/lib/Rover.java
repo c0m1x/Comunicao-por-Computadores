@@ -5,6 +5,16 @@ package lib;
  * Contém apenas os campos básicos necessários à gestão e observação.
  */
 public class Rover {
+
+    public enum EstadoRover {
+        ESTADO_INICIAL,
+        ESTADO_DISPONIVEL,
+        ESTADO_RECEBENDO_MISSAO,
+        ESTADO_EM_MISSAO,
+        ESTADO_CONCLUIDO,
+        ESTADO_FALHA
+    }
+
     public int idRover;
     public float posicaoX;
     public float posicaoY;
@@ -21,7 +31,7 @@ public class Rover {
         this.posicaoY = y;
         this.bateria = 100.0f;
         this.velocidade = 0.0f;
-        estadoOperacional = "DISPONIVEL"; //TODO: trocar este tipo de dados para um enum
+        estadoOperacional = "DISPONIVEL"; //TODO: trocar este tipo de dados para o EstadoRover
         idMissaoAtual = -1;
         progressoMissao = 0.0f;
         temMissao = false;

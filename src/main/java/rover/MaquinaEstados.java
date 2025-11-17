@@ -5,24 +5,17 @@ import java.time.Instant;
 import lib.mensagens.payloads.*;
 
 import java.util.concurrent.locks.ReentrantLock;
-
+import lib.Rover.EstadoRover;
 
 //TODO: limpar maquina estados, diria para separar a classe contextorover da classe maquinaestados
+
+//TODO: trocar o estado operacional para o enum EstadoRover em vez de String
 
 /**
  * Contém RoverContext e logica da máquina de estados.
  * Tradução direta de maquina_estados.c.
  */
 public class MaquinaEstados {
-
-    public enum EstadoRover {
-        ESTADO_INICIAL,
-        ESTADO_DISPONIVEL,
-        ESTADO_RECEBENDO_MISSAO,
-        ESTADO_EM_MISSAO,
-        ESTADO_CONCLUIDO,
-        ESTADO_FALHA
-    }
 
     public enum EventoRelevante {
         EVENTO_NENHUM,
