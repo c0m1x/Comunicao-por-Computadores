@@ -2,7 +2,6 @@ package lib;
 
 import java.io.Serializable;
 import java.sql.Time;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
 
@@ -13,7 +12,9 @@ public class Mensagens {
         MSG_HELLO(1),
         MSG_RESPONSE(2),
         MSG_MISSION(3),
-        MSG_ACK(4);
+        MSG_ACK(4),
+        MSG_PROGRESS(5),
+        MSG_COMPLETED(6);
 
         public final int value;
         TipoMensagem(int v) { value = v; }
@@ -35,7 +36,7 @@ public class Mensagens {
         public boolean flagSucesso;
 
         public CabecalhoUDP() {
-            this.timestamp = Time.valueOf(Instant.now().toString());
+            this.timestamp = new Time(System.currentTimeMillis());
         }
 
         @Override
@@ -58,7 +59,7 @@ public class Mensagens {
         public Time timestamp;
 
         public CabecalhoTCP() { 
-            this.timestamp = Time.valueOf(Instant.now().toString()); 
+            this.timestamp = new Time(System.currentTimeMillis());
         }
 
         @Override
@@ -191,3 +192,4 @@ public class Mensagens {
     }
 
 }
+
