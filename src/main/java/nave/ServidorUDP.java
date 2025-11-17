@@ -15,8 +15,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lib.*;
-import lib.Mensagens.*;
+import lib.mensagens.*;
+import lib.mensagens.payloads.*;
+import lib.TipoMensagem;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).

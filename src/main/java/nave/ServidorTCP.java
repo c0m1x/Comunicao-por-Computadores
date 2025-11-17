@@ -7,9 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.time.Instant;
 
-import lib.Mensagens;
-import lib.Missao;
-import lib.Rover;
+import lib.mensagens.payloads.*;
+import lib.mensagens.*;
 import nave.GestaoEstado;
 
 public class ServidorTCP {
@@ -116,9 +115,9 @@ public class ServidorTCP {
         int idRover = msg.header.idEmissor;
 
         switch (msg.header.tipo) {
-            case MSG_TELEMETRY:
-                if (msg.payload instanceof Mensagens.PayloadTelemetria) {
-                    processarTelemetria(idRover, msg.header, (Mensagens.PayloadTelemetria) msg.payload);
+            case MSG_RESPONSE:
+                if (msg.payload instanceof PayloadTelemetria) {
+                    processarTelemetria(idRover, msg.header, (PayloadTelemetria) msg.payload);
                 }
                 break;
                 
