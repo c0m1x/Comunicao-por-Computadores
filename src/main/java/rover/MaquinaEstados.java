@@ -2,8 +2,7 @@ package rover;
 
 import java.time.Instant;
 
-import lib.Mensagens;
-import lib.Mensagens.PayloadMissao;
+import lib.mensagens.payloads.*;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,6 +34,8 @@ public class MaquinaEstados {
         EVENTO_CHECKPOINT_MISSAO
     }
 
+    private ContextoRover contexto;
+
     /**
      * Contexto interno do Rover — contém lógica da máquina de estados e
      * campos detalhados usados internamente pelo rover.
@@ -50,7 +51,7 @@ public class MaquinaEstados {
         private EstadoRover estadoAnterior;
         public volatile boolean ativo;
         public volatile int idMissaoAtual = -1;
-        public Mensagens.PayloadMissao missaoAtual;
+        public PayloadMissao missaoAtual;
         public volatile boolean temMissao;
         public volatile float progressoMissao;
         public volatile long timestampInicioMissaoEpoch;
@@ -73,6 +74,8 @@ public class MaquinaEstados {
         public static final int INTERVALO_TELEMETRIA_BASE = 5;
         public static final float VELOCIDADE_ROVER = 2.0f;
 
+        
+
         public ContextoRover(int id, float posX, float posY) {
             this.idRover = id;
             this.posicaoX = posX;
@@ -82,7 +85,7 @@ public class MaquinaEstados {
             this.estadoAtual = EstadoRover.ESTADO_INICIAL;
             this.estadoAnterior = EstadoRover.ESTADO_INICIAL;
             this.ativo = true;
-            this.missaoAtual = new Mensagens.PayloadMissao();
+            this.missaoAtual = new PayloadMissao();
         }
 
         // Métodos thread-safe
@@ -202,7 +205,7 @@ public class MaquinaEstados {
 
                 long agora = Instant.now().getEpochSecond();
                 double decorrido = (double) (agora - timestampInicioMissaoEpoch);
-                if (missaoAtual instanceof Mensagens.PayloadMissao) {
+                if (missaoAtual instanceof PayloadMissao) {
                     // backward-compat: se existir um campo duracaoMissaoSecs, usá-lo
                     try {
                         java.lang.reflect.Field f = missaoAtual.getClass().getDeclaredField("duracaoMissaoSecs");
@@ -297,7 +300,7 @@ public class MaquinaEstados {
         }
 
         // Notifica missão recebida (similar a rover_missao_recebida)
-        public void receberMissao(Mensagens.PayloadMissao missao, int idMissao) {
+        public void receberMissao(PayloadMissao missao, int idMissao) {
             lock.lock();
             try {
                 this.missaoAtual = missao;
@@ -314,8 +317,8 @@ public class MaquinaEstados {
         }
 
         // Preenche payload de telemetria atual
-        public Mensagens.PayloadTelemetria getTelemetria() {
-            Mensagens.PayloadTelemetria p = new Mensagens.PayloadTelemetria();
+        public PayloadTelemetria getTelemetria() {
+            PayloadTelemetria p = new PayloadTelemetria();
             lock.lock();
             try {
                 p.posicaoX = posicaoX;
@@ -330,9 +333,6 @@ public class MaquinaEstados {
         }
 
     }
-
-
-    private ContextoRover contexto;
     
     public MaquinaEstados(int idRover, float posX, float posY) {
         this.contexto = new ContextoRover(idRover, posX, posY);

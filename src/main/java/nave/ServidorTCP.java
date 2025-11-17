@@ -7,7 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.time.Instant;
 
-import lib.Mensagens;
+import lib.mensagens.payloads.*;
+import lib.mensagens.*;
 import nave.GestaoEstado;
 import nave.Rover;
 import nave.Missao;
@@ -21,7 +22,7 @@ public class ServidorTCP {
     
 
     public interface TelemetriaCallback {
-        void onTelemetriaRecebida(int idRover, Mensagens.PayloadTelemetria telemetria);
+        void onTelemetriaRecebida(int idRover, PayloadTelemetria telemetria);
         void onBateriaBaixa(int idRover, float nivelBateria);
         void onRoverDesconectado(int idRover);
         void onMudancaEstado(int idRover, String novoEstado);
@@ -61,8 +62,8 @@ public class ServidorTCP {
             while (!client.isClosed() && running) {
                 Object obj = ois.readObject();
                 
-                if (obj instanceof Mensagens.MensagemTCP) {
-                    Mensagens.MensagemTCP msg = (Mensagens.MensagemTCP) obj;
+                if (obj instanceof MensagemTCP) {
+                    MensagemTCP msg = (MensagemTCP) obj;
                     
                     // Identificar rover na primeira mensagem
                     if (idRoverConexao == null) {
@@ -112,13 +113,13 @@ public class ServidorTCP {
         }
     }
 
-    private void processarMensagemTCP(Mensagens.MensagemTCP msg) {
+    private void processarMensagemTCP(MensagemTCP msg) {
         int idRover = msg.header.idEmissor;
 
         switch (msg.header.tipo) {
             case MSG_RESPONSE:
-                if (msg.payload instanceof Mensagens.PayloadTelemetria) {
-                    processarTelemetria(idRover, msg.header, (Mensagens.PayloadTelemetria) msg.payload);
+                if (msg.payload instanceof PayloadTelemetria) {
+                    processarTelemetria(idRover, msg.header, (PayloadTelemetria) msg.payload);
                 }
                 break;
                 
@@ -128,7 +129,7 @@ public class ServidorTCP {
         }
     }
 
-    private void processarTelemetria(int idRover, Mensagens.CabecalhoTCP header, Mensagens.PayloadTelemetria tel) {
+    private void processarTelemetria(int idRover, CabecalhoTCP header, PayloadTelemetria tel) {
         Rover rover = estado.obterRover(idRover);
         
         if (rover == null) {

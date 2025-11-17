@@ -3,7 +3,7 @@ package nave;
 import java.io.Serializable;
 import java.util.Calendar;
 
-import lib.Mensagens.PayloadMissao;
+import lib.mensagens.payloads.PayloadMissao;
 
 /**
  * Representação de uma missão com estado local.
@@ -22,16 +22,19 @@ public class Missao implements Serializable {
     public int idMissao;
     public float x1, y1, x2, y2;
     public String tarefa = "";
-    public Calendar duracaoMissao; // duração (como Calendar, conforme Payload)
-    public Calendar intervaloAtualizacao; // em minutos
-    public Calendar inicioMissao;
+    public Calendar duracaoMissao; // duração (como Calendar, conforme Payload) - alterar saco alteremos em Payload
+    public Calendar intervaloAtualizacao; // em minutos - same shit de cima
+    public Calendar inicioMissao; 
     public int prioridade; // 1-5
 
     public EstadoMissao estadoMissao;
 
     public Missao() {
-        // vazio
+        this.idMissao = 0;
+        this.tarefa = null;
+        this.estadoMissao = EstadoMissao.PENDENTE;
     }
+
     public Missao(int idMissao, String tarefa, EstadoMissao estadoMissao) {
         this.idMissao = idMissao;
         this.tarefa = tarefa;
@@ -44,8 +47,8 @@ public class Missao implements Serializable {
 
     /** Constrói uma Missao a partir de um PayloadMissao. */
     public Missao(PayloadMissao p) {
-
         if (p == null) return;
+
         this.idMissao = p.idMissao;
         this.x1 = p.x1; this.y1 = p.y1; this.x2 = p.x2; this.y2 = p.y2;
         this.tarefa = p.tarefa;
@@ -54,7 +57,6 @@ public class Missao implements Serializable {
         this.inicioMissao = p.inicioMissao;
         this.prioridade = p.prioridade;
         this.estadoMissao = EstadoMissao.PENDENTE;
-
     }
 
     /** Converte esta Missao para um Mensagens.PayloadMissao (compatibilidade).

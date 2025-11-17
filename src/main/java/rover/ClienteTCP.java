@@ -4,9 +4,8 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import rover.MaquinaEstados.ContextoRover;
-import lib.Mensagens;
-import lib.Mensagens.MensagemTCP;
-
+import lib.mensagens.*;
+import lib.TipoMensagem;
 
 public class ClienteTCP implements Runnable {
  
@@ -31,9 +30,9 @@ public class ClienteTCP implements Runnable {
                 while (running && ctx.ativo) {
                     if (ctx.deveEnviarTelemetria()) {
 
-                        Mensagens.MensagemTCP msg = new Mensagens.MensagemTCP();
+                        MensagemTCP msg = new MensagemTCP();
                         // Preencher header
-                        msg.header.tipo = Mensagens.TipoMensagem.MSG_ACK;
+                        msg.header.tipo = TipoMensagem.MSG_ACK;
                         msg.header.idEmissor = ctx.idRover;
                         msg.header.idRecetor = ctx.idNave;
                         msg.header.idMissao = ctx.getMissaoId();
