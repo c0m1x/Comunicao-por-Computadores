@@ -32,7 +32,8 @@ public class ClienteTCP implements Runnable {
 
                         MensagemTCP msg = new MensagemTCP();
                         // Preencher header
-                        msg.header.tipo = TipoMensagem.MSG_ACK;
+                        // Utilizar o tipo esperado pelo ServidorTCP
+                        msg.header.tipo = Mensagens.TipoMensagem.MSG_TELEMETRY;
                         msg.header.idEmissor = ctx.idRover;
                         msg.header.idRecetor = ctx.idNave;
                         msg.header.idMissao = ctx.getMissaoId();

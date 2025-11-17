@@ -115,9 +115,9 @@ public class ServidorTCP {
         int idRover = msg.header.idEmissor;
 
         switch (msg.header.tipo) {
-            case MSG_RESPONSE:
-                if (msg.payload instanceof PayloadTelemetria) {
-                    processarTelemetria(idRover, msg.header, (PayloadTelemetria) msg.payload);
+            case MSG_TELEMETRY:
+                if (msg.payload instanceof Mensagens.PayloadTelemetria) {
+                    processarTelemetria(idRover, msg.header, (Mensagens.PayloadTelemetria) msg.payload);
                 }
                 break;
                 
