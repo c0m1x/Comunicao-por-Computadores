@@ -2,6 +2,7 @@ package lib.mensagens.payloads;
 
 import java.io.Serializable;
 import lib.mensagens.payloads.PayloadTCP;
+import lib.Rover.EstadoRover;
 
 /**
  * Payload da telemetria TCP.
@@ -11,7 +12,7 @@ public class PayloadTelemetria extends PayloadTCP {
     
     public float posicaoX;
     public float posicaoY;
-    public String estadoOperacional = ""; //VER O TIPO DE DADOS DISTO
+    public EstadoRover estadoOperacional;
     public float bateria;
     public float velocidade;
 

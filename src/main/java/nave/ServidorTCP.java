@@ -11,6 +11,7 @@ import lib.mensagens.payloads.*;
 import lib.mensagens.*;
 import nave.GestaoEstado;
 import lib.*;
+import lib.Rover.EstadoRover;
 
 public class ServidorTCP {
 
@@ -24,7 +25,7 @@ public class ServidorTCP {
         void onTelemetriaRecebida(int idRover, PayloadTelemetria telemetria);
         void onBateriaBaixa(int idRover, float nivelBateria);
         void onRoverDesconectado(int idRover);
-        void onMudancaEstado(int idRover, String novoEstado);
+        void onMudancaEstado(int idRover, EstadoRover novoEstado);
     }
     
     private TelemetriaCallback callback;
@@ -136,13 +137,13 @@ public class ServidorTCP {
             return;
         }
 
-        String estadoAnterior = rover.estadoOperacional;
+        String estadoAnterior = rover.estadoRover.toString();
 
         rover.posicaoX = tel.posicaoX;
         rover.posicaoY = tel.posicaoY;
         rover.bateria = tel.bateria;
         rover.velocidade = tel.velocidade;
-        rover.estadoOperacional = tel.estadoOperacional;
+        rover.estadoRover = tel.estadoOperacional;
 
         if (header.idMissao > 0 && header.idMissao != rover.idMissaoAtual) {
             rover.idMissaoAtual = header.idMissao;
@@ -160,12 +161,12 @@ public class ServidorTCP {
                 callback.onBateriaBaixa(idRover, tel.bateria);
             }
 
-            if (estadoAnterior != null && !estadoAnterior.equals(tel.estadoOperacional)) {
+            if (estadoAnterior != null && !estadoAnterior.equals(tel.estadoOperacional.toString())) {
                 callback.onMudancaEstado(idRover, tel.estadoOperacional);
             }
         }
 
-        if ("SUCCESS".equals(tel.estadoOperacional) && rover.idMissaoAtual > 0) {
+        if ("SUCCESS".equals(tel.estadoOperacional.toString()) && rover.idMissaoAtual > 0) {
 
             Missao missao = estado.obterMissao(rover.idMissaoAtual);
 
