@@ -21,7 +21,7 @@ public class Rover {
         this.posicaoY = y;
         this.bateria = 100.0f;
         this.velocidade = 0.0f;
-        estadoOperacional = "INICIAL";
+        estadoOperacional = "DISPONIVEL"; //TODO: trocar este tipo de dados para um enum
         idMissaoAtual = -1;
         progressoMissao = 0.0f;
         temMissao = false;
