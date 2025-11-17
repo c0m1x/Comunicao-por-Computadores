@@ -1,4 +1,4 @@
-package nave;
+package lib;
 
 /**
  * Representação simples do Rover para a Nave-Mãe.
