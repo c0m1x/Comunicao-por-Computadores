@@ -1,6 +1,8 @@
 package rover;
 
-import lib.Mensagens.*;
+import lib.mensagens.*;
+import lib.mensagens.payloads.*;
+import lib.TipoMensagem;
 import java.io.*;
 import java.net.*;
 import java.util.*;
