@@ -109,4 +109,13 @@ public class GestaoEstado {
         return null;
     }
 
+    public Rover obterRoverDisponivel() {
+        for (Rover r : rovers.values()) {
+            // TODO: verificar estado operacional antes
+            if (!r.temMissao) {
+                return r;
+            }
+        }
+        return null;
+    }
 }
