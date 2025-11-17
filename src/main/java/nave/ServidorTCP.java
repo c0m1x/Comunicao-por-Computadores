@@ -41,7 +41,7 @@ public class ServidorTCP {
 
     public void start() throws Exception {
         try (ServerSocket server = new ServerSocket(port)) {
-            System.out.println("✓ Servidor TCP telemetria escuta na porta " + port);
+            System.out.println("Servidor TCP telemetria escuta na porta " + port);
             while (running) {
                 Socket client = server.accept();
                 pool.submit(() -> handleClient(client));
@@ -53,7 +53,7 @@ public class ServidorTCP {
 
     private void handleClient(Socket client) {
         String remote = client.getRemoteSocketAddress().toString();
-        System.out.println("→ Nova conexão TCP: " + remote);
+        System.out.println("Nova conexão TCP: " + remote);
         
         Integer idRoverConexao = null;
         
@@ -73,12 +73,12 @@ public class ServidorTCP {
                     processarMensagemTCP(msg);
                     
                 } else {
-                    System.out.println("⚠ Objeto desconhecido recebido: " + obj.getClass());
+                    System.out.println("Objeto desconhecido recebido: " + obj.getClass());
                 }
             }
         } catch (Exception e) {
             if (running) {
-                System.out.println("✗ Rover desconectou: " + remote + " (" + e.getMessage() + ")");
+                System.out.println("Rover desconectou: " + remote + " (" + e.getMessage() + ")");
             }
         } finally {
             if (idRoverConexao != null) {
@@ -95,16 +95,16 @@ public class ServidorTCP {
             rover = new Rover(idRover, 0.0f, 0.0f);
             
             estado.adicionarRover(idRover, rover);
-            System.out.println("✓ Rover " + idRover + " registrado no sistema (conexão: " + endereco + ")");
+            System.out.println("Rover " + idRover + " registrado no sistema (conexão: " + endereco + ")");
         } else {
-            System.out.println("✓ Rover " + idRover + " reconectado (conexão: " + endereco + ")");
+            System.out.println("Rover " + idRover + " reconectado (conexão: " + endereco + ")");
         }
     }
     
     private void marcarRoverDesconectado(int idRover) {
         Rover rover = estado.obterRover(idRover);
         if (rover != null) {
-            System.out.println("✗ Rover " + idRover + " desconectado");
+            System.out.println("Rover " + idRover + " desconectado");
             
             if (callback != null) {
                 callback.onRoverDesconectado(idRover);
@@ -123,7 +123,7 @@ public class ServidorTCP {
                 break;
                 
             default:
-                System.out.println("⚠ Tipo de mensagem TCP não esperado: " + msg.header.tipo);
+                System.out.println("Tipo de mensagem TCP não esperado: " + msg.header.tipo);
                 break;
         }
     }
@@ -185,6 +185,6 @@ public class ServidorTCP {
     public void stop() { 
         running = false;
         pool.shutdownNow();
-        System.out.println("✗ Servidor TCP encerrado");
+        System.out.println("Servidor TCP encerrado");
     }
 }
