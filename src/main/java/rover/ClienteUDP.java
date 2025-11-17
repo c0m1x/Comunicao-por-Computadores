@@ -261,8 +261,7 @@ public class ClienteUDP implements Runnable {
                 maquina.receberMissao(payload);
             }
             
-            // Iniciar Fase 2: Execução e Reportagem de Progresso
-            iniciarFase2Execucao(payload);
+            reportarMissao(payload);
             
             return true;
             
@@ -367,17 +366,17 @@ public class ClienteUDP implements Runnable {
     }
     
     /**
-     * Inicia a Fase 2: Execução da missão.
+     * Inicia a reportagem da missão
      */
-    private void iniciarFase2Execucao(PayloadMissao payload) {
-        // Atualizar sessão para Fase 2
+    private void reportarMissao(PayloadMissao payload) {
+        // Atualizar sessão 
         sessaoAtual.emExecucao = true;
-        sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS
+        sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS TODO: ajustar se necessário
         sessaoAtual.intervaloAtualizacao = payload.intervaloAtualizacao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
         sessaoAtual.duracaoMissao = payload.duracaoMissao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
         sessaoAtual.inicioMissao = System.currentTimeMillis();
         
-        // Limpar dados da Fase 1 (não mais necessários)
+        // Limpar dados (não mais necessários)
         sessaoAtual.fragmentosRecebidos = null;
         
         // Iniciar thread de envio de progresso
@@ -385,7 +384,7 @@ public class ClienteUDP implements Runnable {
         threadProgresso.setDaemon(true);
         threadProgresso.start();
         
-        System.out.println("[ClienteUDP] Iniciada Fase 2 - Execução da missão " + payload.idMissao);
+        System.out.println("[ClienteUDP] Iniciada a execução da missão " + payload.idMissao);
     }
     
     /**
@@ -400,7 +399,7 @@ public class ClienteUDP implements Runnable {
                 
                 // Calcular progresso
                 long tempoDecorrido = System.currentTimeMillis() - sessaoAtual.inicioMissao;
-                float progressoPerc = Math.min(100.0f, (tempoDecorrido * 100.0f) / sessaoAtual.duracaoMissao);
+                float progressoPerc = maquina.getContexto().getProgresso();
                 
                 // Enviar PROGRESS
                 if (progressoPerc < 100.0f) {
@@ -451,7 +450,7 @@ public class ClienteUDP implements Runnable {
             long inicio = System.currentTimeMillis();
             while (System.currentTimeMillis() - inicio < TIMEOUT_MS && sessaoAtual.aguardandoAck) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(100); //TODO: rever os timeouts
                 } catch (InterruptedException e) {
                     return;
                 }
@@ -527,7 +526,7 @@ public class ClienteUDP implements Runnable {
     
     /**
      * Classe que representa uma sessão completa de missão no cliente.
-     * Gerencia tanto a Fase 1 (recepção) quanto a Fase 2 (execução).
+     * Gerencia tanto a recepção quanto a reportagem do progresso da missão.
      */
     private static class SessaoClienteMissionLink {
         // Comum a todas as fases
@@ -535,11 +534,11 @@ public class ClienteUDP implements Runnable {
         InetAddress enderecoNave;
         int portaNave;
         
-        // Fase 1: Recepção de missão
+        // Recepção de missão
         int totalFragmentos;
         Map<Integer, byte[]> fragmentosRecebidos;
         
-        // Fase 2: Execução de missão
+        // Reportagem do progresso da missão
         boolean emExecucao = false;
         int seqAtual;
         long intervaloAtualizacao; // em ms

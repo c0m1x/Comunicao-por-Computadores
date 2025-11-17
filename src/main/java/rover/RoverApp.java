@@ -46,8 +46,6 @@ public class RoverApp {
             
             // Criar clientes
             ClienteUDP clienteUDP = new ClienteUDP(roverId, maquina);
-
-            //TODO: iniciar os outros clientes aqui 
             ClienteTCP clienteTCP = new ClienteTCP(maquina.getContexto(), "127.0.0.1", 5001);
             
             // Arrancar clientes em threads separadas
