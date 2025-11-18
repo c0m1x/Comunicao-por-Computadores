@@ -1,8 +1,8 @@
 
 package api;
 
-import nave.Rover;
-import nave.Missao;
+import lib.Rover;
+import lib.Missao;
 import lib.mensagens.payloads.*;
 
 import java.util.Calendar;
@@ -36,7 +36,7 @@ public class CriarJson {
                 + "\"posicaoY\":" + r.posicaoY + ","
                 + "\"bateria\":" + r.bateria + ","
                 + "\"velocidade\":" + r.velocidade + ","
-                + "\"estadoOperacional\":\"" + escape(r.estadoOperacional) + "\","
+                + "\"estadoOperacional\":\"" + escape(r.estadoRover.toString()) + "\","
                 + "\"idMissaoAtual\":" + r.idMissaoAtual + ","
                 + "\"progressoMissao\":" + r.progressoMissao + ","
                 + "\"temMissao\":" + r.temMissao
@@ -106,7 +106,7 @@ public class CriarJson {
         return "{"
                 + "\"posicaoX\":" + p.posicaoX + ","
                 + "\"posicaoY\":" + p.posicaoY + ","
-                + "\"estadoOperacional\":\"" + escape(p.estadoOperacional) + "\","
+                + "\"estadoOperacional\":\"" + escape(p.estadoOperacional.toString()) + "\","
                 + "\"bateria\":" + p.bateria + ","
                 + "\"velocidade\":" + p.velocidade
                 + "}";

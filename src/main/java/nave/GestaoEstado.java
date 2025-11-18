@@ -86,8 +86,8 @@ public class GestaoEstado {
  
     public Rover obterRoverDisponivel() {
         for (Rover r : rovers.values()) {
-            // TODO: verificar estado operacional antes
-            if (!r.temMissao) {
+            if (!r.temMissao && r.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL) {
+                r.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
                 return r;
             }
         }
@@ -158,7 +158,7 @@ public class GestaoEstado {
         if (r != null) {
             r.posicaoX = p.posicaoX;
             r.posicaoY = p.posicaoY;
-            r.estadoOperacional = p.estadoOperacional;
+            r.estadoRover = p.estadoOperacional;
             r.bateria = p.bateria;
             r.velocidade = p.velocidade;
         }
@@ -188,16 +188,9 @@ public class GestaoEstado {
         progressoMissoes.put(p.idMissao, p);
 
         for (Rover r : rovers.values()) {
-            if (!r.temMissao && r.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL) {
-                return r;
-            }
-        }
-        return null;
-    }
             if (r.idMissaoAtual == p.idMissao)
                 r.progressoMissao = p.progressoPercentagem;
         }
     }
-
 }
 

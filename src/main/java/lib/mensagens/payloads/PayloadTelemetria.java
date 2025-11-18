@@ -1,7 +1,5 @@
 package lib.mensagens.payloads;
 
-import java.io.Serializable;
-import lib.mensagens.payloads.PayloadTCP;
 import lib.Rover.EstadoRover;
 
 /**
