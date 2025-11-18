@@ -48,8 +48,8 @@ import rover.EventoRelevante;
             this.posicaoY = posY;
             this.bateria = 100.0f;
             this.velocidade = 0.0f;
-            this.estadoAtual = EstadoRover.ESTADO_INICIAL;
-            this.estadoAnterior = EstadoRover.ESTADO_INICIAL;
+            this.estadoAtual = EstadoRover.ESTADO_DISPONIVEL;
+            this.estadoAnterior = EstadoRover.ESTADO_DISPONIVEL;
             this.ativo = true;
             this.missaoAtual = new PayloadMissao();
         }

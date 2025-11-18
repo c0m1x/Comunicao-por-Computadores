@@ -14,11 +14,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lib.mensagens.*;
-import lib.mensagens.payloads.*;
+import lib.Missao;
+import lib.Rover;
+import lib.SessaoServidorMissionLink;
 import lib.TipoMensagem;
-import lib.*;
-import lib.Rover.EstadoRover;
+import lib.mensagens.MensagemUDP;
+import lib.mensagens.payloads.PayloadAck;
+import lib.mensagens.payloads.PayloadMissao;
+import lib.mensagens.payloads.PayloadProgresso;
+import lib.mensagens.payloads.PayloadUDP;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -119,6 +123,7 @@ public class ServidorUDP implements Runnable {
                     System.out.println("[ServidorUDP] Nenhum rover disponível no momento.");
                     continue;
                 } else {
+                    roverDisponivel.portaUdp = PORTA_BASE_ROVER + roverDisponivel.idRover; // definir porta UDP do rover (valor padrão)
                     System.out.println("[ServidorUDP] Atribuindo missão " + missao.idMissao + " ao rover " + roverDisponivel.idRover);
                     iniciarEnvioMissao(roverDisponivel, missao);
                 }
@@ -184,15 +189,13 @@ public class ServidorUDP implements Runnable {
                 return;
             }
 
-            //TODO: continuar aqui o resto em vez de ser so no processar mensagens, para que nao finalize a sessao antes do COMPLETED
+            //Passo 5: Aguarda PROGRESS enquanto não receber COMPLETED
+            if(!aguardarProgress(sessao)) {
+                System.err.println("[ServidorUDP] Falha ao aguardar PROGRESS do rover " + sessao.rover.idRover);
+                finalizarSessao(sessao, false);
+                return;
+            }
 
-            //Passo 5: Aguarda PROGRESS (processado em processarMensagemRecebida)
-
-            //Passo 6: Aguarda COMPLETED (processado em processarMensagemRecebida)
-            
-            // Sucesso!
-            System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
-                             " enviada com sucesso para rover " + sessao.rover.idRover);
             finalizarSessao(sessao, true);
             
         } catch (Exception e) {
@@ -215,8 +218,8 @@ public class ServidorUDP implements Runnable {
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = false;
         msg.payload = null; // HELLO não tem payload
-        
-        return enviarMensagem(msg, sessao.rover);
+
+        return enviarMensagemUDP(msg, sessao);
     }
     
     /**
@@ -326,7 +329,7 @@ public class ServidorUDP implements Runnable {
         frag.dados = sessao.fragmentos[indice];
         msg.payload = frag;
         
-        return enviarMensagem(msg, sessao.rover);
+        return enviarMensagemUDP(msg, sessao);
     }
     
     /**
@@ -341,7 +344,13 @@ public class ServidorUDP implements Runnable {
             while (System.currentTimeMillis() - inicio < TIMEOUT_MS) { //TODO: REVER se aqui não temos que usar outro timeout
                 if (sessao.ackRecebido) {
                     if (sessao.fragmentosPerdidos.isEmpty()) {
-                        // ACK completo!
+                        // ACK completo! Sucesso!
+                        System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                             " enviada com sucesso para rover " + sessao.rover.idRover);
+                        
+                        // Atualizar estado da missão e do rover
+                        estado.atribuirMissaoARover(sessao.rover.idRover, sessao.missao.idMissao);
+                        
                         return true;
                     } else {
                         // Retransmitir fragmentos perdidos
@@ -375,6 +384,36 @@ public class ServidorUDP implements Runnable {
         
         return false;
     }
+
+    /**
+     * Aguarda receção de mensagens PROGRESS até receber COMPLETED ou timeout.
+     * Reinicia janela de timeout sempre que chega novo progresso.
+     */
+
+     //TODO: rever isto para ter em conta os intervalos de report de progresso definidos pela missao
+     //talvez verificar se o seq é incremental, porque se nao for quer dizer que perdeu um pacote pelo meio e diz qual deles foi para pedir retransmissao
+     //tratar tambem de progressos duplicados a partir de seq
+    private boolean aguardarProgress(SessaoServidorMissionLink sessao) {
+        long inicioJanela = System.currentTimeMillis();
+        int ultimoSeq = sessao.ultimoSeqProgress;
+        while (!sessao.completedRecebido) {
+            // Se chegou novo progresso, reinicia janela
+            if (sessao.ultimoSeqProgress != ultimoSeq) {
+                ultimoSeq = sessao.ultimoSeqProgress;
+                inicioJanela = System.currentTimeMillis();
+            }
+            // Timeout sem progresso nem completed
+            if (System.currentTimeMillis() - inicioJanela > TIMEOUT_MS) {
+                return false; // Falhou aguardar progress/completed
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+        return true; // COMPLETED recebido
+    }
     
     /**
      * Processa mensagem recebida do rover (RESPONSE ou ACK).
@@ -394,7 +433,18 @@ public class ServidorUDP implements Runnable {
                 // Mensagem sem sessão ativa
                 return;
             }
-            
+            /*  nota: nao sei se isto é preciso
+            // Atualizar endpoint da sessão com base no pacote recebido
+            if (sessao != null) {
+                if (pacote.getAddress() != null) {
+                    sessao.enderecoRover = pacote.getAddress();
+                }
+                if (pacote.getPort() > 0) {
+                    sessao.portaRover = pacote.getPort();
+                }
+            }
+                */
+
             switch (msg.header.tipo) {
                 case MSG_RESPONSE:
                     sessao.responseRecebido = true;
@@ -419,7 +469,6 @@ public class ServidorUDP implements Runnable {
                     break;
                     
                 case MSG_PROGRESS:
-
                 //TODO: tratar como os outros, fazer metodo separado para aguardar progress e aqui so atualizar a sessao
                     processarProgress(msg, idRover, pacote);
                     break;
@@ -448,15 +497,15 @@ public class ServidorUDP implements Runnable {
                              ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
             
             // Atualizar estado da missão no GestaoEstado
-            Rover rover = estado.obterRover(idRover);
-            if (rover != null) {
-                // TODO: atualizar progresso da missão no estado
-                System.out.println("[ServidorUDP] Progresso da missão " + progresso.idMissao + ": " + 
-                                 String.format("%.2f", progresso.progressoPercentagem) + "%%");
-            }
+            estado.atualizarProgressoMissao(idRover, progresso.idMissao, progresso.progressoPercentagem);
             
             // Enviar ACK
-            enviarAckParaRover(msg, pacote.getAddress(), pacote.getPort());
+            SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
+            if (sessao != null) {
+                sessao.recebendoProgresso = true;
+                sessao.ultimoSeqProgress = msg.header.seq;
+                enviarAckParaRover(msg, sessao);
+            }
         }
     }
     
@@ -467,35 +516,26 @@ public class ServidorUDP implements Runnable {
         System.out.println("[ServidorUDP] COMPLETED recebido do rover " + idRover + 
                          " (seq=" + msg.header.seq + ", missão=" + msg.header.idMissao + 
                          ", sucesso=" + msg.header.flagSucesso + ")");
+        // Atualizar estado via GestaoEstado
+        estado.concluirMissao(idRover, msg.header.idMissao, msg.header.flagSucesso);
         
-        // Atualizar estado da missão e rover
-        Rover rover = estado.obterRover(idRover);
-        Missao missao = estado.obterMissao(msg.header.idMissao);
-        
-        if (rover != null && missao != null) {
-            if (msg.header.flagSucesso) {
-                missao.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
-                System.out.println("[ServidorUDP] Missão " + msg.header.idMissao + " marcada como CONCLUÍDA");
-            } else {
-                missao.estadoMissao = Missao.EstadoMissao.CANCELADA; // Usar CANCELADA como estado de falha
-                System.out.println("[ServidorUDP] Missão " + msg.header.idMissao + " marcada como CANCELADA (falha)");
-            }
-            
-            rover.temMissao = false;
-            rover.idMissaoAtual = -1;
-            rover.estadoRover = EstadoRover.ESTADO_DISPONIVEL;
-            System.out.println("[ServidorUDP] Rover " + idRover + " agora está disponível");
+        // Marcar na sessão
+        SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
+        if (sessao != null) {
+            sessao.completedRecebido = true;
+            sessao.completedSucesso = msg.header.flagSucesso;
         }
         
         // Enviar ACK
         //TODO: VER se deixamos aqui ou se metemos no executar sessao missao
-        enviarAckParaRover(msg, pacote.getAddress(), pacote.getPort());
+        if (sessao != null) enviarAckParaRover(msg, sessao);
     }
     
     /**
      * Envia ACK para o rover (usado para PROGRESS e COMPLETED).
      */
-    private void enviarAckParaRover(MensagemUDP msgOriginal, InetAddress endereco, int porta) {
+    //NOTA: talvez isto dar return de um boolean como os outros que enviam mensagem
+    private void enviarAckParaRover(MensagemUDP msgOriginal, SessaoServidorMissionLink sessao) {
         MensagemUDP ack = new MensagemUDP();
         ack.header.tipo = TipoMensagem.MSG_ACK;
         ack.header.idEmissor = 0; // Nave-Mãe
@@ -506,16 +546,7 @@ public class ServidorUDP implements Runnable {
         ack.header.flagSucesso = true;
         ack.payload = null;
         
-        //TODO: usar a enviar mensagem para nao repetir codigo
-        try {
-            byte[] dados = serializarObjeto(ack);
-            DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
-            socket.send(pacote);
-            System.out.println("[ServidorUDP] ACK enviado para rover " + msgOriginal.header.idEmissor + 
-                             " (seq=" + ack.header.seq + ")");
-        } catch (IOException e) {
-            System.err.println("[ServidorUDP] Erro ao enviar ACK: " + e.getMessage());
-        }
+        enviarMensagemUDP(ack, sessao);
     }
     
     /**
@@ -523,33 +554,45 @@ public class ServidorUDP implements Runnable {
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
         if (sucesso) {
-            // Atualizar estado da missão e rover
-            sessao.missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
-            sessao.rover.temMissao = true;
-            sessao.rover.idMissaoAtual = sessao.missao.idMissao;
-            sessao.rover.estadoRover = EstadoRover.ESTADO_EM_MISSAO;
+            //talvez no caso de insucesso, reverter a missao para pendente ou para cancelada, dependendo do caso para ser reatribuida ao mesmo rover ou a outro diferente(implementar isto depois com msg erros)
         }
-        
         sessoesAtivas.remove(sessao.rover.idRover);
     }
     
     /**
      * Envia mensagem UDP para o rover.
      */
-    private boolean enviarMensagem(MensagemUDP msg, Rover rover) {
+    private boolean enviarMensagemUDP(MensagemUDP msg, SessaoServidorMissionLink sessao) {
         try {
-            // Obter endereço do rover (assumindo localhost para testes)
-            InetAddress endereco = InetAddress.getByName("localhost");
-            int porta = PORTA_BASE_ROVER + rover.idRover; // Porta baseada no ID do rover
-            
+            InetAddress endereco = sessao.enderecoRover;
+            int porta = sessao.portaRover;
+
+            //caso nao esteja em sessao tenta ir busar os dados no rover
+
+            if (endereco == null && sessao.rover != null && sessao.rover.enderecoHost != null) {
+                endereco = InetAddress.getByName(sessao.rover.enderecoHost);
+            }
+            if (porta <= 0) {
+                if (sessao.rover != null && sessao.rover.portaUdp != null && sessao.rover.portaUdp > 0) {
+                    porta = sessao.rover.portaUdp;
+                } else {
+                    porta = PORTA_BASE_ROVER + sessao.rover.idRover; // porta padrão
+                }
+            }
+
+            if (endereco == null || porta <= 0) {
+                System.err.println("[ServidorUDP] Endpoint do rover desconhecido para envio (id=" +
+                                   (sessao.rover != null ? sessao.rover.idRover : -1) + ")");
+                return false;
+            }
+
             byte[] dados = serializarObjeto(msg);
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
             socket.send(pacote);
 
-            System.out.println("[ServidorUDP] Enviada mensagem " + msg.header.tipo + " para rover " + rover.idRover + " (seq=" + msg.header.seq + ")");
-            
+            System.out.println("[ServidorUDP] Enviada mensagem " + msg.header.tipo +
+                               " para rover " + sessao.rover.idRover + " (seq=" + msg.header.seq + ")");
             return true;
-            
         } catch (IOException e) {
             System.err.println("[ServidorUDP] Erro ao enviar mensagem: " + e.getMessage());
             return false;
