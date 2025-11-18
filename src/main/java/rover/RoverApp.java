@@ -1,7 +1,5 @@
 package rover;
 
-import rover.MaquinaEstados.ContextoRover;
-
 /**
  * Aplicação minimalista do Rover.
  * 

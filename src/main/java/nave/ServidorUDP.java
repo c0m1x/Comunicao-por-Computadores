@@ -11,7 +11,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,6 +48,8 @@ public class ServidorUDP implements Runnable {
     
     // Controlo de sessões ativas (idRover -> sessão)
     private ConcurrentHashMap<Integer, SessaoServidorMissionLink> sessoesAtivas;
+
+
     
     public ServidorUDP(GestaoEstado estado) {
         this.estado = estado;
@@ -164,6 +167,7 @@ public class ServidorUDP implements Runnable {
             // Passo 2: Aguardar RESPONSE (processado em processarMensagemRecebida)
             if (!aguardarResponse(sessao)) {
                 System.err.println("[ServidorUDP] Timeout aguardando RESPONSE do rover " + sessao.rover.idRover);
+                //todo: implementar retry ou tratamento de erro
                 finalizarSessao(sessao, false);
                 return;
             }
@@ -221,6 +225,8 @@ public class ServidorUDP implements Runnable {
      * Aguarda RESPONSE do rover.
      */
     private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
+
+        //talvez adicionar aqui outro while para fazer retries no envio do hello se nao receber resposta com MAX_RETRIES
         long inicio = System.currentTimeMillis();
         while (System.currentTimeMillis() - inicio < TIMEOUT_MS) {
             if (sessao.responseRecebido) {
@@ -237,37 +243,57 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Fragmenta e envia todos os fragmentos da missão.
-     * TODO: REVER para ver se está a fragmentar corretamente como tinhamos decidido.
+     * TODO: ver maneiras melhores de fazer a fragmentação por campos
      */
     private boolean enviarFragmentosMissao(SessaoServidorMissionLink sessao) {
         try {
-            // Serializar payload da missão
+            // 1) Obter payload da missão
             PayloadMissao payload = sessao.missao.toPayload();
-            byte[] dadosCompletos = serializarObjeto(payload);
-            
-            // Calcular número de fragmentos
-            int totalFragmentos = (int) Math.ceil((double) dadosCompletos.length / TAMANHO_FRAGMENTO);
+
+            // 2) Serializar campo a campo 
+            List<byte[]> blocos = payload.serializarPorCampos();
+
+            // 3) Empacotar blocos em fragmentos de até TAMANHO_FRAGMENTO sem dividir campos
+            List<byte[]> frags = new ArrayList<>();
+            ByteArrayOutputStream atual = new ByteArrayOutputStream();
+            for (byte[] bloco : blocos) {
+                if (bloco.length > TAMANHO_FRAGMENTO) {
+                    // Campo maior que o tamanho de fragmento — enviar sozinho (nota académica)
+                    if (atual.size() > 0) {
+                        frags.add(atual.toByteArray());
+                        atual.reset();
+                    }
+                    frags.add(bloco);
+                    continue;
+                }
+
+                if (atual.size() + bloco.length > TAMANHO_FRAGMENTO) {
+                    frags.add(atual.toByteArray());
+                    atual.reset();
+                }
+                atual.write(bloco);
+            }
+            if (atual.size() > 0) {
+                frags.add(atual.toByteArray());
+            }
+
+            // 4) Guardar na sessão
+            int totalFragmentos = frags.size();
             sessao.totalFragmentos = totalFragmentos;
             sessao.fragmentos = new byte[totalFragmentos][];
-            
-            System.out.println("[ServidorUDP] Enviando missão " + sessao.missao.idMissao + 
-                             " em " + totalFragmentos + " fragmentos");
-            
-            // Criar fragmentos
-            for (int i = 0; i < totalFragmentos; i++) {
-                int inicio = i * TAMANHO_FRAGMENTO;
-                int fim = Math.min(inicio + TAMANHO_FRAGMENTO, dadosCompletos.length);
-                sessao.fragmentos[i] = Arrays.copyOfRange(dadosCompletos, inicio, fim);
-            }
-            
-            // Enviar todos os fragmentos
+            for (int i = 0; i < totalFragmentos; i++) sessao.fragmentos[i] = frags.get(i);
+
+            System.out.println("[ServidorUDP] Enviando missão " + sessao.missao.idMissao +
+                    " em " + totalFragmentos + " fragmentos (empacotado por campos)");
+
+            // 5) Enviar todos os fragmentos
             for (int i = 0; i < totalFragmentos; i++) {
                 if (!enviarFragmento(sessao, i + 2)) { // seq começa em 2
                     return false;
                 }
                 Thread.sleep(10); // Pequeno delay entre fragmentos
             }
-            
+
             return true;
             
         } catch (Exception e) {
@@ -275,6 +301,8 @@ public class ServidorUDP implements Runnable {
             return false;
         }
     }
+
+    
     
     /**
      * Envia um fragmento específico.
@@ -340,6 +368,7 @@ public class ServidorUDP implements Runnable {
                     return false;
                 }
             }
+            //aqui se calhar, depois de passar o timeout e antes de passar á proxima tentativa mandar uma mensagem a confirmar que o rover ainda está lá
             
             if (!sessao.ackRecebido) {
                 tentativas++;
@@ -392,6 +421,8 @@ public class ServidorUDP implements Runnable {
                     break;
                     
                 case MSG_PROGRESS:
+
+                //TODO: tratar como os outros, fazer metodo separado para aguardar progress e aqui so atualizar a sessao
                     processarProgress(msg, idRover, pacote);
                     break;
                     

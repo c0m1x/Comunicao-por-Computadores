@@ -240,31 +240,76 @@ public class ClienteUDP implements Runnable {
             // Ordenar fragmentos por sequência
             List<Integer> seqs = new ArrayList<>(sessaoAtual.fragmentosRecebidos.keySet());
             Collections.sort(seqs);
-            
+
+            //print dos dados recebidos para debug
+            System.out.println("[ClienteUDP] Dados dos fragmentos recebidos:");
+            for (int seq : seqs) {
+                byte[] fragmento = sessaoAtual.fragmentosRecebidos.get(seq);
+                System.out.println("  Seq " + seq + ": " + Arrays.toString(fragmento));
+            }
+
             // Concatenar dados
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             for (int seq : seqs) {
                 byte[] fragmento = sessaoAtual.fragmentosRecebidos.get(seq);
                 baos.write(fragmento);
             }
-            
-            // Deserializar PayloadMissao
+
             byte[] dadosCompletos = baos.toByteArray();
-            ByteArrayInputStream bais = new ByteArrayInputStream(dadosCompletos);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            PayloadMissao payload = (PayloadMissao) ois.readObject();
-            
+
+            // Interpretar byte a byte (formato académico, compatível com servidor)
+            java.io.DataInputStream dis = new java.io.DataInputStream(new java.io.ByteArrayInputStream(dadosCompletos));
+
+            PayloadMissao payload = new PayloadMissao();
+
+            // int idMissao
+            payload.idMissao = dis.readInt();
+
+            // float x1,y1,x2,y2
+            payload.x1 = dis.readFloat();
+            payload.y1 = dis.readFloat();
+            payload.x2 = dis.readFloat();
+            payload.y2 = dis.readFloat();
+
+            // String tarefa
+            int tarefaLen = dis.readInt();
+            if (tarefaLen > 0) {
+                byte[] tb = new byte[tarefaLen];
+                dis.readFully(tb);
+                payload.tarefa = new String(tb, java.nio.charset.StandardCharsets.UTF_8);
+            } else {
+                payload.tarefa = "";
+            }
+
+            // Calendars em millis
+            long durMillis = dis.readLong();
+            long intMillis = dis.readLong();
+            long iniMillis = dis.readLong();
+
+            java.util.Calendar c1 = java.util.Calendar.getInstance();
+            c1.setTimeInMillis(durMillis);
+            java.util.Calendar c2 = java.util.Calendar.getInstance();
+            c2.setTimeInMillis(intMillis);
+            java.util.Calendar c3 = java.util.Calendar.getInstance();
+            c3.setTimeInMillis(iniMillis);
+            payload.duracaoMissao = c1;
+            payload.intervaloAtualizacao = c2;
+            payload.inicioMissao = c3;
+
+            // prioridade
+            payload.prioridade = dis.readInt();
+
             System.out.println("[ClienteUDP] Missão reconstruída: " + payload);
-            
+
             // Atualizar máquina de estados
             if (maquina != null) {
                 maquina.receberMissao(payload);
             }
-            
+
             reportarMissao(payload);
-            
+
             return true;
-            
+
         } catch (Exception e) {
             System.err.println("[ClienteUDP] Erro ao reconstruir missão: " + e.getMessage());
             e.printStackTrace();
