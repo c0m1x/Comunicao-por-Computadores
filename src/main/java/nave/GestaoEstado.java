@@ -2,7 +2,14 @@ package nave;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
+
+import lib.mensagens.payloads.PayloadProgresso;
+import lib.mensagens.payloads.PayloadTelemetria;
 
 /**
  * Gestão de estado central (armazenamento de rovers e missões).
@@ -13,10 +20,18 @@ public class GestaoEstado {
 
     private ConcurrentHashMap<Integer, Rover> rovers;
     private ConcurrentHashMap<Integer, Missao> missoes;
+    private ConcurrentHashMap<Integer, PayloadProgresso> progressoMissoes;
+    private ConcurrentHashMap<Integer, PayloadTelemetria> ultimaTelemetria;
+    private final ConcurrentLinkedQueue<PayloadTelemetria> historicoTelemetria;
+    private ConcurrentSkipListSet<Integer> missoesConcluidas;
 
     public GestaoEstado(){
         this.rovers = new ConcurrentHashMap <>();
         this.missoes = new ConcurrentHashMap<>();
+        this.progressoMissoes = new ConcurrentHashMap<>();
+        this.ultimaTelemetria = new ConcurrentHashMap<>();
+        this.historicoTelemetria = new ConcurrentLinkedQueue<>();
+        this.missoesConcluidas = new ConcurrentSkipListSet<>();
 
         // NOTA: Missões para testar, depois tirar daqui
 
@@ -32,9 +47,7 @@ public class GestaoEstado {
 
 /** Adiciona ou substitui um Rover com o id fornecido. */
     public void adicionarRover(int id, Rover ctx) {
-        if (ctx == null) throw new NullPointerException("Rover não pode ser null");
         rovers.put(id, ctx);
-        System.out.println("Rover adicionado");
     }
 
     /** Remove e devolve o Rover associado ao id, ou null se não existir. */
@@ -57,11 +70,30 @@ public class GestaoEstado {
         return rovers;
     }
 
+    public boolean existeRover(int id) {
+        return rovers.containsKey(id);
+    }
+
+    /** Insere o rover apenas se não existir já um com o mesmo id. Retorna true se inseriu. */
+    public boolean inserirRoverSeAusente(int id, Rover ctx) {
+        if (ctx == null) throw new NullPointerException("Rover não pode ser null");
+        return rovers.putIfAbsent(id, ctx) == null;
+    }
+ 
+    public Rover obterRoverDisponivel() {
+        for (Rover r : rovers.values()) {
+            // TODO: verificar estado operacional antes
+            if (!r.temMissao) {
+                return r;
+            }
+        }
+        return null;
+    }
+
     // ----- Missões -----
 
     /** Adiciona ou substitui uma missão com o id fornecido. */
     public void adicionarMissao(int id, Missao missao) {
-        if (missao == null) throw new NullPointerException("missao não pode ser null");
         missoes.put(id, missao);
     }
 
@@ -85,18 +117,16 @@ public class GestaoEstado {
         return missoes;
     }
 
-    // ----- Operações atómicas utilitárias -----
-
-    /** Insere a missão apenas se não existir já uma com o mesmo id. Retorna true se inseriu. */
-    public boolean inserirMissaoSeAusente(int id, Missao missao) {
-        if (missao == null) throw new NullPointerException("missao não pode ser null");
-        return missoes.putIfAbsent(id, missao) == null;
+    public void marcarMissaoComoConcluida(int idMissao) {
+        Missao m = missoes.get(idMissao);
+        if (m != null) {
+            m.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
+            missoesConcluidas.add(idMissao);
+        }
     }
 
-    /** Insere o rover apenas se não existir já um com o mesmo id. Retorna true se inseriu. */
-    public boolean inserirRoverSeAusente(int id, Rover ctx) {
-        if (ctx == null) throw new NullPointerException("Rover não pode ser null");
-        return rovers.putIfAbsent(id, ctx) == null;
+    public Set<Integer> listarMissoesConcluidas() {
+        return missoesConcluidas;
     }
 
     /** Devolve uma missão que ainda não tenha sido atribuida. */
@@ -109,13 +139,54 @@ public class GestaoEstado {
         return null;
     }
 
-    public Rover obterRoverDisponivel() {
-        for (Rover r : rovers.values()) {
-            // TODO: verificar estado operacional antes
-            if (!r.temMissao) {
-                return r;
-            }
-        }
-        return null;
+    /** Insere a missão apenas se não existir já uma com o mesmo id. Retorna true se inseriu. */
+    public boolean inserirMissaoSeAusente(int id, Missao missao) {
+        if (missao == null) throw new NullPointerException("missao não pode ser null");
+        return missoes.putIfAbsent(id, missao) == null;
     }
+
+    // ------ Telemetria -------
+
+    public void atualizarTelemetria(int idRover, PayloadTelemetria p) {
+        ultimaTelemetria.put(idRover, p);
+
+        Rover r = rovers.get(idRover);
+        if (r != null) {
+            r.posicaoX = p.posicaoX;
+            r.posicaoY = p.posicaoY;
+            r.estadoOperacional = p.estadoOperacional;
+            r.bateria = p.bateria;
+            r.velocidade = p.velocidade;
+        }
+
+        historicoTelemetria.add(p);
+    }
+
+    public PayloadTelemetria obterUltimaTelemetria(int idRover) {
+        return ultimaTelemetria.get(idRover);
+    }
+
+    public Queue<PayloadTelemetria> obterHistoricoTelemetria() {
+        return historicoTelemetria;
+    }
+
+    // ----- Progresso -----
+
+    public PayloadProgresso obterProgresso(int idMissao) {
+        return progressoMissoes.get(idMissao);
+    }
+
+    public Map<Integer, PayloadProgresso> listarProgressoMissoes() {
+        return progressoMissoes;
+    }
+    
+    public void atualizarProgresso(PayloadProgresso p) {
+        progressoMissoes.put(p.idMissao, p);
+
+        for (Rover r : rovers.values()) {
+            if (r.idMissaoAtual == p.idMissao)
+                r.progressoMissao = p.progressoPercentagem;
+        }
+    }
+
 }
