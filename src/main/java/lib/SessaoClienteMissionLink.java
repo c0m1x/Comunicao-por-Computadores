@@ -3,6 +3,7 @@ package lib;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
     /**
      * Classe que representa uma sessão completa de missão no cliente.
@@ -26,5 +27,18 @@ import java.util.Map;
         public long duracaoMissao; // em ms
         public long inicioMissao; // timestamp de início
         public boolean aguardandoAck = false;
+
+
+        //adicionar o resto dos campos necessários
+        public SessaoClienteMissionLink(int idMissao, InetAddress enderecoNave, int portaNave) {
+            this.idMissao = idMissao;
+            this.enderecoNave = enderecoNave;
+            this.portaNave = portaNave;
+            //this.duracaoMissao = duracaoMissao;
+            //this.intervaloAtualizacao = intervaloAtualizacao;
+            this.seqAtual = 0;
+            this.totalFragmentos = 0;
+            this.fragmentosRecebidos = new HashMap<>();
+        }
 
     }

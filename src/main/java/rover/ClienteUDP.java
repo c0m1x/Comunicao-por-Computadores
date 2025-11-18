@@ -126,12 +126,7 @@ public class ClienteUDP implements Runnable {
         
         if (disponivel){
             // Criar nova sessão de missão
-            sessaoAtual = new SessaoClienteMissionLink();
-            sessaoAtual.idMissao = msg.header.idMissao;
-            sessaoAtual.enderecoNave = endereco;
-            sessaoAtual.portaNave = porta;
-            sessaoAtual.totalFragmentos = 0; // Será atualizado ao receber primeiro MISSION
-            sessaoAtual.fragmentosRecebidos = new HashMap<>();
+            sessaoAtual = new SessaoClienteMissionLink(msg.header.idMissao, endereco, porta);
             
             System.out.println("[ClienteUDP] Rover disponível - Aguardando fragmentos MISSION");
         } else {

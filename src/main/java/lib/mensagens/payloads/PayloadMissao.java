@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import lib.mensagens.payloads.PayloadUDP;
 import java.util.function.Function;
 
 /**
