@@ -1,93 +1,123 @@
 package api;
 
-import nave.Rover;
-import nave.Missao;
-import lib.mensagens.payloads.PayloadTelemetria;
-import lib.mensagens.payloads.PayloadProgresso;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 
-import org.springframework.web.bind.annotation.*;
+import nave.GestaoEstado;
 
-import java.util.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 
 /**
- * API REST de Observação da Nave-Mãe.
- *
- * Esta API não altera estado nenhum — apenas lê o estado atual das estruturas internas.
+ * API REST HTTP para observação da Nave-Mãe.
+ * Expõe o estado dos rovers, missões e telemetria. 
  */
-@RestController
-@RequestMapping("/api/observacao")
 public class ObservacaoApi {
 
+    private final GestaoEstado estado;
+    private HttpServer server;
 
-
-    public ObservacaoApi(Map<Integer, Rover> rovers, Map<Integer, Missao> missoes, List<PayloadTelemetria> historicoTelemetria, Map<Integer, PayloadProgresso> progressoMissoes, Set<Integer> missoesConcluidas) {
-        this.rovers = rovers;
-        this.missoes = missoes;
-        this.historicoTelemetria = historicoTelemetria;
-        this.progressoMissoes = progressoMissoes;
-        this.missoesConcluidas = missoesConcluidas;
+    public ObservacaoApi(GestaoEstado estado) {
+        this.estado = estado;
     }
 
-    /** Lista todos os rovers com todos os atributos da classe Rover. */
-    @GetMapping("/rovers")
-    public Collection<Rover> listarRovers() {
-        return rovers.values();
+    // ----- UTILITÁRIOS -------
+
+    private void responderJson(HttpExchange ex, String json) throws IOException {
+        if (json == null) json = "{}";
+
+        ex.getResponseHeaders().add("Content-Type", "application/json");
+        ex.sendResponseHeaders(200, json.getBytes().length);
+
+        OutputStream os = ex.getResponseBody();
+        os.write(json.getBytes());
+        os.close();
     }
 
-    /** Devolve um rover específico. */
-    @GetMapping("/rovers/{id}")
-    public Rover obterRover(@PathVariable int id) {
-        return rovers.get(id);
+    private void responder404(HttpExchange ex) throws IOException {
+        String msg = "{\"erro\":\"endpoint desconhecido\"}";
+        ex.sendResponseHeaders(404, msg.length());
+        ex.getResponseBody().write(msg.getBytes());
+        ex.getResponseBody().close();
     }
 
-    /** Lista todas as missões com todos os campos, incluindo estado. */
-    @GetMapping("/missoes")
-    public Collection<Missao> listarMissoes() {
-        return missoes.values();
+
+    public void iniciar(int porto) throws IOException {
+        server = HttpServer.create(new InetSocketAddress(porto), 0);
+
+        server.createContext("/rovers", this::handleRovers);
+        server.createContext("/missoes", this::handleMissoes);
+        server.createContext("/telemetria", this::handleTelemetria);
+
+        System.out.println("API de Observação ativa em http://localhost:" + porto);
+        server.start();
     }
 
-    /** Detalhes completos de uma missão. */
-    @GetMapping("/missoes/{id}")
-    public Missao obterMissao(@PathVariable int id) {
-        return missoes.get(id);
+    private void handleRovers(HttpExchange ex) throws IOException {
+        String path = ex.getRequestURI().getPath();
+
+        // /rovers
+        if (path.equals("/rovers")) {
+            responderJson(ex, CriarJson.rovers(estado.listarRovers()));
+            return;
+        }
+
+        // /rovers/{id}
+        if (path.matches("/rovers/\\d+")) {
+            int id = Integer.parseInt(path.replace("/rovers/", ""));
+            responderJson(ex, CriarJson.rover(estado.obterRover(id)));
+            return;
+        }
+
+        responder404(ex);
     }
 
-    /** Progresso de uma missão individual. */
-    @GetMapping("/missoes/{id}/progresso")
-    public PayloadProgresso obterProgresso(@PathVariable int id) {
-        return progressoMissoes.get(id);
+    private void handleMissoes(HttpExchange ex) throws IOException {
+        String path = ex.getRequestURI().getPath();
+
+        // /missoes
+        if (path.equals("/missoes")) {
+            responderJson(ex, CriarJson.missoes(estado.listarMissoes()));
+            return;
+        }
+
+        // /missoes/{id}
+        if (path.matches("/missoes/\\d+")) {
+            int id = Integer.parseInt(path.replace("/missoes/", ""));
+            responderJson(ex, CriarJson.missao(estado.obterMissao(id)));
+            return;
+        }
+
+        // /missoes/progresso/{id}
+        if (path.matches("/missoes/progresso/\\d+")) {
+            int id = Integer.parseInt(path.replace("/missoes/progresso/", ""));
+            responderJson(ex, CriarJson.progresso(estado.obterProgresso(id)));
+            return;
+        }
+
+        responder404(ex);
     }
 
-    /** Lista todo o progresso conhecido associado a todas as missoes. */
-    @GetMapping("/missoes/progresso")
-    public Collection<PayloadProgresso> listarProgresso() {
-        return progressoMissoes.values();
+    private void handleTelemetria(HttpExchange ex) throws IOException {
+        String path = ex.getRequestURI().getPath();
+
+        // /telemetria/historico
+        if (path.equals("/telemetria/historico")) {
+            responderJson(ex, CriarJson.historicoTelemetria(estado.obterHistoricoTelemetria()));
+            return;
+        }
+
+        // /telemetria/{idRover}
+        if (path.matches("/telemetria/\\d+")) {
+            int id = Integer.parseInt(path.replace("/telemetria/", ""));
+            responderJson(ex, CriarJson.telemetria(estado.obterUltimaTelemetria(id)));
+            return;
+        }
+
+        responder404(ex);
     }
 
-    @GetMapping("/missoes/concluidas")
-    public Set<Integer> listarConcluidas() {
-        return missoesConcluidas;
-    }
-
-    /** Devolve todo o histórico de telemetria recebido. */
-    @GetMapping("/telemetria")
-    public List<PayloadTelemetria> listarTelemetria() {
-        return historicoTelemetria;
-    }
-
-    /** Últimas N telemetrias (por default as últimas 10). */
-    @GetMapping("/telemetria/latest")
-    public List<PayloadTelemetria> ultimasTelemetrias(
-            @RequestParam(defaultValue = "10") int n) {
-
-        if (historicoTelemetria.size() <= n)
-            return historicoTelemetria;
-
-        return historicoTelemetria.subList(
-                historicoTelemetria.size() - n,
-                historicoTelemetria.size()
-        );
-    }
 
     //todo: telemetria por rover
 }
