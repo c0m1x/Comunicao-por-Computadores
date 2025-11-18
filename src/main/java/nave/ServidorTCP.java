@@ -12,6 +12,7 @@ import lib.Rover.EstadoRover;
 /**
  * Servidor TCP da Nave-Mãe (TelemetryLink).
  * Recebe telemetria contínua dos rovers via TCP.
+ * faz: gestao de sockets, threads, rececao e parsing de mensagens, callback, atualização de estado do river e missao e gestao de reconexoes
  */
 public class ServidorTCP implements Runnable {
 
