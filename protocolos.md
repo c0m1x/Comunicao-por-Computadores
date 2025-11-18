@@ -53,12 +53,13 @@ a Nave-Mãe retransmite apenas esses pacotes.)
 
 ## Diagrama de sequência
 
+
 ```mermaid
 sequenceDiagram
     participant R as Rover
     participant NM_UDP as Nave-Mãe 
 
-    Note over R,NM_UDP: Atribuição de missão
+    Note over R,NM_UDP: Fase 1: Atribuição de Missão
 
     NM_UDP->>R: HELLO (seq=1, mission_id="M-001")
     R-->>NM_UDP: RESPONSE (seq=1, suc=true)
@@ -76,7 +77,40 @@ sequenceDiagram
   
         else Todos os fragmentos recebidos
             R-->>NM_UDP: ACK (seq=N, missing=[])
-            Note over NM_UDP,R: Transmissão concluída com sucesso
+            Note over NM_UDP,R: Missão atribuída com sucesso
         end
     end
+
+    Note over R,NM_UDP: Fase 2: Execução e Reportagem de Progresso
+
+    loop Enquanto estiver em missão
+        Note over NM_UDP,R: Rover envia progresso nos intervalos definidos
+        Note over NM_UDP,R: A cada iteração o seq incrementa
+        
+        R->>NM_UDP: PROGRESS (seq=M, mission_id="M-001", payload[])
+
+        Note over R: Rover espera receber ACK da Nave-Mãe
+
+        alt Timeout sem ACK
+        Note over R, NM_UDP: Retransmissão de mensagem
+            R->>NM_UDP: PROGRESS (seq=M, mission_id="M-001", payload[])
+  
+        else ACK recebido
+            NM_UDP-->>R: ACK (seq=M, suc=true)
+        end
+    end
+
+    Note over R,NM_UDP: Fase 3: Conclusão da Missão
+    
+    R->>NM_UDP: COMPLETED (seq=M+1, mission_id="M-001", suc=true)
+    Note over R: Rover espera receber ACK da Nave-Mãe
+    alt Timeout sem ACK
+    Note over R, NM_UDP: Rover retransmite mensagem
+    R->>NM_UDP: COMPLETED (seq=M+1, mission_id="M-001", suc=true)
+  
+        else ACK recebido
+            NM_UDP-->>R: ACK (seq=M, suc=true)
+        end
+
+    Note over NM_UDP,R: Sessão concluída com sucesso
 ```
