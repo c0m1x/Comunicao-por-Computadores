@@ -20,8 +20,11 @@ import java.util.Set;
         public boolean responseRecebido = false;
         public boolean responseSucesso = false;
         public boolean ackRecebido = false;
+        public boolean recebendoProgresso = false;
+        public int ultimoSeqProgress = 0;
+        public boolean completedRecebido = false;
+        public boolean completedSucesso = false;
 
-        //adicionar aqui o resto das variaveis que precisamos para controlar a sessao (progresso, completed)
         
         // Fragmentação
         public int totalFragmentos = 0;

@@ -74,6 +74,20 @@ public class GestaoEstado {
         return missoes.remove(id);
     }
 
+
+    /** Atualiza progresso de missão e garante estado EM_ANDAMENTO. */
+    public void atualizarProgressoMissao(int idRover, int idMissao, float progressoPercent) {
+        Rover rover = obterRover(idRover);
+        Missao missao = obterMissao(idMissao);
+        if (rover == null || missao == null) return;
+
+        //nota: ver onde metemos as informações do progresso, talvez na propria missão
+        rover.progressoMissao = progressoPercent;
+
+        if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
+            missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
+        }
+    }
     /** Devolve a missão associada ao id, ou null se não existir. */
     public Missao obterMissao(int id) {
         return missoes.get(id);
@@ -120,5 +134,37 @@ public class GestaoEstado {
             }
         }
         return null;
+    }
+
+    /** Marca uma missão como EM_ANDAMENTO quando é atribuída a um rover. */
+    public void atribuirMissaoARover(int idRover, int idMissao) {
+        Rover rover = obterRover(idRover);
+        Missao missao = obterMissao(idMissao);
+        if (rover == null || missao == null) return;
+
+        // Atualizar estado da missão
+        missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
+
+        // Atualizar estado do rover
+        rover.temMissao = true;
+        rover.idMissaoAtual = idMissao;
+        rover.estadoRover = Rover.EstadoRover.ESTADO_EM_MISSAO;
+    }
+
+    /** Conclui ou cancela uma missão, atualizando estado do rover e da missão. */
+    public void concluirMissao(int idRover, int idMissao, boolean sucesso) {
+        Rover rover = obterRover(idRover);
+        Missao missao = obterMissao(idMissao);
+        if (rover == null || missao == null) return;
+
+        if (sucesso) {
+            missao.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
+        } else {
+            missao.estadoMissao = Missao.EstadoMissao.CANCELADA;
+        }
+
+        rover.temMissao = false;
+        rover.idMissaoAtual = -1;
+        rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
     }
 }
