@@ -1,12 +1,14 @@
 package rover;
 
+import lib.*;
 import lib.mensagens.*;
 import lib.mensagens.payloads.*;
-import lib.TipoMensagem;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import lib.Rover.EstadoRover;
+
 /**
  * Cliente UDP do Rover (MissionLink).
  * Recebe missões da Nave-Mãe seguindo o protocolo fiável.
@@ -29,7 +31,7 @@ public class ClienteUDP implements Runnable {
     private boolean running = true;
     private MaquinaEstados maquina;
     
-    // Controle da sessão completa da missão (Fase 1 + Fase 2)
+    // Controle da sessão completa da missão 
     private SessaoClienteMissionLink sessaoAtual = null;
     private Thread threadProgresso = null;
     
@@ -124,12 +126,7 @@ public class ClienteUDP implements Runnable {
         
         if (disponivel){
             // Criar nova sessão de missão
-            sessaoAtual = new SessaoClienteMissionLink();
-            sessaoAtual.idMissao = msg.header.idMissao;
-            sessaoAtual.enderecoNave = endereco;
-            sessaoAtual.portaNave = porta;
-            sessaoAtual.totalFragmentos = 0; // Será atualizado ao receber primeiro MISSION
-            sessaoAtual.fragmentosRecebidos = new HashMap<>();
+            sessaoAtual = new SessaoClienteMissionLink(msg.header.idMissao, endereco, porta);
             
             System.out.println("[ClienteUDP] Rover disponível - Aguardando fragmentos MISSION");
         } else {
@@ -153,11 +150,11 @@ public class ClienteUDP implements Runnable {
         
         // Atualizar total de fragmentos se necessário (primeira vez que recebemos um MISSION)
         if (sessaoAtual.totalFragmentos == 0 && msg.header.totalFragm > 1) {
-            sessaoAtual.totalFragmentos = msg.header.totalFragm - 1; // -1 porque HELLO (seq=1) não conta
+            sessaoAtual.totalFragmentos = msg.header.totalFragm;
             System.out.println("[ClienteUDP] Total de fragmentos atualizado: " + sessaoAtual.totalFragmentos);
         }
         
-        System.out.println("[ClienteUDP] Fragmento recebido: seq=" + seq + "/" + msg.header.totalFragm);
+        System.out.println("[ClienteUDP] Fragmento recebido: seq=" + seq + "/" + (msg.header.totalFragm + 1));
         
         // Extrair dados do fragmento
         byte[] dados = null;
@@ -185,21 +182,21 @@ public class ClienteUDP implements Runnable {
              (fragmentosRecebidos > 0 && fragmentosRecebidos % 5 == 0))) {
             
             // Identificar fragmentos perdidos
-            List<Integer> perdidos = identificarFragmentosPerdidos();
+            sessaoAtual.fragmentosPerdidos = identificarFragmentosPerdidos();
             
-            if (perdidos.isEmpty()) {
+            if (sessaoAtual.fragmentosPerdidos.isEmpty()) {
                 // Todos recebidos - reconstruir missão
                 if (reconstruirMissao()) {
                     System.out.println("[ClienteUDP] Missão recebida com sucesso!");
-                    enviarAck(msg.header.idMissao, msg.header.seq, perdidos, endereco, porta);
+                    enviarAck();
                     sessaoAtual = null; // Finalizar sessão
                 } else {
                     System.err.println("[ClienteUDP] Erro ao reconstruir missão");
                 }
             } else {
                 // Enviar ACK com fragmentos perdidos
-                System.out.println("[ClienteUDP] Solicitando retransmissão de " + perdidos.size() + " fragmentos");
-                enviarAck(msg.header.idMissao, msg.header.seq, perdidos, endereco, porta);
+                System.out.println("[ClienteUDP] Solicitando retransmissão de " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos");
+                enviarAck();
             }
         }
     }
@@ -221,13 +218,11 @@ public class ClienteUDP implements Runnable {
     private List<Integer> identificarFragmentosPerdidos() {
         List<Integer> perdidos = new ArrayList<>();
         
-        // Fragmentos começam em seq=2 (seq=1 é HELLO)
         for (int i = 2; i <= sessaoAtual.totalFragmentos + 1; i++) {
             if (!sessaoAtual.fragmentosRecebidos.containsKey(i)) {
                 perdidos.add(i);
             }
         }
-        
         return perdidos;
     }
     
@@ -338,27 +333,27 @@ public class ClienteUDP implements Runnable {
     /**
      * Envia mensagem ACK.
      */
-    private void enviarAck(int idMissao, int seq, List<Integer> perdidos, InetAddress endereco, int porta) {
+    private void enviarAck() {
         MensagemUDP msg = new MensagemUDP();
         msg.header.tipo = TipoMensagem.MSG_ACK;
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = idMissao;
+        msg.header.idMissao = sessaoAtual.idMissao;
         //msg.header.timestamp = new Time(System.currentTimeMillis());
-        msg.header.seq = seq;
+        msg.header.seq = sessaoAtual.seqAtual;
         msg.header.totalFragm = 1;
-        msg.header.flagSucesso = perdidos.isEmpty();
+        msg.header.flagSucesso = sessaoAtual.fragmentosPerdidos.isEmpty();
         
         PayloadAck ack = new PayloadAck();
-        ack.missingCount = perdidos.size();
-        ack.missing = new int[perdidos.size()];
-        for (int i = 0; i < perdidos.size(); i++) {
-            ack.missing[i] = perdidos.get(i);
+        ack.missingCount = sessaoAtual.fragmentosPerdidos.size();
+        ack.missing = new int[sessaoAtual.fragmentosPerdidos.size()];
+        for (int i = 0; i < sessaoAtual.fragmentosPerdidos.size(); i++) {
+            ack.missing[i] = sessaoAtual.fragmentosPerdidos.get(i);
         }
         msg.payload = ack;
         
-        enviarMensagem(msg, endereco, porta);
-        System.out.println("[ClienteUDP] ACK enviado (faltam " + perdidos.size() + " fragmentos)");
+        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
+        System.out.println("[ClienteUDP] ACK enviado (faltam " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos)");
     }
     
     /**
@@ -569,27 +564,4 @@ public class ClienteUDP implements Runnable {
         }
     }
     
-    /**
-     * Classe que representa uma sessão completa de missão no cliente.
-     * Gerencia tanto a recepção quanto a reportagem do progresso da missão.
-     */
-    private static class SessaoClienteMissionLink {
-        // Comum a todas as fases
-        int idMissao;
-        InetAddress enderecoNave;
-        int portaNave;
-        
-        // Recepção de missão
-        int totalFragmentos;
-        Map<Integer, byte[]> fragmentosRecebidos;
-        
-        // Reportagem do progresso da missão
-        boolean emExecucao = false;
-        int seqAtual;
-        long intervaloAtualizacao; // em ms
-        long duracaoMissao; // em ms
-        long inicioMissao; // timestamp de início
-        boolean aguardandoAck = false;
-    }
 }
-
