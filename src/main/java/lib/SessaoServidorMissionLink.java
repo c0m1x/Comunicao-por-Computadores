@@ -1,5 +1,6 @@
 package lib;
 
+import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -7,6 +8,11 @@ import java.util.Set;
      * Classe que representa uma sessão de envio de missão no servidor.
      */
     public class SessaoServidorMissionLink {
+
+        // Endpoint do rover 
+        public InetAddress enderecoRover;
+        public int portaRover;
+
         public Rover rover;
         public Missao missao;
         
@@ -25,5 +31,11 @@ import java.util.Set;
         public SessaoServidorMissionLink(Rover rover, Missao missao) {
             this.rover = rover;
             this.missao = missao;
+            try {
+                this.enderecoRover = InetAddress.getByName(rover.enderecoHost);
+            } catch (Exception e) {
+                this.enderecoRover = null;
+            }
+            this.portaRover = rover.portaUdp != null ? rover.portaUdp : -1;
         }
     }

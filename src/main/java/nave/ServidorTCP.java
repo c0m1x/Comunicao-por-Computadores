@@ -15,7 +15,7 @@ import lib.Rover.EstadoRover;
  */
 public class ServidorTCP implements Runnable {
 
-    private static final int PORTA_TCP = 9000;
+    private static final int PORTA_TCP = 5001;
     
     private ServerSocket serverSocket;
     private GestaoEstado estado;
@@ -112,12 +112,22 @@ public class ServidorTCP implements Runnable {
         Rover rover = estado.obterRover(idRover);
         if (rover == null) {
             // Criar novo rover se não existir (posição inicial padrão)
-            rover = new Rover(idRover, 0.0f, 0.0f);
+            rover = new Rover(idRover, 0.0f, 0.0f, extrairHost(endereco));
             estado.adicionarRover(idRover, rover);
             System.out.println("[ServidorTCP] Rover " + idRover + " registrado no sistema (conexão: " + endereco + ")");
         } else {
             System.out.println("[ServidorTCP] Rover " + idRover + " reconectado (conexão: " + endereco + ")");
         }
+    }
+
+    // Extrai apenas o host/IP de uma string no formato "/ip:porta"
+    private String extrairHost(String remote) {
+        if (remote == null) return null;
+        String s = remote.trim();
+        if (s.startsWith("/")) s = s.substring(1);
+        int idx = s.indexOf(':');
+        if (idx > 0) s = s.substring(0, idx);
+        return s;
     }
     
     private void marcarRoverDesconectado(int idRover) {
