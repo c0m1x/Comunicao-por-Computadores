@@ -433,7 +433,6 @@ public class ServidorUDP implements Runnable {
                     break;
                     
                 case MSG_PROGRESS:
-
                 //TODO: tratar como os outros, fazer metodo separado para aguardar progress e aqui so atualizar a sessao
                     processarProgress(msg, idRover, pacote);
                     break;
@@ -484,32 +483,19 @@ public class ServidorUDP implements Runnable {
         System.out.println("[ServidorUDP] COMPLETED recebido do rover " + idRover + 
                          " (seq=" + msg.header.seq + ", missão=" + msg.header.idMissao + 
                          ", sucesso=" + msg.header.flagSucesso + ")");
+        // Atualizar estado via GestaoEstado
+        estado.concluirMissao(idRover, msg.header.idMissao, msg.header.flagSucesso);
         
-        // Atualizar estado da missão e rover
-        Rover rover = estado.obterRover(idRover);
-        Missao missao = estado.obterMissao(msg.header.idMissao);
-        
-        if (rover != null && missao != null) {
-            if (msg.header.flagSucesso) {
-                missao.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
-                System.out.println("[ServidorUDP] Missão " + msg.header.idMissao + " marcada como CONCLUÍDA");
-            } else {
-                missao.estadoMissao = Missao.EstadoMissao.CANCELADA; // Usar CANCELADA como estado de falha
-                System.out.println("[ServidorUDP] Missão " + msg.header.idMissao + " marcada como CANCELADA (falha)");
-            }
-            
-            rover.temMissao = false;
-            rover.idMissaoAtual = -1;
-            rover.estadoRover = EstadoRover.ESTADO_DISPONIVEL;
-            System.out.println("[ServidorUDP] Rover " + idRover + " agora está disponível");
+        // Marcar na sessão
+        SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
+        if (sessao != null) {
+            sessao.completedRecebido = true;
+            sessao.completedSucesso = msg.header.flagSucesso;
         }
         
         // Enviar ACK
         //TODO: VER se deixamos aqui ou se metemos no executar sessao missao
-        SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
-        if (sessao != null) {
-            enviarAckParaRover(msg, sessao);
-        }
+        if (sessao != null) enviarAckParaRover(msg, sessao);
     }
     
     /**

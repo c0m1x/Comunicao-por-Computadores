@@ -121,4 +121,21 @@ public class GestaoEstado {
         }
         return null;
     }
+
+    /** Conclui ou cancela uma missão, atualizando estado do rover e da missão. */
+    public void concluirMissao(int idRover, int idMissao, boolean sucesso) {
+        Rover rover = obterRover(idRover);
+        Missao missao = obterMissao(idMissao);
+        if (rover == null || missao == null) return;
+
+        if (sucesso) {
+            missao.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
+        } else {
+            missao.estadoMissao = Missao.EstadoMissao.CANCELADA;
+        }
+
+        rover.temMissao = false;
+        rover.idMissaoAtual = -1;
+        rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
+    }
 }
