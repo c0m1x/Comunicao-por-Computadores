@@ -1,4 +1,4 @@
-package nave;
+package lib;
 
 import java.io.Serializable;
 import java.util.Calendar;

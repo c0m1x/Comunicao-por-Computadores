@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import lib.Missao;
+import lib.Rover;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -35,7 +38,8 @@ public class GestaoEstado {
 
         // NOTA: Missões para testar, depois tirar daqui
 
-        Missao m1 = new Missao(1, "Explorar cratera A", Missao.EstadoMissao.PENDENTE);
+        // uma missao que ocupe mais de 512 bytes para testar fragmentação
+        Missao m1 = new Missao(1, "Explorar cratera A " + "x".repeat(500), Missao.EstadoMissao.PENDENTE);
         Missao m2 = new Missao(2, "Coletar amostras do solo", Missao.EstadoMissao.PENDENTE);
         Missao m3 = new Missao(3, "Analisar atmosfera", Missao.EstadoMissao.PENDENTE);
 
@@ -184,9 +188,16 @@ public class GestaoEstado {
         progressoMissoes.put(p.idMissao, p);
 
         for (Rover r : rovers.values()) {
+            if (!r.temMissao && r.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL) {
+                return r;
+            }
+        }
+        return null;
+    }
             if (r.idMissaoAtual == p.idMissao)
                 r.progressoMissao = p.progressoPercentagem;
         }
     }
 
 }
+

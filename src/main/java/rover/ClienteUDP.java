@@ -6,7 +6,7 @@ import lib.TipoMensagem;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-
+import lib.Rover.EstadoRover;
 /**
  * Cliente UDP do Rover (MissionLink).
  * Recebe missões da Nave-Mãe seguindo o protocolo fiável.
@@ -120,10 +120,9 @@ public class ClienteUDP implements Runnable {
     private void processarHello(MensagemUDP msg, InetAddress endereco, int porta) {
         System.out.println("[ClienteUDP] HELLO recebido - Missão ID: " + msg.header.idMissao);
         
-        // Verificar se rover está disponível para receber missão
-        boolean disponivel = maquina != null; //TODO:  verificar estado real do rover
+        boolean disponivel = (maquina != null && maquina.getEstadoAtual() == EstadoRover.ESTADO_DISPONIVEL);
         
-        if (disponivel) {
+        if (disponivel){
             // Criar nova sessão de missão
             sessaoAtual = new SessaoClienteMissionLink();
             sessaoAtual.idMissao = msg.header.idMissao;
@@ -240,32 +239,76 @@ public class ClienteUDP implements Runnable {
             // Ordenar fragmentos por sequência
             List<Integer> seqs = new ArrayList<>(sessaoAtual.fragmentosRecebidos.keySet());
             Collections.sort(seqs);
-            
+
+            //print dos dados recebidos para debug
+            System.out.println("[ClienteUDP] Dados dos fragmentos recebidos:");
+            for (int seq : seqs) {
+                byte[] fragmento = sessaoAtual.fragmentosRecebidos.get(seq);
+                System.out.println("  Seq " + seq + ": " + Arrays.toString(fragmento));
+            }
+
             // Concatenar dados
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             for (int seq : seqs) {
                 byte[] fragmento = sessaoAtual.fragmentosRecebidos.get(seq);
                 baos.write(fragmento);
             }
-            
-            // Deserializar PayloadMissao
+
             byte[] dadosCompletos = baos.toByteArray();
-            ByteArrayInputStream bais = new ByteArrayInputStream(dadosCompletos);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            PayloadMissao payload = (PayloadMissao) ois.readObject();
-            
+
+            // Interpretar byte a byte (formato académico, compatível com servidor)
+            java.io.DataInputStream dis = new java.io.DataInputStream(new java.io.ByteArrayInputStream(dadosCompletos));
+
+            PayloadMissao payload = new PayloadMissao();
+
+            // int idMissao
+            payload.idMissao = dis.readInt();
+
+            // float x1,y1,x2,y2
+            payload.x1 = dis.readFloat();
+            payload.y1 = dis.readFloat();
+            payload.x2 = dis.readFloat();
+            payload.y2 = dis.readFloat();
+
+            // String tarefa
+            int tarefaLen = dis.readInt();
+            if (tarefaLen > 0) {
+                byte[] tb = new byte[tarefaLen];
+                dis.readFully(tb);
+                payload.tarefa = new String(tb, java.nio.charset.StandardCharsets.UTF_8);
+            } else {
+                payload.tarefa = "";
+            }
+
+            // Calendars em millis
+            long durMillis = dis.readLong();
+            long intMillis = dis.readLong();
+            long iniMillis = dis.readLong();
+
+            java.util.Calendar c1 = java.util.Calendar.getInstance();
+            c1.setTimeInMillis(durMillis);
+            java.util.Calendar c2 = java.util.Calendar.getInstance();
+            c2.setTimeInMillis(intMillis);
+            java.util.Calendar c3 = java.util.Calendar.getInstance();
+            c3.setTimeInMillis(iniMillis);
+            payload.duracaoMissao = c1;
+            payload.intervaloAtualizacao = c2;
+            payload.inicioMissao = c3;
+
+            // prioridade
+            payload.prioridade = dis.readInt();
+
             System.out.println("[ClienteUDP] Missão reconstruída: " + payload);
-            
+
             // Atualizar máquina de estados
             if (maquina != null) {
                 maquina.receberMissao(payload);
             }
-            
-            // Iniciar Fase 2: Execução e Reportagem de Progresso
-            iniciarFase2Execucao(payload);
-            
+
+            reportarMissao(payload);
+
             return true;
-            
+
         } catch (Exception e) {
             System.err.println("[ClienteUDP] Erro ao reconstruir missão: " + e.getMessage());
             e.printStackTrace();
@@ -367,17 +410,17 @@ public class ClienteUDP implements Runnable {
     }
     
     /**
-     * Inicia a Fase 2: Execução da missão.
+     * Inicia a reportagem da missão
      */
-    private void iniciarFase2Execucao(PayloadMissao payload) {
-        // Atualizar sessão para Fase 2
+    private void reportarMissao(PayloadMissao payload) {
+        // Atualizar sessão 
         sessaoAtual.emExecucao = true;
-        sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS
+        sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS TODO: ajustar se necessário
         sessaoAtual.intervaloAtualizacao = payload.intervaloAtualizacao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
         sessaoAtual.duracaoMissao = payload.duracaoMissao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
         sessaoAtual.inicioMissao = System.currentTimeMillis();
         
-        // Limpar dados da Fase 1 (não mais necessários)
+        // Limpar dados (não mais necessários)
         sessaoAtual.fragmentosRecebidos = null;
         
         // Iniciar thread de envio de progresso
@@ -385,7 +428,7 @@ public class ClienteUDP implements Runnable {
         threadProgresso.setDaemon(true);
         threadProgresso.start();
         
-        System.out.println("[ClienteUDP] Iniciada Fase 2 - Execução da missão " + payload.idMissao);
+        System.out.println("[ClienteUDP] Iniciada a execução da missão " + payload.idMissao);
     }
     
     /**
@@ -400,7 +443,7 @@ public class ClienteUDP implements Runnable {
                 
                 // Calcular progresso
                 long tempoDecorrido = System.currentTimeMillis() - sessaoAtual.inicioMissao;
-                float progressoPerc = Math.min(100.0f, (tempoDecorrido * 100.0f) / sessaoAtual.duracaoMissao);
+                float progressoPerc = maquina.getContexto().getProgresso();
                 
                 // Enviar PROGRESS
                 if (progressoPerc < 100.0f) {
@@ -451,7 +494,7 @@ public class ClienteUDP implements Runnable {
             long inicio = System.currentTimeMillis();
             while (System.currentTimeMillis() - inicio < TIMEOUT_MS && sessaoAtual.aguardandoAck) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(100); //TODO: rever os timeouts
                 } catch (InterruptedException e) {
                     return;
                 }
@@ -514,7 +557,8 @@ public class ClienteUDP implements Runnable {
         
         // Atualizar máquina de estados
         if (maquina != null) {
-            // TODO: notificar máquina de estados que missão foi concluída
+            maquina.getContexto().transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
+            maquina.getContexto().eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
         }
     }
     
@@ -527,7 +571,7 @@ public class ClienteUDP implements Runnable {
     
     /**
      * Classe que representa uma sessão completa de missão no cliente.
-     * Gerencia tanto a Fase 1 (recepção) quanto a Fase 2 (execução).
+     * Gerencia tanto a recepção quanto a reportagem do progresso da missão.
      */
     private static class SessaoClienteMissionLink {
         // Comum a todas as fases
@@ -535,11 +579,11 @@ public class ClienteUDP implements Runnable {
         InetAddress enderecoNave;
         int portaNave;
         
-        // Fase 1: Recepção de missão
+        // Recepção de missão
         int totalFragmentos;
         Map<Integer, byte[]> fragmentosRecebidos;
         
-        // Fase 2: Execução de missão
+        // Reportagem do progresso da missão
         boolean emExecucao = false;
         int seqAtual;
         long intervaloAtualizacao; // em ms

@@ -3,7 +3,6 @@ package rover;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import rover.MaquinaEstados.ContextoRover;
 import lib.mensagens.*;
 import lib.TipoMensagem;
 
@@ -31,8 +30,8 @@ public class ClienteTCP implements Runnable {
                     if (ctx.deveEnviarTelemetria()) {
 
                         MensagemTCP msg = new MensagemTCP();
-                        // Preencher header
-                        msg.header.tipo = TipoMensagem.MSG_ACK;
+                        // Preencher header e payload
+                        msg.header.tipo = TipoMensagem.MSG_TELEMETRY; // Utilizar o tipo esperado pelo ServidorTCP
                         msg.header.idEmissor = ctx.idRover;
                         msg.header.idRecetor = ctx.idNave;
                         msg.header.idMissao = ctx.getMissaoId();
@@ -49,6 +48,7 @@ public class ClienteTCP implements Runnable {
             System.err.println("[TCP] Erro cliente telemetria: " + e.getMessage());
         } 
     }
+    //nota: onde fechar socket
 
     public void stop() { 
         running = false; 
