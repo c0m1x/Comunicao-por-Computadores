@@ -115,8 +115,7 @@ public class GestaoEstado {
 
     public Rover obterRoverDisponivel() {
         for (Rover r : rovers.values()) {
-            // TODO: verificar estado operacional antes
-            if (!r.temMissao) {
+            if (!r.temMissao && r.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL) {
                 return r;
             }
         }
