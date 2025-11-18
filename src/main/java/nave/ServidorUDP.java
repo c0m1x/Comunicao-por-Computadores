@@ -10,17 +10,19 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lib.mensagens.*;
-import lib.mensagens.payloads.*;
+import lib.Missao;
+import lib.Rover;
+import lib.SessaoServidorMissionLink;
 import lib.TipoMensagem;
-import lib.*;
-import lib.Rover.EstadoRover;
+import lib.mensagens.MensagemUDP;
+import lib.mensagens.payloads.PayloadAck;
+import lib.mensagens.payloads.PayloadMissao;
+import lib.mensagens.payloads.PayloadProgresso;
+import lib.mensagens.payloads.PayloadUDP;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -345,6 +347,10 @@ public class ServidorUDP implements Runnable {
                         // ACK completo! Sucesso!
                         System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
                              " enviada com sucesso para rover " + sessao.rover.idRover);
+                        
+                        // Atualizar estado da missão e do rover
+                        estado.atribuirMissaoARover(sessao.rover.idRover, sessao.missao.idMissao);
+                        
                         return true;
                     } else {
                         // Retransmitir fragmentos perdidos

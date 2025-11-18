@@ -136,6 +136,21 @@ public class GestaoEstado {
         return null;
     }
 
+    /** Marca uma missão como EM_ANDAMENTO quando é atribuída a um rover. */
+    public void atribuirMissaoARover(int idRover, int idMissao) {
+        Rover rover = obterRover(idRover);
+        Missao missao = obterMissao(idMissao);
+        if (rover == null || missao == null) return;
+
+        // Atualizar estado da missão
+        missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
+
+        // Atualizar estado do rover
+        rover.temMissao = true;
+        rover.idMissaoAtual = idMissao;
+        rover.estadoRover = Rover.EstadoRover.ESTADO_EM_MISSAO;
+    }
+
     /** Conclui ou cancela uma missão, atualizando estado do rover e da missão. */
     public void concluirMissao(int idRover, int idMissao, boolean sucesso) {
         Rover rover = obterRover(idRover);
