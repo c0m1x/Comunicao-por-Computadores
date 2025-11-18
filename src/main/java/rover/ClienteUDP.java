@@ -6,7 +6,7 @@ import lib.TipoMensagem;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-
+import lib.Rover.EstadoRover;
 /**
  * Cliente UDP do Rover (MissionLink).
  * Recebe missões da Nave-Mãe seguindo o protocolo fiável.
@@ -120,10 +120,9 @@ public class ClienteUDP implements Runnable {
     private void processarHello(MensagemUDP msg, InetAddress endereco, int porta) {
         System.out.println("[ClienteUDP] HELLO recebido - Missão ID: " + msg.header.idMissao);
         
-        // Verificar se rover está disponível para receber missão
-        boolean disponivel = maquina != null; //TODO:  verificar estado real do rover
+        boolean disponivel = (maquina != null && maquina.getEstadoAtual() == EstadoRover.ESTADO_DISPONIVEL);
         
-        if (disponivel) {
+        if (disponivel){
             // Criar nova sessão de missão
             sessaoAtual = new SessaoClienteMissionLink();
             sessaoAtual.idMissao = msg.header.idMissao;
@@ -558,7 +557,8 @@ public class ClienteUDP implements Runnable {
         
         // Atualizar máquina de estados
         if (maquina != null) {
-            // TODO: notificar máquina de estados que missão foi concluída
+            maquina.getContexto().transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
+            maquina.getContexto().eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
         }
     }
     
