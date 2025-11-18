@@ -1,6 +1,7 @@
 package lib;
 
 import java.net.InetAddress;
+import java.util.List;
 import java.util.Map;
 
     /**
@@ -16,6 +17,7 @@ import java.util.Map;
         // Recepção de missão
         public int totalFragmentos;
         public Map<Integer, byte[]> fragmentosRecebidos;
+        public List<Integer> fragmentosPerdidos;
         
         // Reportagem do progresso da missão
         public boolean emExecucao = false;
@@ -24,4 +26,5 @@ import java.util.Map;
         public long duracaoMissao; // em ms
         public long inicioMissao; // timestamp de início
         public boolean aguardandoAck = false;
+
     }
