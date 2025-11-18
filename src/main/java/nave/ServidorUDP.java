@@ -13,7 +13,6 @@ import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -226,6 +225,8 @@ public class ServidorUDP implements Runnable {
      * Aguarda RESPONSE do rover.
      */
     private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
+
+        //talvez adicionar aqui outro while para fazer retries no envio do hello se nao receber resposta com MAX_RETRIES
         long inicio = System.currentTimeMillis();
         while (System.currentTimeMillis() - inicio < TIMEOUT_MS) {
             if (sessao.responseRecebido) {
@@ -367,6 +368,7 @@ public class ServidorUDP implements Runnable {
                     return false;
                 }
             }
+            //aqui se calhar, depois de passar o timeout e antes de passar á proxima tentativa mandar uma mensagem a confirmar que o rover ainda está lá
             
             if (!sessao.ackRecebido) {
                 tentativas++;
@@ -419,6 +421,8 @@ public class ServidorUDP implements Runnable {
                     break;
                     
                 case MSG_PROGRESS:
+
+                //TODO: tratar como os outros, fazer metodo separado para aguardar progress e aqui so atualizar a sessao
                     processarProgress(msg, idRover, pacote);
                     break;
                     
