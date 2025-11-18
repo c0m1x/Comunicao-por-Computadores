@@ -187,15 +187,13 @@ public class ServidorUDP implements Runnable {
                 return;
             }
 
-            //TODO: continuar aqui o resto em vez de ser so no processar mensagens, para que nao finalize a sessao antes do COMPLETED
+            //Passo 5: Aguarda PROGRESS enquanto não receber COMPLETED
+            if(!aguardarProgress(sessao)) {
+                System.err.println("[ServidorUDP] Falha ao aguardar PROGRESS do rover " + sessao.rover.idRover);
+                finalizarSessao(sessao, false);
+                return;
+            }
 
-            //Passo 5: Aguarda PROGRESS (processado em processarMensagemRecebida)
-
-            //Passo 6: Aguarda COMPLETED (processado em processarMensagemRecebida)
-            
-            // Sucesso!
-            System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
-                             " enviada com sucesso para rover " + sessao.rover.idRover);
             finalizarSessao(sessao, true);
             
         } catch (Exception e) {
@@ -344,7 +342,9 @@ public class ServidorUDP implements Runnable {
             while (System.currentTimeMillis() - inicio < TIMEOUT_MS) { //TODO: REVER se aqui não temos que usar outro timeout
                 if (sessao.ackRecebido) {
                     if (sessao.fragmentosPerdidos.isEmpty()) {
-                        // ACK completo!
+                        // ACK completo! Sucesso!
+                        System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                             " enviada com sucesso para rover " + sessao.rover.idRover);
                         return true;
                     } else {
                         // Retransmitir fragmentos perdidos
@@ -377,6 +377,36 @@ public class ServidorUDP implements Runnable {
         }
         
         return false;
+    }
+
+    /**
+     * Aguarda receção de mensagens PROGRESS até receber COMPLETED ou timeout.
+     * Reinicia janela de timeout sempre que chega novo progresso.
+     */
+
+     //TODO: rever isto para ter em conta os intervalos de report de progresso definidos pela missao
+     //talvez verificar se o seq é incremental, porque se nao for quer dizer que perdeu um pacote pelo meio e diz qual deles foi para pedir retransmissao
+     //tratar tambem de progressos duplicados a partir de seq
+    private boolean aguardarProgress(SessaoServidorMissionLink sessao) {
+        long inicioJanela = System.currentTimeMillis();
+        int ultimoSeq = sessao.ultimoSeqProgress;
+        while (!sessao.completedRecebido) {
+            // Se chegou novo progresso, reinicia janela
+            if (sessao.ultimoSeqProgress != ultimoSeq) {
+                ultimoSeq = sessao.ultimoSeqProgress;
+                inicioJanela = System.currentTimeMillis();
+            }
+            // Timeout sem progresso nem completed
+            if (System.currentTimeMillis() - inicioJanela > TIMEOUT_MS) {
+                return false; // Falhou aguardar progress/completed
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+        return true; // COMPLETED recebido
     }
     
     /**
@@ -462,8 +492,6 @@ public class ServidorUDP implements Runnable {
             
             // Atualizar estado da missão no GestaoEstado
             estado.atualizarProgressoMissao(idRover, progresso.idMissao, progresso.progressoPercentagem);
-            System.out.println("[ServidorUDP] Progresso da missão " + progresso.idMissao + ": " + 
-                               String.format("%.2f", progresso.progressoPercentagem) + "%%");
             
             // Enviar ACK
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
@@ -520,13 +548,8 @@ public class ServidorUDP implements Runnable {
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
         if (sucesso) {
-            // Atualizar estado da missão e rover
-            sessao.missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
-            sessao.rover.temMissao = true;
-            sessao.rover.idMissaoAtual = sessao.missao.idMissao;
-            sessao.rover.estadoRover = EstadoRover.ESTADO_EM_MISSAO;
+            //talvez no caso de insucesso, reverter a missao para pendente ou para cancelada, dependendo do caso para ser reatribuida ao mesmo rover ou a outro diferente(implementar isto depois com msg erros)
         }
-        
         sessoesAtivas.remove(sessao.rover.idRover);
     }
     
