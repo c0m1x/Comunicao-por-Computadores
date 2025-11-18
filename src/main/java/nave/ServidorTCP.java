@@ -20,6 +20,7 @@ public class ServidorTCP implements Runnable {
     private ServerSocket serverSocket;
     private GestaoEstado estado;
     private boolean running = true;
+    //TODO: meter isto dos callbacks a dar
     private TelemetriaCallback callback;
 
     public interface TelemetriaCallback {
@@ -73,7 +74,7 @@ public class ServidorTCP implements Runnable {
         System.out.println("[ServidorTCP] Nova conexão: " + remote);
         
         Integer idRoverConexao = null;
-        
+
         try (ObjectInputStream ois = new ObjectInputStream(client.getInputStream())) {
             while (!client.isClosed() && running) {
                 Object obj = ois.readObject();
@@ -81,12 +82,10 @@ public class ServidorTCP implements Runnable {
                 if (obj instanceof MensagemTCP) {
                     MensagemTCP msg = (MensagemTCP) obj;
                     
-                    // Identificar rover na primeira mensagem
-                    if (idRoverConexao == null) {
-                        idRoverConexao = msg.header.idEmissor;
-                        verificarOuCriarRover(idRoverConexao, remote);
-                    }
-                    
+                    // Nota: Identificar rover na primeira mensagem, ver se há maneira de isto ser feito so uma vez ao receber a primeira mensagem do socket
+                    idRoverConexao = msg.header.idEmissor;
+                    verificarOuCriarRover(idRoverConexao, remote);
+
                     processarMensagemTCP(msg);
                     
                 } else {
@@ -99,7 +98,7 @@ public class ServidorTCP implements Runnable {
             }
         } finally {
             if (idRoverConexao != null) {
-                marcarRoverDesconectado(idRoverConexao);
+                marcarRoverDesconectado(idRoverConexao); //NOTA: ver se é preciso dizer que conectou e desconectou de cada vez que manda mensagem
             }
             try {
                 client.close();
@@ -111,11 +110,9 @@ public class ServidorTCP implements Runnable {
 
     private void verificarOuCriarRover(int idRover, String endereco) {
         Rover rover = estado.obterRover(idRover);
-        
         if (rover == null) {
             // Criar novo rover se não existir (posição inicial padrão)
             rover = new Rover(idRover, 0.0f, 0.0f);
-            
             estado.adicionarRover(idRover, rover);
             System.out.println("[ServidorTCP] Rover " + idRover + " registrado no sistema (conexão: " + endereco + ")");
         } else {
@@ -187,6 +184,7 @@ public class ServidorTCP implements Runnable {
             }
         }
 
+        //nota: este equals nao sei se vai funcionar bem, testar
         if ("SUCCESS".equals(tel.estadoOperacional.toString()) && rover.idMissaoAtual > 0) {
             Missao missao = estado.obterMissao(rover.idMissaoAtual);
 
