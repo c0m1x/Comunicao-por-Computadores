@@ -1,5 +1,6 @@
 package rover;
 
+import lib.*;
 import lib.mensagens.*;
 import lib.mensagens.payloads.*;
 import lib.TipoMensagem;
@@ -7,6 +8,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import lib.Rover.EstadoRover;
+
 /**
  * Cliente UDP do Rover (MissionLink).
  * Recebe missões da Nave-Mãe seguindo o protocolo fiável.
@@ -29,7 +31,7 @@ public class ClienteUDP implements Runnable {
     private boolean running = true;
     private MaquinaEstados maquina;
     
-    // Controle da sessão completa da missão (Fase 1 + Fase 2)
+    // Controlo da sessão completa da missão 
     private SessaoClienteMissionLink sessaoAtual = null;
     private Thread threadProgresso = null;
     
@@ -567,29 +569,6 @@ public class ClienteUDP implements Runnable {
         if (threadProgresso != null) {
             threadProgresso.interrupt();
         }
-    }
-    
-    /**
-     * Classe que representa uma sessão completa de missão no cliente.
-     * Gerencia tanto a recepção quanto a reportagem do progresso da missão.
-     */
-    private static class SessaoClienteMissionLink {
-        // Comum a todas as fases
-        int idMissao;
-        InetAddress enderecoNave;
-        int portaNave;
-        
-        // Recepção de missão
-        int totalFragmentos;
-        Map<Integer, byte[]> fragmentosRecebidos;
-        
-        // Reportagem do progresso da missão
-        boolean emExecucao = false;
-        int seqAtual;
-        long intervaloAtualizacao; // em ms
-        long duracaoMissao; // em ms
-        long inicioMissao; // timestamp de início
-        boolean aguardandoAck = false;
     }
 }
 
