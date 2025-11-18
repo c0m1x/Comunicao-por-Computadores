@@ -121,6 +121,7 @@ public class ServidorUDP implements Runnable {
                     System.out.println("[ServidorUDP] Nenhum rover disponível no momento.");
                     continue;
                 } else {
+                    roverDisponivel.portaUdp = PORTA_BASE_ROVER + roverDisponivel.idRover; // definir porta UDP do rover (valor padrão)
                     System.out.println("[ServidorUDP] Atribuindo missão " + missao.idMissao + " ao rover " + roverDisponivel.idRover);
                     iniciarEnvioMissao(roverDisponivel, missao);
                 }
@@ -217,8 +218,8 @@ public class ServidorUDP implements Runnable {
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = false;
         msg.payload = null; // HELLO não tem payload
-        
-        return enviarMensagem(msg, sessao.rover);
+
+        return enviarMensagemUDP(msg, sessao);
     }
     
     /**
@@ -328,7 +329,7 @@ public class ServidorUDP implements Runnable {
         frag.dados = sessao.fragmentos[indice];
         msg.payload = frag;
         
-        return enviarMensagem(msg, sessao.rover);
+        return enviarMensagemUDP(msg, sessao);
     }
     
     /**
@@ -396,7 +397,18 @@ public class ServidorUDP implements Runnable {
                 // Mensagem sem sessão ativa
                 return;
             }
-            
+            /*  nota: nao sei se isto é preciso
+            // Atualizar endpoint da sessão com base no pacote recebido
+            if (sessao != null) {
+                if (pacote.getAddress() != null) {
+                    sessao.enderecoRover = pacote.getAddress();
+                }
+                if (pacote.getPort() > 0) {
+                    sessao.portaRover = pacote.getPort();
+                }
+            }
+                */
+
             switch (msg.header.tipo) {
                 case MSG_RESPONSE:
                     sessao.responseRecebido = true;
@@ -458,7 +470,10 @@ public class ServidorUDP implements Runnable {
             }
             
             // Enviar ACK
-            enviarAckParaRover(msg, pacote.getAddress(), pacote.getPort());
+            SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
+            if (sessao != null) {
+                enviarAckParaRover(msg, sessao);
+            }
         }
     }
     
@@ -491,13 +506,17 @@ public class ServidorUDP implements Runnable {
         
         // Enviar ACK
         //TODO: VER se deixamos aqui ou se metemos no executar sessao missao
-        enviarAckParaRover(msg, pacote.getAddress(), pacote.getPort());
+        SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
+        if (sessao != null) {
+            enviarAckParaRover(msg, sessao);
+        }
     }
     
     /**
      * Envia ACK para o rover (usado para PROGRESS e COMPLETED).
      */
-    private void enviarAckParaRover(MensagemUDP msgOriginal, InetAddress endereco, int porta) {
+    //NOTA: talvez isto dar return de um boolean como os outros que enviam mensagem
+    private void enviarAckParaRover(MensagemUDP msgOriginal, SessaoServidorMissionLink sessao) {
         MensagemUDP ack = new MensagemUDP();
         ack.header.tipo = TipoMensagem.MSG_ACK;
         ack.header.idEmissor = 0; // Nave-Mãe
@@ -508,16 +527,7 @@ public class ServidorUDP implements Runnable {
         ack.header.flagSucesso = true;
         ack.payload = null;
         
-        //TODO: usar a enviar mensagem para nao repetir codigo
-        try {
-            byte[] dados = serializarObjeto(ack);
-            DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
-            socket.send(pacote);
-            System.out.println("[ServidorUDP] ACK enviado para rover " + msgOriginal.header.idEmissor + 
-                             " (seq=" + ack.header.seq + ")");
-        } catch (IOException e) {
-            System.err.println("[ServidorUDP] Erro ao enviar ACK: " + e.getMessage());
-        }
+        enviarMensagemUDP(ack, sessao);
     }
     
     /**
@@ -538,20 +548,37 @@ public class ServidorUDP implements Runnable {
     /**
      * Envia mensagem UDP para o rover.
      */
-    private boolean enviarMensagem(MensagemUDP msg, Rover rover) {
+    private boolean enviarMensagemUDP(MensagemUDP msg, SessaoServidorMissionLink sessao) {
         try {
-            // Obter endereço do rover (assumindo localhost para testes)
-            InetAddress endereco = InetAddress.getByName("localhost");
-            int porta = PORTA_BASE_ROVER + rover.idRover; // Porta baseada no ID do rover
-            
+            InetAddress endereco = sessao.enderecoRover;
+            int porta = sessao.portaRover;
+
+            //caso nao esteja em sessao tenta ir busar os dados no rover
+
+            if (endereco == null && sessao.rover != null && sessao.rover.enderecoHost != null) {
+                endereco = InetAddress.getByName(sessao.rover.enderecoHost);
+            }
+            if (porta <= 0) {
+                if (sessao.rover != null && sessao.rover.portaUdp != null && sessao.rover.portaUdp > 0) {
+                    porta = sessao.rover.portaUdp;
+                } else {
+                    porta = PORTA_BASE_ROVER + sessao.rover.idRover; // porta padrão
+                }
+            }
+
+            if (endereco == null || porta <= 0) {
+                System.err.println("[ServidorUDP] Endpoint do rover desconhecido para envio (id=" +
+                                   (sessao.rover != null ? sessao.rover.idRover : -1) + ")");
+                return false;
+            }
+
             byte[] dados = serializarObjeto(msg);
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
             socket.send(pacote);
 
-            System.out.println("[ServidorUDP] Enviada mensagem " + msg.header.tipo + " para rover " + rover.idRover + " (seq=" + msg.header.seq + ")");
-            
+            System.out.println("[ServidorUDP] Enviada mensagem " + msg.header.tipo +
+                               " para rover " + sessao.rover.idRover + " (seq=" + msg.header.seq + ")");
             return true;
-            
         } catch (IOException e) {
             System.err.println("[ServidorUDP] Erro ao enviar mensagem: " + e.getMessage());
             return false;
