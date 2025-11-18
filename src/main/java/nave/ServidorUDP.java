@@ -321,7 +321,7 @@ public class ServidorUDP implements Runnable {
         msg.header.idMissao = sessao.missao.idMissao;
         //msg.header.timestamp = new Time(System.currentTimeMillis());
         msg.header.seq = seq;
-        msg.header.totalFragm = sessao.totalFragmentos + 1; // +1 por causa do HELLO (seq=1)
+        msg.header.totalFragm = sessao.totalFragmentos; 
         msg.header.flagSucesso = false;
         
         // Payload é o fragmento raw (será tratado especialmente na serialização)

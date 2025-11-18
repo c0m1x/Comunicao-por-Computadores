@@ -155,11 +155,11 @@ public class ClienteUDP implements Runnable {
         
         // Atualizar total de fragmentos se necessário (primeira vez que recebemos um MISSION)
         if (sessaoAtual.totalFragmentos == 0 && msg.header.totalFragm > 1) {
-            sessaoAtual.totalFragmentos = msg.header.totalFragm - 1; // -1 porque HELLO (seq=1) não conta
+            sessaoAtual.totalFragmentos = msg.header.totalFragm;
             System.out.println("[ClienteUDP] Total de fragmentos atualizado: " + sessaoAtual.totalFragmentos);
         }
         
-        System.out.println("[ClienteUDP] Fragmento recebido: seq=" + seq + "/" + msg.header.totalFragm);
+        System.out.println("[ClienteUDP] Fragmento recebido: seq=" + seq + "/" + (msg.header.totalFragm + 1));
         
         // Extrair dados do fragmento
         byte[] dados = null;
@@ -223,13 +223,11 @@ public class ClienteUDP implements Runnable {
     private List<Integer> identificarFragmentosPerdidos() {
         List<Integer> perdidos = new ArrayList<>();
         
-        // Fragmentos começam em seq=2 (seq=1 é HELLO)
         for (int i = 2; i <= sessaoAtual.totalFragmentos + 1; i++) {
             if (!sessaoAtual.fragmentosRecebidos.containsKey(i)) {
                 perdidos.add(i);
             }
         }
-        
         return perdidos;
     }
     
