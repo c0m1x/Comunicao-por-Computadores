@@ -35,7 +35,7 @@ public class Rover {
         this.posicaoY = y;
         this.bateria = 100.0f;
         this.velocidade = 0.0f;
-        this.estadoRover = EstadoRover.ESTADO_INICIAL;
+        this.estadoRover = EstadoRover.ESTADO_DISPONIVEL;
         idMissaoAtual = -1;
         progressoMissao = 0.0f;
         temMissao = false;

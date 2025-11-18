@@ -22,6 +22,8 @@ import java.util.Set;
         public boolean ackRecebido = false;
         public boolean completedRecebido = false;
         public boolean completedSucesso = false;
+        public boolean recebendoProgresso = false;
+        public int ultimoSeqProgress = 0;
 
         //adicionar aqui o resto das variaveis que precisamos para controlar a sessao (progresso, completed)
         

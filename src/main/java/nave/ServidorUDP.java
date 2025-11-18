@@ -461,16 +461,15 @@ public class ServidorUDP implements Runnable {
                              ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
             
             // Atualizar estado da missão no GestaoEstado
-            Rover rover = estado.obterRover(idRover);
-            if (rover != null) {
-                // TODO: atualizar progresso da missão no estado
-                System.out.println("[ServidorUDP] Progresso da missão " + progresso.idMissao + ": " + 
-                                 String.format("%.2f", progresso.progressoPercentagem) + "%%");
-            }
+            estado.atualizarProgressoMissao(idRover, progresso.idMissao, progresso.progressoPercentagem);
+            System.out.println("[ServidorUDP] Progresso da missão " + progresso.idMissao + ": " + 
+                               String.format("%.2f", progresso.progressoPercentagem) + "%%");
             
             // Enviar ACK
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             if (sessao != null) {
+                sessao.recebendoProgresso = true;
+                sessao.ultimoSeqProgress = msg.header.seq;
                 enviarAckParaRover(msg, sessao);
             }
         }

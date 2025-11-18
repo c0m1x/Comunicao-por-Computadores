@@ -74,6 +74,20 @@ public class GestaoEstado {
         return missoes.remove(id);
     }
 
+
+    /** Atualiza progresso de missão e garante estado EM_ANDAMENTO. */
+    public void atualizarProgressoMissao(int idRover, int idMissao, float progressoPercent) {
+        Rover rover = obterRover(idRover);
+        Missao missao = obterMissao(idMissao);
+        if (rover == null || missao == null) return;
+
+        //nota: ver onde metemos as informações do progresso, talvez na propria missão
+        rover.progressoMissao = progressoPercent;
+
+        if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
+            missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
+        }
+    }
     /** Devolve a missão associada ao id, ou null se não existir. */
     public Missao obterMissao(int id) {
         return missoes.get(id);
