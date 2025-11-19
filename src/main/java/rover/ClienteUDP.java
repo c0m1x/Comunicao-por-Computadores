@@ -1,12 +1,15 @@
 package rover;
 
-import lib.*;
-import lib.mensagens.*;
+import lib.SessaoClienteMissionLink;
+import lib.TipoMensagem;
+import lib.mensagens.MensagemUDP;
 import lib.mensagens.payloads.*;
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import lib.Rover.EstadoRover;
 
 /**
@@ -79,38 +82,31 @@ public class ClienteUDP implements Runnable {
      * Processa mensagem recebida da Nave-Mãe.
      */
     private void processarMensagem(DatagramPacket pacote) {
-        try {
-            MensagemUDP msg = deserializarMensagem(pacote.getData(), pacote.getLength());
-            
-            if (msg == null || msg.header == null) {
-                return;
-            }
-            
-            // Verificar se a mensagem é para este rover
-            if (msg.header.idRecetor != idRover) {
-                return;
-            }
-            
-            switch (msg.header.tipo) {
-                case MSG_HELLO:
-                    processarHello(msg, pacote.getAddress(), pacote.getPort());
-                    break;
-                    
-                case MSG_MISSION:
-                    processarMission(msg, pacote.getAddress(), pacote.getPort());
-                    break;
-                    
-                case MSG_ACK:
-                    processarAck(msg, pacote.getAddress(), pacote.getPort());
-                    break;
-                    
-                default:
-                    System.out.println("[ClienteUDP] Mensagem inesperada: " + msg.header.tipo);
-            }
-            
-        } catch (Exception e) {
-            System.err.println("[ClienteUDP] Erro ao processar mensagem: " + e.getMessage());
-            e.printStackTrace();
+        MensagemUDP msg = deserializarMensagem(pacote.getData(), pacote.getLength());
+
+        if (msg == null || msg.header == null) {
+            return;
+        }
+
+        if (msg.header.idRecetor != idRover) {
+            return;
+        }
+
+        InetAddress endereco = pacote.getAddress();
+        int porta = pacote.getPort();
+
+        switch (msg.header.tipo) {
+            case MSG_HELLO:
+                processarHello(msg, endereco, porta);
+                break;
+            case MSG_MISSION:
+                processarMission(msg, endereco, porta);
+                break;
+            case MSG_ACK:
+                processarAck(msg);
+                break;
+            default:
+                System.out.println("[ClienteUDP] Mensagem inesperada: " + msg.header.tipo);
         }
     }
     
@@ -203,7 +199,7 @@ public class ClienteUDP implements Runnable {
     /**
      * Processa mensagem ACK (para PROGRESS e COMPLETED).
      */
-    private void processarAck(MensagemUDP msg, InetAddress endereco, int porta) {
+    private void processarAck(MensagemUDP msg) {
         if (sessaoAtual != null && sessaoAtual.emExecucao && msg.header.idMissao == sessaoAtual.idMissao) {
             System.out.println("[ClienteUDP] ACK recebido para seq=" + msg.header.seq + 
                              " (sucesso=" + msg.header.flagSucesso + ")");
@@ -234,14 +230,6 @@ public class ClienteUDP implements Runnable {
             List<Integer> seqs = new ArrayList<>(sessaoAtual.fragmentosRecebidos.keySet());
             Collections.sort(seqs);
 
-            //print dos dados recebidos para debug
-            System.out.println("[ClienteUDP] Dados dos fragmentos recebidos:");
-            for (int seq : seqs) {
-                byte[] fragmento = sessaoAtual.fragmentosRecebidos.get(seq);
-                System.out.println("  Seq " + seq + ": " + Arrays.toString(fragmento));
-            }
-
-            // Concatenar dados
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             for (int seq : seqs) {
                 byte[] fragmento = sessaoAtual.fragmentosRecebidos.get(seq);
@@ -250,8 +238,7 @@ public class ClienteUDP implements Runnable {
 
             byte[] dadosCompletos = baos.toByteArray();
 
-            // Interpretar byte a byte (formato académico, compatível com servidor)
-            java.io.DataInputStream dis = new java.io.DataInputStream(new java.io.ByteArrayInputStream(dadosCompletos));
+            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(dadosCompletos));
 
             //TODO: depois de ler payload, passar a missao para máquina de estados
             PayloadMissao payload = new PayloadMissao();
