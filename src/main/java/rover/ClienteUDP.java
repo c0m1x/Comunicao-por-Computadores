@@ -275,26 +275,21 @@ public class ClienteUDP implements Runnable {
                 payload.tarefa = "";
             }
 
-            // Calendars em millis
-            long durMillis = dis.readLong();
-            long intMillis = dis.readLong();
-            long iniMillis = dis.readLong();
+            // tempos em segundos
+            long durSeg = dis.readLong();
+            long intSeg = dis.readLong();
+            long iniSeg = dis.readLong();
 
-            java.util.Calendar c1 = java.util.Calendar.getInstance();
-            c1.setTimeInMillis(durMillis);
-            java.util.Calendar c2 = java.util.Calendar.getInstance();
-            c2.setTimeInMillis(intMillis);
-            java.util.Calendar c3 = java.util.Calendar.getInstance();
-            c3.setTimeInMillis(iniMillis);
-            payload.duracaoMissao = c1;
-            payload.intervaloAtualizacao = c2;
-            payload.inicioMissao = c3;
+            payload.duracaoMissao = durSeg;
+            payload.intervaloAtualizacao = intSeg;
+            payload.inicioMissao = iniSeg;
 
             // prioridade
             payload.prioridade = dis.readInt();
 
-            sessaoAtual.intervaloAtualizacao = payload.intervaloAtualizacao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
-            sessaoAtual.duracaoMissao = payload.duracaoMissao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
+            // intervalos já vêm em segundos, converter para ms
+            sessaoAtual.intervaloAtualizacao = payload.intervaloAtualizacao * 1000;
+            sessaoAtual.duracaoMissao = payload.duracaoMissao * 1000;
 
 
 
@@ -466,8 +461,8 @@ public class ClienteUDP implements Runnable {
         
         PayloadProgresso progresso = new PayloadProgresso();
         progresso.idMissao = sessaoAtual.idMissao;
-        progresso.tempoDecorrido = Calendar.getInstance();
-        progresso.tempoDecorrido.setTimeInMillis(tempoDecorrido);
+        // converter ms para segundos
+        progresso.tempoDecorrido = tempoDecorrido / 1000;
         progresso.progressoPercentagem = progressoPerc;
         msg.payload = progresso;
         

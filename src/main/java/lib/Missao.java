@@ -1,7 +1,6 @@
 package lib;
 
 import java.io.Serializable;
-import java.util.Calendar;
 
 import lib.mensagens.payloads.PayloadMissao;
 
@@ -22,9 +21,10 @@ public class Missao implements Serializable {
     public int idMissao;
     public float x1, y1, x2, y2;
     public String tarefa = "";
-    public Calendar duracaoMissao; // duração (como Calendar, conforme Payload) - alterar saco alteremos em Payload
-    public Calendar intervaloAtualizacao; // em minutos - same shit de cima
-    public Calendar inicioMissao; 
+    // tempos em segundos
+    public long duracaoMissao;        // duração da missão em segundos
+    public long intervaloAtualizacao; // intervalo de atualização em segundos
+    public long inicioMissao;         // instante de início em segundos (epoch)
     public int prioridade; // 1-5
 
     public EstadoMissao estadoMissao;
@@ -40,9 +40,9 @@ public class Missao implements Serializable {
         this.tarefa = tarefa;
         this.estadoMissao = estadoMissao;
         this.x1 = 0.0f; this.y1 = 0.0f; this.x2 = 0.0f; this.y2 = 0.0f;
-        this.duracaoMissao = Calendar.getInstance();
-        this.intervaloAtualizacao = Calendar.getInstance();
-        this.inicioMissao = Calendar.getInstance();
+        this.duracaoMissao = 0;
+        this.intervaloAtualizacao = 0;
+        this.inicioMissao = 0;
     }
 
     /** Constrói uma Missao a partir de um PayloadMissao. */
