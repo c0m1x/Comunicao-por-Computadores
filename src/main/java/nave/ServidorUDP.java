@@ -19,10 +19,7 @@ import lib.Rover;
 import lib.SessaoServidorMissionLink;
 import lib.TipoMensagem;
 import lib.mensagens.MensagemUDP;
-import lib.mensagens.payloads.PayloadAck;
-import lib.mensagens.payloads.PayloadMissao;
-import lib.mensagens.payloads.PayloadProgresso;
-import lib.mensagens.payloads.PayloadUDP;
+import lib.mensagens.payloads.*;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -627,15 +624,6 @@ public class ServidorUDP implements Runnable {
     public void parar() {
         running = false;
     }
-    
-    /**
-     * Classe auxiliar para armazenar fragmentos de dados.
-     */
-    private static class FragmentoPayload extends PayloadUDP {
-        private static final long serialVersionUID = 1L;
-        public byte[] dados;
-    }
-    
    
 }
 
