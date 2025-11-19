@@ -33,7 +33,6 @@ public class ClienteUDP implements Runnable {
     
     // Controle da sessão completa da missão 
     private SessaoClienteMissionLink sessaoAtual = null;
-    private Thread threadProgresso = null;
     
     public ClienteUDP(int idRover, MaquinaEstados maquina) {
         this.idRover = idRover;
@@ -189,7 +188,7 @@ public class ClienteUDP implements Runnable {
                 if (reconstruirMissao()) {
                     System.out.println("[ClienteUDP] Missão recebida com sucesso!");
                     enviarAck();
-                    sessaoAtual = null; // Finalizar sessão
+                    reportarMissao();
                 } else {
                     System.err.println("[ClienteUDP] Erro ao reconstruir missão");
                 }
@@ -254,6 +253,7 @@ public class ClienteUDP implements Runnable {
             // Interpretar byte a byte (formato académico, compatível com servidor)
             java.io.DataInputStream dis = new java.io.DataInputStream(new java.io.ByteArrayInputStream(dadosCompletos));
 
+            //TODO: depois de ler payload, passar a missao para máquina de estados
             PayloadMissao payload = new PayloadMissao();
 
             // int idMissao
@@ -293,14 +293,17 @@ public class ClienteUDP implements Runnable {
             // prioridade
             payload.prioridade = dis.readInt();
 
+            sessaoAtual.intervaloAtualizacao = payload.intervaloAtualizacao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
+            sessaoAtual.duracaoMissao = payload.duracaoMissao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
+
+
+
             System.out.println("[ClienteUDP] Missão reconstruída: " + payload);
 
             // Atualizar máquina de estados
             if (maquina != null) {
                 maquina.receberMissao(payload);
             }
-
-            reportarMissao(payload);
 
             return true;
 
@@ -407,29 +410,17 @@ public class ClienteUDP implements Runnable {
     /**
      * Inicia a reportagem da missão
      */
-    private void reportarMissao(PayloadMissao payload) {
+    private void reportarMissao() {
         // Atualizar sessão 
         sessaoAtual.emExecucao = true;
         sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS TODO: ajustar se necessário
-        sessaoAtual.intervaloAtualizacao = payload.intervaloAtualizacao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
-        sessaoAtual.duracaoMissao = payload.duracaoMissao.get(Calendar.MINUTE) * 60 * 1000; // converter minutos para ms
         sessaoAtual.inicioMissao = System.currentTimeMillis();
         
         // Limpar dados (não mais necessários)
         sessaoAtual.fragmentosRecebidos = null;
         
-        // Iniciar thread de envio de progresso
-        threadProgresso = new Thread(this::enviarProgressoPeriodicamente);
-        threadProgresso.setDaemon(true);
-        threadProgresso.start();
+        // Iniciar envio de progresso
         
-        System.out.println("[ClienteUDP] Iniciada a execução da missão " + payload.idMissao);
-    }
-    
-    /**
-     * Thread que envia mensagens PROGRESS periodicamente.
-     */
-    private void enviarProgressoPeriodicamente() {
         while (running && sessaoAtual != null && sessaoAtual.emExecucao) {
             try {
                 Thread.sleep(sessaoAtual.intervaloAtualizacao);
@@ -453,7 +444,10 @@ public class ClienteUDP implements Runnable {
                 break;
             }
         }
+        
+        System.out.println("[ClienteUDP] Iniciada a execução da missão " + sessaoAtual.idMissao);
     }
+
     
     /**
      * Envia mensagem PROGRESS para a Nave-Mãe.
@@ -559,9 +553,6 @@ public class ClienteUDP implements Runnable {
     
     public void parar() {
         running = false;
-        if (threadProgresso != null) {
-            threadProgresso.interrupt();
-        }
     }
     
 }
