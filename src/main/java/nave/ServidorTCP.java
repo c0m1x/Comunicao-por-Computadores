@@ -47,8 +47,6 @@ public class ServidorTCP implements Runnable {
             
             while (running) {
                 Socket client = serverSocket.accept();
-                
-                // Criar thread daemon para cada cliente
                 Thread t = new Thread(() -> handleClient(client));
                 t.setDaemon(true);
                 t.start();
@@ -112,7 +110,6 @@ public class ServidorTCP implements Runnable {
     private void verificarOuCriarRover(int idRover, String endereco) {
         Rover rover = estado.obterRover(idRover);
         if (rover == null) {
-            // Criar novo rover se não existir (posição inicial padrão)
             rover = new Rover(idRover, 0.0f, 0.0f, extrairHost(endereco));
             estado.adicionarRover(idRover, rover);
             System.out.println("[ServidorTCP] Rover " + idRover + " registrado no sistema (conexão: " + endereco + ")");

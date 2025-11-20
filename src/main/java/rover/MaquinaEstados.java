@@ -21,7 +21,7 @@ public class MaquinaEstados {
         return contexto.getEstado();
     }
 
-    // Passo da máquina de estados (chamada periódica)
+    // Atualização da máquina de estados (chamada periódica)
     public void atualizar() {
         EstadoRover e = getEstadoAtual();
         switch (e) {
@@ -75,7 +75,7 @@ public class MaquinaEstados {
         return contexto;
     }
 
-    // ===== Implementação da lógica da missão =====
+    // Implementação da lógica da missão
     private void executarPassoMissao() {
         if (!contexto.temMissao || contexto.missaoAtual == null)
             return;
@@ -118,7 +118,7 @@ public class MaquinaEstados {
                             contexto.progressoMissao = 100.0f;
                     }
                 } catch (NoSuchFieldException | IllegalAccessException ex) {
-                    // Sem campo de duração — ignora cálculo temporal
+                    // Sem campo de duração — ignoramos cálculo temporal
                 }
             }
 
