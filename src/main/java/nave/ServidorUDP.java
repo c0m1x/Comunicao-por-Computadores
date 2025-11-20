@@ -1,23 +1,12 @@
 package nave;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.io.*;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lib.Missao;
-import lib.Rover;
-import lib.SessaoServidorMissionLink;
-import lib.TipoMensagem;
+import lib.*;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.payloads.*;
 
@@ -43,16 +32,15 @@ public class ServidorUDP implements Runnable {
     
     private DatagramSocket socket;
     private GestaoEstado estado;
-    private boolean running = true;
+    private boolean running;
     
     // Controlo de sessões ativas (idRover -> sessão)
     private ConcurrentHashMap<Integer, SessaoServidorMissionLink> sessoesAtivas;
-
-
     
     public ServidorUDP(GestaoEstado estado) {
         this.estado = estado;
         this.sessoesAtivas = new ConcurrentHashMap<>();
+        this.running = true;
     }
     
     @Override
@@ -89,9 +77,7 @@ public class ServidorUDP implements Runnable {
         } catch (SocketException e) {
             System.err.println("[ServidorUDP] Erro ao criar socket: " + e.getMessage());
         } finally {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
+            this.parar();
             System.out.println("[ServidorUDP] Encerrado");
         }
     }
@@ -387,10 +373,19 @@ public class ServidorUDP implements Runnable {
      * Reinicia janela de timeout sempre que chega novo progresso.
      */
 
-     //TODO: rever isto para ter em conta os intervalos de report de progresso definidos pela missao
-     //talvez verificar se o seq é incremental, porque se nao for quer dizer que perdeu um pacote pelo meio e diz qual deles foi para pedir retransmissao
+     //TODO: talvez verificar se o seq é incremental, porque se nao for quer dizer que perdeu um pacote pelo meio e diz qual deles foi para pedir retransmissao
      //tratar tambem de progressos duplicados a partir de seq
     private boolean aguardarProgress(SessaoServidorMissionLink sessao) {
+
+        long intervaloAtualizacao = TIMEOUT_MS;
+
+        if (sessao.missao != null && sessao.missao.intervaloAtualizacao > 0){
+            intervaloAtualizacao = sessao.missao.intervaloAtualizacao * 1000; // converter para ms
+        }
+        
+        // timeout = 2x intervalo de atualização (podes ajustar este fator)
+        long timeoutProgressMs = intervaloAtualizacao * 2;
+
         long inicioJanela = System.currentTimeMillis();
         int ultimoSeq = sessao.ultimoSeqProgress;
         while (!sessao.completedRecebido) {
@@ -400,7 +395,7 @@ public class ServidorUDP implements Runnable {
                 inicioJanela = System.currentTimeMillis();
             }
             // Timeout sem progresso nem completed
-            if (System.currentTimeMillis() - inicioJanela > TIMEOUT_MS) {
+            if (System.currentTimeMillis() - inicioJanela > timeoutProgressMs) {
                 return false; // Falhou aguardar progress/completed
             }
             try {
@@ -623,6 +618,9 @@ public class ServidorUDP implements Runnable {
     
     public void parar() {
         running = false;
+        if (socket != null && !socket.isClosed()) {
+                socket.close();
+        }
     }
    
 }
