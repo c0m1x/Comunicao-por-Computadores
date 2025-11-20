@@ -1,6 +1,4 @@
 package lib.mensagens.payloads;
-
-import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.ByteBuffer;
@@ -16,9 +14,10 @@ public class PayloadMissao extends PayloadUDP {
     public int idMissao;
     public float x1, y1, x2, y2; // coordenadas da area da missao
     public String tarefa = "";
-    public Calendar duracaoMissao; // NOTA: VER O TIPO DE DADOS DISTO - poria segundos (int)
-    public Calendar intervaloAtualizacao; // em minutos - poria int
-    public Calendar inicioMissao;
+    // tempos em segundos
+    public long duracaoMissao;          // duração da missão em segundos
+    public long intervaloAtualizacao;   // intervalo de atualização em segundos
+    public long inicioMissao;           // instante de início em segundos (epoch)
     public int prioridade; // 1-5
 
 
@@ -52,13 +51,10 @@ public class PayloadMissao extends PayloadUDP {
         if (tarefaBytes.length > 0)
             blocos.add(tarefaBytes);
 
-        // Calendars como millis
-        long durMillis = (duracaoMissao != null) ? duracaoMissao.getTimeInMillis() : 0L;
-        long intMillis = (intervaloAtualizacao != null) ? intervaloAtualizacao.getTimeInMillis() : 0L;
-        long iniMillis = (inicioMissao != null) ? inicioMissao.getTimeInMillis() : 0L;
-        blocos.add(longBlock.apply(durMillis));
-        blocos.add(longBlock.apply(intMillis));
-        blocos.add(longBlock.apply(iniMillis));
+        // tempos em segundos (já armazenados assim)
+        blocos.add(longBlock.apply(duracaoMissao));
+        blocos.add(longBlock.apply(intervaloAtualizacao));
+        blocos.add(longBlock.apply(inicioMissao));
 
         // prioridade
         blocos.add(intBlock.apply(prioridade));
@@ -68,9 +64,9 @@ public class PayloadMissao extends PayloadUDP {
 
     @Override
     public String toString() {
-        return String.format("Missao{id=%d, area=(%.2f,%.2f)-(%.2f,%.2f), tarefa=%s, dur=%dmin, int=%dmin, prio=%d}",
-                idMissao, x1, y1, x2, y2, tarefa, duracaoMissao.get(Calendar.MINUTE),
-                intervaloAtualizacao.get(Calendar.MINUTE), prioridade);
+        return String.format("Missao{id=%d, area=(%.2f,%.2f)-(%.2f,%.2f), tarefa=%s, dur=%ds, int=%ds, prio=%d}",
+            idMissao, x1, y1, x2, y2, tarefa, duracaoMissao,
+            intervaloAtualizacao, prioridade);
     }
 
 }

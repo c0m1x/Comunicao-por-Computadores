@@ -5,7 +5,6 @@ import lib.Rover;
 import lib.Missao;
 import lib.mensagens.payloads.*;
 
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
@@ -79,7 +78,7 @@ public class CriarJson {
 
         return "{"
                 + "\"idMissao\":" + p.idMissao + ","
-                + "\"tempoDecorridoMin\":" + p.tempoDecorrido.get(Calendar.MINUTE) + ","
+                + "\"tempoDecorridoSeg\":" + p.tempoDecorrido + ","
                 + "\"progressoPercentagem\":" + p.progressoPercentagem
                 + "}";
     }

@@ -2,7 +2,6 @@ package lib.mensagens;
 
 import java.io.Serializable;
 import lib.mensagens.payloads.PayloadTCP;
-import lib.mensagens.CabecalhoTCP;
 
 /**
  * Mensagem TCP (cabeçalho + payload).

@@ -2,7 +2,6 @@ package lib.mensagens;
 
 import java.io.Serializable;
 import lib.mensagens.payloads.PayloadUDP;
-import lib.mensagens.CabecalhoUDP;
 
 /**
  * Mensagem UDP (cabeçalho + payload).

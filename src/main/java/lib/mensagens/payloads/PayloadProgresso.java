@@ -1,8 +1,5 @@
 package lib.mensagens.payloads;
 
-import java.util.Calendar;
-import lib.mensagens.payloads.PayloadUDP;
-
 /**
  * Payload do progresso UDP.
  */
@@ -10,12 +7,12 @@ import lib.mensagens.payloads.PayloadUDP;
 public class PayloadProgresso extends PayloadUDP {
 
     public int idMissao;
-    public Calendar tempoDecorrido;
+    public long tempoDecorrido; // tempo decorrido em segundos
     public float progressoPercentagem; // 0.0 a 100.0
 
     @Override
     public String toString() {
-        return String.format("Progresso{missaoId=%d, tempoDecorrido=%dmin, progresso=%.2f%%}",
-                idMissao, tempoDecorrido.get(Calendar.MINUTE), progressoPercentagem);
+        return String.format("Progresso{missaoId=%d, tempoDecorrido=%ds, progresso=%.2f%%}",
+            idMissao, tempoDecorrido, progressoPercentagem);
     }
 }
