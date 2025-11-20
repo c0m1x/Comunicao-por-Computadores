@@ -30,7 +30,6 @@ public class ClienteTCP implements Runnable {
                     if (ctx.deveEnviarTelemetria()) {
 
                         MensagemTCP msg = new MensagemTCP();
-                        // Preencher header e payload
                         msg.header.tipo = TipoMensagem.MSG_TELEMETRY; // Utilizar o tipo esperado pelo ServidorTCP
                         msg.header.idEmissor = ctx.idRover;
                         msg.header.idRecetor = ctx.idNave;

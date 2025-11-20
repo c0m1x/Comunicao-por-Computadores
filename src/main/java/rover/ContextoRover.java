@@ -17,6 +17,7 @@ import rover.EventoRelevante;
         // Identificadores
         public int idRover;
         public int idNave = 1; // assumindo nave com ID 0
+
         // Estado
         private EstadoRover estadoAtual;
         private EstadoRover estadoAnterior;
@@ -26,11 +27,13 @@ import rover.EventoRelevante;
         public volatile boolean temMissao;
         public volatile float progressoMissao;
         public volatile long timestampInicioMissaoEpoch;
+
         // Telemetria / posição
         public volatile float posicaoX;
         public volatile float posicaoY;
         public volatile float bateria;
         public volatile float velocidade;
+        
         // timing / eventos
         public volatile long ultimoHelloEpoch = 0;
         public volatile long ultimoEnvioTelemetriaEpoch = 0;
