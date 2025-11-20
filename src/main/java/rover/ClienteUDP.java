@@ -100,7 +100,7 @@ public class ClienteUDP implements Runnable {
                 processarHello(msg, endereco, porta);
                 break;
             case MSG_MISSION:
-                processarMission(msg, endereco, porta);
+                processarMission(msg);
                 break;
             case MSG_ACK:
                 processarAck(msg);
@@ -127,15 +127,15 @@ public class ClienteUDP implements Runnable {
         } else {
             System.out.println("[ClienteUDP] Rover não disponível para missão");
         }
-        
+        sessaoAtual.seqAtual = msg.header.seq;
         // Enviar RESPONSE
-        enviarResponse(msg.header.idMissao, msg.header.seq, disponivel, endereco, porta);
+        enviarResponse(disponivel);
     }
     
     /**
      * Processa fragmento MISSION.
      */
-    private void processarMission(MensagemUDP msg, InetAddress endereco, int porta) {
+    private void processarMission(MensagemUDP msg) {
         if (sessaoAtual == null || sessaoAtual.idMissao != msg.header.idMissao) {
             System.err.println("[ClienteUDP] Fragmento recebido sem sessão ativa");
             return;
@@ -302,19 +302,19 @@ public class ClienteUDP implements Runnable {
     /**
      * Envia mensagem RESPONSE.
      */
-    private void enviarResponse(int idMissao, int seq, boolean sucesso, InetAddress endereco, int porta) {
+    private void enviarResponse(boolean sucesso) {
         MensagemUDP msg = new MensagemUDP();
         msg.header.tipo = TipoMensagem.MSG_RESPONSE;
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = idMissao;
+        msg.header.idMissao = sessaoAtual.idMissao;
         //msg.header.timestamp = new Time(System.currentTimeMillis());
-        msg.header.seq = seq;
+        msg.header.seq = sessaoAtual.seqAtual;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = sucesso;
         msg.payload = null;
         
-        enviarMensagem(msg, endereco, porta);
+        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
         System.out.println("[ClienteUDP] RESPONSE enviado (sucesso=" + sucesso + ")");
     }
     
