@@ -21,7 +21,7 @@ import java.util.Set;
         public boolean responseSucesso = false;
         public boolean ackRecebido = false;
         public boolean recebendoProgresso = false;
-        public int ultimoSeqProgress = 0;
+        public int ultimoSeq = 0;
         public boolean completedRecebido = false;
         public boolean completedSucesso = false;
 
