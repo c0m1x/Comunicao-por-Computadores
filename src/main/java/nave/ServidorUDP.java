@@ -489,8 +489,8 @@ public class ServidorUDP implements Runnable {
                              ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
             
             // Atualizar estado da missão no GestaoEstado
-            estado.atualizarProgressoMissao(idRover, progresso.idMissao, progresso.progressoPercentagem);
-            
+            estado.atualizarProgresso(progresso);
+
             // Enviar ACK
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             if (sessao != null) {

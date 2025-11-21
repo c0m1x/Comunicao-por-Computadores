@@ -171,6 +171,8 @@ public class ServidorTCP implements Runnable {
         rover.velocidade = tel.velocidade;
         rover.estadoRover = tel.estadoOperacional;
 
+        estado.atualizarTelemetria(idRover, tel);
+
         if (header.idMissao > 0 && header.idMissao != rover.idMissaoAtual) {
             rover.idMissaoAtual = header.idMissao;
             rover.temMissao = true;
