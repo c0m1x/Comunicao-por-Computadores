@@ -9,7 +9,6 @@ import lib.mensagens.payloads.PayloadTCP;
 
  public class MensagemTCP implements Serializable {
 
-    private static final long serialVersionUID = 1L;
     public CabecalhoTCP header;
     public PayloadTCP payload;
     //NOTA: REVER O CONSTRUTOR E TALVEZ METER SETERS/GETTERS
