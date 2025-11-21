@@ -274,11 +274,19 @@ public class ClienteUDP implements Runnable {
             payload.intervaloAtualizacao = intSeg;
             payload.inicioMissao = iniSeg;
 
+            // Aplicar defaults seguros caso venham a zero/negativos
+            if (payload.duracaoMissao <= 0) {
+                payload.duracaoMissao = 60; // 60s por omissão
+            }
+            if (payload.intervaloAtualizacao <= 0) {
+                payload.intervaloAtualizacao = 2; // 2s por omissão
+            }
+
             // prioridade
             payload.prioridade = dis.readInt();
 
-            // intervalos já vêm em segundos, converter para ms
-            sessaoAtual.intervaloAtualizacao = payload.intervaloAtualizacao * 1000;
+            // intervalos já vêm em segundos, converter para ms (com mínimo de 200ms)
+            sessaoAtual.intervaloAtualizacao = Math.max(200, (int) (payload.intervaloAtualizacao * 1000));
             sessaoAtual.duracaoMissao = payload.duracaoMissao * 1000;
 
 
@@ -397,6 +405,8 @@ public class ClienteUDP implements Runnable {
      */
     private void reportarMissao() {
         // Atualizar sessão 
+        if (sessaoAtual == null) return;
+        int missionId = sessaoAtual.idMissao;
         sessaoAtual.emExecucao = true;
         sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS TODO: ajustar se necessário
         sessaoAtual.inicioMissao = System.currentTimeMillis();
@@ -405,6 +415,7 @@ public class ClienteUDP implements Runnable {
         sessaoAtual.fragmentosRecebidos = null;
         
         // Iniciar envio de progresso
+        System.out.println("[ClienteUDP] Iniciada a execução da missão " + missionId);
         
         while (running && sessaoAtual != null && sessaoAtual.emExecucao) {
             try {
@@ -413,6 +424,10 @@ public class ClienteUDP implements Runnable {
                 if (sessaoAtual == null || !sessaoAtual.emExecucao) break;
                 
                 // Calcular progresso
+                // Atualizar lógica da missão antes de reportar
+                if (maquina != null) {
+                    maquina.atualizar();
+                }
                 long tempoDecorrido = System.currentTimeMillis() - sessaoAtual.inicioMissao;
                 float progressoPerc = maquina.getContexto().getProgresso();
                 
@@ -422,7 +437,7 @@ public class ClienteUDP implements Runnable {
                 } else {
                     // Missão concluída
                     enviarCompleted(true);
-                    break;
+                    return;
                 }
                 
             } catch (InterruptedException e) {
@@ -430,7 +445,7 @@ public class ClienteUDP implements Runnable {
             }
         }
         
-        System.out.println("[ClienteUDP] Iniciada a execução da missão " + sessaoAtual.idMissao);
+        System.out.println("[ClienteUDP] Execução da missão " + missionId + " terminada");
     }
 
     

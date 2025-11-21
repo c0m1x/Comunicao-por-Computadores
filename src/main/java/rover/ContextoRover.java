@@ -106,6 +106,15 @@ import rover.EventoRelevante;
 
         // Notifica missão recebida (dados); a transição fica a cargo da máquina de estados
         public void receberMissao(PayloadMissao missao, int idMissao) {
+                // Garantir valores mínimos razoáveis todo:: tirar daqui e meter em missao
+                if (missao != null) {
+                    if (missao.duracaoMissao <= 0) {
+                        missao.duracaoMissao = 60; // 60s por omissão
+                    }
+                    if (missao.intervaloAtualizacao <= 0) {
+                        missao.intervaloAtualizacao = 2; // 2s por omissão
+                    }
+                }
                 this.missaoAtual = missao;
                 this.idMissaoAtual = idMissao;
                 this.temMissao = true;
