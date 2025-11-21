@@ -1,0 +1,1058 @@
+make[1]: Entering directory '/workspaces/CC'
+gradle runNaveMaeApp
+
+Welcome to Gradle 9.2.1!
+
+Here are the highlights of this release:
+ - Windows ARM support
+ - Improved publishing APIs
+ - Better guidance for dependency verification failures
+
+For more details see https://docs.gradle.org/9.2.1/release-notes.html
+
+Starting a Gradle Daemon, 2 incompatible Daemons could not be reused, use --status for details
+> Task :compileJava
+> Task :processResources NO-SOURCE
+> Task :classes
+
+> Task :runNaveMaeApp
+=== Nave-Mãe - Sistema de Controlo ===
+Todos os servidores iniciados. Pressione CTRL+C para parar.
+[HTTP] Servidor HTTP ativo na porta 8080...
+[ServidorTCP] Iniciado na porta 5001
+[ServidorUDP] Iniciado na porta 9001
+[ServidorTCP] Nova conexão: /127.0.0.1:33744
+[ServidorTCP] Rover 3 registrado no sistema (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorTCP] Nova conexão: /127.0.0.1:33750
+[ServidorTCP] Rover 2 registrado no sistema (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=1, area=(0.0,0.0)-(0.0,0.0), tarefa=Explorar cratera A xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 1 ao rover 2
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 2 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 2 (sucesso=true)
+[ServidorUDP] Enviando missão 1 em 3 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 2 (seq=2)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 2 (seq=3)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 2 (seq=4)
+[ServidorUDP] ACK recebido do rover 2 (faltam 0 fragmentos)
+[ServidorUDP] PROGRESS recebido do rover 2 (seq=1, missão=1, progresso=0.00%%)
+[ServidorUDP] Enviada mensagem MSG_ACK para rover 2 (seq=1)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão 1 enviada com sucesso para rover 2
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] PROGRESS recebido do rover 2 (seq=1, missão=1, progresso=0.00%%)
+[ServidorUDP] Enviada mensagem MSG_ACK para rover 2 (seq=1)
+[ServidorUDP] Falha ao aguardar PROGRESS do rover 2
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.
+[ServidorUDP] Falha na confirmação da missão para rover 3
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Enviada mensagem MSG_HELLO para rover 3 (seq=1)
+[ServidorUDP] RESPONSE recebido do rover 3 (sucesso=true)
+[ServidorUDP] Enviando missão 2 em 1 fragmentos (empacotado por campos)
+[ServidorUDP] Enviada mensagem MSG_MISSION para rover 3 (seq=2)
+[ServidorTCP] Rover 2 reconectado (conexão: /127.0.0.1:33750)
+[ServidorTCP] Rover 2: pos=(10.00, 0.00) bat=100.0% vel=0.00m/s estado=ESTADO_EM_MISSAO missao=1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Nenhum rover disponível no momento.
+[ServidorTCP] Rover 3 reconectado (conexão: /127.0.0.1:33744)
+[ServidorTCP] Rover 3: pos=(0.00, 10.00) bat=100.0% vel=0.00m/s estado=ESTADO_DISPONIVEL missao=-1
+[ServidorUDP] Missão pendente encontrada: Missao{id=2, area=(0.0,0.0)-(0.0,0.0), tarefa=Coletar amostras do solo, prio=0, estado=PENDENTE}
+[ServidorUDP] Atribuindo missão 2 ao rover 3
+[ServidorUDP] Rover 3 já tem sessão ativa! Possivel problema no ML.

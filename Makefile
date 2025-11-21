@@ -26,6 +26,28 @@ run-rover3:
 run-nave:
 	gradle runNaveMaeApp
 
+#executa os 4 terminais em background
+run-demo:
+	@echo ">>> A iniciar Nave-Mãe..."
+	nohup sh -c "make run-nave" > nave.log 2>&1 &
+
+	@echo ">>> A iniciar Rover 1..."
+	nohup sh -c "make run-rover1" > rover1.log 2>&1 &
+
+	@echo ">>> A iniciar Rover 2..."
+	nohup sh -c "make run-rover2" > rover2.log 2>&1 &
+
+	@echo ">>> A iniciar Rover 3..."
+	nohup sh -c "make run-rover3" > rover3.log 2>&1 &
+
+run-test-api:
+	@echo "Testando /rovers:"
+	curl -s http://localhost:8080/rovers | jq .
+	@echo "\nTestando /missoes:"
+	curl -s http://localhost:8080/missoes | jq .
+	@echo "\nTestando /telemetria/historico:"
+	curl -s http://localhost:8080/telemetria/historico | jq .
+
 # Clean and build
 all: clean build
 

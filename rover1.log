@@ -1,0 +1,23 @@
+make[1]: Entering directory '/workspaces/CC'
+gradle runRoverApp --args="1 0.0 0.0 5001"
+
+Welcome to Gradle 9.2.1!
+
+Here are the highlights of this release:
+ - Windows ARM support
+ - Improved publishing APIs
+ - Better guidance for dependency verification failures
+
+For more details see https://docs.gradle.org/9.2.1/release-notes.html
+
+Starting a Gradle Daemon, 2 incompatible Daemons could not be reused, use --status for details
+> Task :compileJava
+> Task :processResources NO-SOURCE
+> Task :classes
+
+> Task :runRoverApp
+=== Rover - Sistema de Exploração ===
+Rover ID: 1 | Posição: (0.00, 0.00) | Porta: 5001
+Rover iniciado. Pressione CTRL+C para parar.
+[TCP] Erro cliente telemetria: Connection refused
+[ClienteUDP] Rover 1 iniciado na porta 9011

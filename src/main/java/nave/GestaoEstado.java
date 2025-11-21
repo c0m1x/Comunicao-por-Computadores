@@ -188,6 +188,8 @@ public class GestaoEstado {
      * Atualiza o progresso de uma missão. Atualiza estado da missao e do rover
      */
     public void atualizarProgresso(PayloadProgresso p) {
+        if (p == null) return;
+
         progressoMissoes.put(p.idMissao, p);
 
         // atualizar a Missao
