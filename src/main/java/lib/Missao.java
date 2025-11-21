@@ -33,15 +33,25 @@ public class Missao implements Serializable {
         this.idMissao = 0;
         this.tarefa = null;
         this.estadoMissao = EstadoMissao.PENDENTE;
+        this.duracaoMissao = 0;
+        this.intervaloAtualizacao = 0;
     }
 
-    public Missao(int idMissao, String tarefa, EstadoMissao estadoMissao) {
+    public Missao(int idMissao, String tarefa, EstadoMissao estadoMissao, long duracaoMissao, long intervaloAtualizacao) {
         this.idMissao = idMissao;
         this.tarefa = tarefa;
         this.estadoMissao = estadoMissao;
         this.x1 = 0.0f; this.y1 = 0.0f; this.x2 = 0.0f; this.y2 = 0.0f;
-        this.duracaoMissao = 0;
-        this.intervaloAtualizacao = 0;
+        if (duracaoMissao <= 0) {
+            this.duracaoMissao = 60; // 60s por omissão
+        } else {
+            this.duracaoMissao = duracaoMissao;
+        }
+        if (intervaloAtualizacao <= 0) {
+            this.intervaloAtualizacao = 2; // 2s por omissão
+        } else {
+            this.intervaloAtualizacao = intervaloAtualizacao;
+        }
         this.inicioMissao = 0;
     }
 

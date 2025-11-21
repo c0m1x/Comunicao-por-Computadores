@@ -16,7 +16,7 @@ import rover.EventoRelevante;
 
         // Identificadores
         public int idRover;
-        public int idNave = 1; // assumindo nave com ID 0
+        public int idNave;
 
         // Estado
         private EstadoRover estadoAtual;
@@ -26,7 +26,7 @@ import rover.EventoRelevante;
         public PayloadMissao missaoAtual;
         public volatile boolean temMissao;
         public volatile float progressoMissao;
-        public volatile long timestampInicioMissaoEpoch;
+        public volatile long timestampInicioMissao;
 
         // Telemetria / posição
         public volatile float posicaoX;
@@ -35,8 +35,8 @@ import rover.EventoRelevante;
         public volatile float velocidade;
         
         // timing / eventos
-        public volatile long ultimoHelloEpoch = 0;
-        public volatile long ultimoEnvioTelemetriaEpoch = 0;
+        public volatile long ultimoEnvioMensagem = 0; // nota: ver se é preciso isto para manter a nave a saber que o rover está ativo
+        public volatile long ultimoEnvioTelemetria = 0;
         public volatile EventoRelevante eventoPendente = EventoRelevante.EVENTO_NENHUM;
         public volatile EventoRelevante ultimoEvento = EventoRelevante.EVENTO_NENHUM;
 
@@ -47,6 +47,7 @@ import rover.EventoRelevante;
 
         public ContextoRover(int id, float posX, float posY) {
             this.idRover = id;
+            this.idNave = 1; // assumindo nave com ID 1
             this.posicaoX = posX;
             this.posicaoY = posY;
             this.bateria = 100.0f;
@@ -60,7 +61,10 @@ import rover.EventoRelevante;
         public EstadoRover getEstado() {
             return estadoAtual;
         }
-  
+
+        public boolean isDisponivel() {
+            return estadoAtual == EstadoRover.ESTADO_DISPONIVEL;
+        }
 
         public void transicionarEstado(EstadoRover novo) {
             if (estadoAtual != novo) {
@@ -70,19 +74,10 @@ import rover.EventoRelevante;
             }
         }
 
-        public boolean deveEnviarHello() {
-                long agora = Instant.now().getEpochSecond();
-                if ((agora - ultimoHelloEpoch) >= INTERVALO_KEEPALIVE) {
-                    ultimoHelloEpoch = agora;
-                    return true;
-                }
-                return false;
-        }
-
         public boolean deveEnviarTelemetria() {
                 long agora = Instant.now().getEpochSecond();
                 boolean deve = false;
-                if ((agora - ultimoEnvioTelemetriaEpoch) >= INTERVALO_TELEMETRIA_BASE)
+                if ((agora - ultimoEnvioTelemetria) >= INTERVALO_TELEMETRIA_BASE)
                     deve = true;
                 if (eventoPendente != EventoRelevante.EVENTO_NENHUM) {
                     deve = true;
@@ -93,7 +88,7 @@ import rover.EventoRelevante;
         }
 
         public void telemetriaEnviada() {
-                ultimoEnvioTelemetriaEpoch = Instant.now().getEpochSecond();
+                ultimoEnvioTelemetria = Instant.now().getEpochSecond();
         }
 
         public int getMissaoId() {
@@ -105,22 +100,64 @@ import rover.EventoRelevante;
         }
 
         // Notifica missão recebida (dados); a transição fica a cargo da máquina de estados
-        public void receberMissao(PayloadMissao missao, int idMissao) {
-                // Garantir valores mínimos razoáveis todo:: tirar daqui e meter em missao
+        public void iniciarMissao(PayloadMissao missao) {
                 if (missao != null) {
-                    if (missao.duracaoMissao <= 0) {
-                        missao.duracaoMissao = 60; // 60s por omissão
-                    }
-                    if (missao.intervaloAtualizacao <= 0) {
-                        missao.intervaloAtualizacao = 2; // 2s por omissão
-                    }
+                    if (missao.duracaoMissao <= 0) missao.duracaoMissao = 60;
+                    if (missao.intervaloAtualizacao <= 0) missao.intervaloAtualizacao = 2;
                 }
                 this.missaoAtual = missao;
-                this.idMissaoAtual = idMissao;
-                this.temMissao = true;
+                this.idMissaoAtual = (missao != null ? missao.idMissao : -1);
+                this.temMissao = (missao != null);
                 this.progressoMissao = 0.0f;
-                this.timestampInicioMissaoEpoch = Instant.now().getEpochSecond();
+                this.timestampInicioMissao = Instant.now().getEpochSecond();
                 this.eventoPendente = EventoRelevante.EVENTO_INICIO_MISSAO;
+        }
+
+        // Atualiza dinâmica (movimento, bateria, eventos) e progresso temporal
+        public void atualizarDuranteMissao() {
+                if (!temMissao || missaoAtual == null) return;
+
+                float destinoX = (missaoAtual.x1 + missaoAtual.x2) / 2.0f;
+                float destinoY = (missaoAtual.y1 + missaoAtual.y2) / 2.0f;
+
+                float dx = destinoX - posicaoX;
+                float dy = destinoY - posicaoY;
+                float distancia = (float) Math.sqrt(dx * dx + dy * dy);
+
+                if (distancia > 0.5f) {
+                    float passo = 0.5f;
+                    posicaoX += (dx / distancia) * passo;
+                    posicaoY += (dy / distancia) * passo;
+                    velocidade = VELOCIDADE_ROVER;
+                } else {
+                    velocidade = 0.0f;
+                }
+
+                bateria -= 0.1f;
+                if (bateria < 0.0f) bateria = 0.0f;
+
+                if (bateria < 20.0f && ultimoEvento != EventoRelevante.EVENTO_BATERIA_BAIXA) {
+                    eventoPendente = EventoRelevante.EVENTO_BATERIA_BAIXA;
+                }
+
+                long agora = Instant.now().getEpochSecond();
+                long decorrido = agora - timestampInicioMissao;
+                if (missaoAtual.duracaoMissao > 0) {
+                    progressoMissao = (float) (((double) decorrido / (double) missaoAtual.duracaoMissao) * 100.0);
+                    if (progressoMissao > 100.0f) progressoMissao = 100.0f;
+                }
+
+                int checkpoint = (int) (progressoMissao / 25.0f);
+                if (checkpoint > 0) {
+                    eventoPendente = EventoRelevante.EVENTO_CHECKPOINT_MISSAO;
+                }
+        }
+
+        public void concluirMissao() {
+                temMissao = false;
+                idMissaoAtual = -1;
+                progressoMissao = 0.0f;
+                missaoAtual = null;
         }
 
         // Preenche payload de telemetria atual

@@ -39,9 +39,9 @@ public class GestaoEstado {
         // NOTA: Missões para testar, depois tirar daqui
 
         // uma missao que ocupe mais de 512 bytes para testar fragmentação
-        Missao m1 = new Missao(1, "Explorar cratera A " + "x".repeat(500), Missao.EstadoMissao.PENDENTE);
-        Missao m2 = new Missao(2, "Coletar amostras do solo", Missao.EstadoMissao.PENDENTE);
-        Missao m3 = new Missao(3, "Analisar atmosfera", Missao.EstadoMissao.PENDENTE);
+        Missao m1 = new Missao(1, "Explorar cratera A " + "x".repeat(500), Missao.EstadoMissao.PENDENTE, 30, 5);
+        Missao m2 = new Missao(2, "Coletar amostras do solo", Missao.EstadoMissao.PENDENTE, 50, 5);
+        Missao m3 = new Missao(3, "Analisar atmosfera", Missao.EstadoMissao.PENDENTE, 150, 10);
 
         this.adicionarMissao(m1.idMissao, m1);
         this.adicionarMissao(m2.idMissao, m2);
