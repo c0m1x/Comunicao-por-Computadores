@@ -106,20 +106,12 @@ public class MaquinaEstados {
             }
 
             long agora = Instant.now().getEpochSecond();
-            double decorrido = (double) (agora - contexto.timestampInicioMissaoEpoch);
-            if (contexto.missaoAtual instanceof PayloadMissao) {
-                try {
-                    java.lang.reflect.Field f = contexto.missaoAtual.getClass().getDeclaredField("duracaoMissaoSecs");
-                    f.setAccessible(true);
-                    long secs = f.getLong(contexto.missaoAtual);
-                    if (secs > 0) {
-                        contexto.progressoMissao = (float) ((decorrido / (double) secs) * 100.0);
-                        if (contexto.progressoMissao > 100.0f)
-                            contexto.progressoMissao = 100.0f;
-                    }
-                } catch (NoSuchFieldException | IllegalAccessException ex) {
-                    // Sem campo de duração — ignoramos cálculo temporal
-                }
+            long decorrido = agora - contexto.timestampInicioMissaoEpoch;
+            // Campo "duracaoMissao" contém a duração total em segundos
+            if (contexto.missaoAtual.duracaoMissao > 0) {
+                contexto.progressoMissao = (float) (((double) decorrido / (double) contexto.missaoAtual.duracaoMissao) * 100.0);
+                if (contexto.progressoMissao > 100.0f)
+                    contexto.progressoMissao = 100.0f;
             }
 
             int checkpoint = (int) (contexto.progressoMissao / 25.0f);
