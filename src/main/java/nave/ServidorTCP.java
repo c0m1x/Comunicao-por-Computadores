@@ -191,18 +191,6 @@ public class ServidorTCP implements Runnable {
                 callback.onMudancaEstado(idRover, tel.estadoOperacional);
             }
         }
-
-        //nota: este equals nao sei se vai funcionar bem, testar
-        if ("SUCCESS".equals(tel.estadoOperacional.toString()) && rover.idMissaoAtual > 0) {
-            Missao missao = estado.obterMissao(rover.idMissaoAtual);
-
-            if (missao != null && missao.estadoMissao == Missao.EstadoMissao.EM_ANDAMENTO) {
-                missao.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
-                rover.temMissao = false;
-                rover.progressoMissao = 100.0f;
-                System.out.println("[ServidorTCP] Missão " + rover.idMissaoAtual + " concluída pelo Rover " + idRover);
-            }
-        }
     }
 
     public void parar() {
