@@ -22,7 +22,6 @@ public class Rover {
     public float velocidade;
     public EstadoRover estadoRover;
     public int idMissaoAtual;
-    public float progressoMissao;
     public boolean temMissao;
 
     // Endpoint opcional do rover (se conhecido/configurado)
@@ -37,7 +36,6 @@ public class Rover {
         this.velocidade = 0.0f;
         this.estadoRover = EstadoRover.ESTADO_DISPONIVEL;
         idMissaoAtual = -1;
-        progressoMissao = 0.0f;
         temMissao = false;
         this.enderecoHost = enderecoHost;
         this.portaUdp = null;
@@ -45,7 +43,7 @@ public class Rover {
 
     @Override
     public String toString() {
-        return String.format("Rover{id=%d, pos=(%.2f,%.2f), bat=%.1f%%, vel=%.2fm/s, estado=%s, missao=%d, progresso=%.1f%%}",
-                idRover, posicaoX, posicaoY, bateria, velocidade, estadoRover, idMissaoAtual, progressoMissao);
+        return String.format("Rover{id=%d, pos=(%.2f,%.2f), bat=%.1f%%, vel=%.2fm/s, estado=%s, missao=%d}",
+                idRover, posicaoX, posicaoY, bateria, velocidade, estadoRover, idMissaoAtual);
     }
 }

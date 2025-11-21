@@ -36,8 +36,6 @@ public class GestaoEstado {
         this.historicoTelemetria = new ConcurrentLinkedQueue<>();
         this.missoesConcluidas = new ConcurrentSkipListSet<>();
 
-        // NOTA: Missões para testar, depois tirar daqui
-
         // uma missao que ocupe mais de 512 bytes para testar fragmentação
         Missao m1 = new Missao(1, "Explorar cratera A " + "x".repeat(500), Missao.EstadoMissao.PENDENTE, 30, 5);
         Missao m2 = new Missao(2, "Coletar amostras do solo", Missao.EstadoMissao.PENDENTE, 50, 5);
@@ -113,8 +111,7 @@ public class GestaoEstado {
         Missao missao = obterMissao(idMissao);
         if (rover == null || missao == null) return;
 
-        //nota: ver onde metemos as informações do progresso, talvez na propria missão
-        rover.progressoMissao = progressoPercent;
+        missao.progressoMissao = progressoPercent;
 
         if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
             missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
@@ -201,9 +198,9 @@ public class GestaoEstado {
     public void atualizarProgresso(PayloadProgresso p) {
         progressoMissoes.put(p.idMissao, p);
 
-        for (Rover r : rovers.values()) {
-            if (r.idMissaoAtual == p.idMissao)
-                r.progressoMissao = p.progressoPercentagem;
+        Missao m = missoes.get(p.idMissao);
+        if (m != null) {
+            m.progressoMissao = p.progressoPercentagem;
         }
     }
 

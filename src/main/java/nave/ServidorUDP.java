@@ -249,7 +249,7 @@ public class ServidorUDP implements Runnable {
             ByteArrayOutputStream atual = new ByteArrayOutputStream();
             for (byte[] bloco : blocos) {
                 if (bloco.length > TAMANHO_FRAGMENTO) {
-                    // Campo maior que o tamanho de fragmento — enviar sozinho (nota académica)
+                    // Campo maior que o tamanho de fragmento — enviar sozinho
                     if (atual.size() > 0) {
                         frags.add(atual.toByteArray());
                         atual.reset();
