@@ -274,14 +274,6 @@ public class ClienteUDP implements Runnable {
             payload.intervaloAtualizacao = intSeg;
             payload.inicioMissao = iniSeg;
 
-            // Aplicar defaults seguros caso venham a zero/negativos
-            if (payload.duracaoMissao <= 0) {
-                payload.duracaoMissao = 60; // 60s por omissão
-            }
-            if (payload.intervaloAtualizacao <= 0) {
-                payload.intervaloAtualizacao = 2; // 2s por omissão
-            }
-
             // prioridade
             payload.prioridade = dis.readInt();
 
