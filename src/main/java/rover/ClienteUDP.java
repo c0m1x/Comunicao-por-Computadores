@@ -100,7 +100,7 @@ public class ClienteUDP implements Runnable {
                 processarHello(msg, endereco, porta);
                 break;
             case MSG_MISSION:
-                processarMission(msg, endereco, porta);
+                processarMission(msg);
                 break;
             case MSG_ACK:
                 processarAck(msg);
@@ -127,15 +127,15 @@ public class ClienteUDP implements Runnable {
         } else {
             System.out.println("[ClienteUDP] Rover não disponível para missão");
         }
-        
+        sessaoAtual.seqAtual = msg.header.seq;
         // Enviar RESPONSE
-        enviarResponse(msg.header.idMissao, msg.header.seq, disponivel, endereco, porta);
+        enviarResponse(disponivel);
     }
     
     /**
      * Processa fragmento MISSION.
      */
-    private void processarMission(MensagemUDP msg, InetAddress endereco, int porta) {
+    private void processarMission(MensagemUDP msg) {
         if (sessaoAtual == null || sessaoAtual.idMissao != msg.header.idMissao) {
             System.err.println("[ClienteUDP] Fragmento recebido sem sessão ativa");
             return;
@@ -184,7 +184,10 @@ public class ClienteUDP implements Runnable {
                 if (reconstruirMissao()) {
                     System.out.println("[ClienteUDP] Missão recebida com sucesso!");
                     enviarAck();
-                    reportarMissao();
+                    // Iniciar a reportagem em thread separada para não bloquear a receção
+                    Thread t = new Thread(this::reportarMissao);
+                    t.setDaemon(true);
+                    t.start();
                 } else {
                     System.err.println("[ClienteUDP] Erro ao reconstruir missão");
                 }
@@ -299,19 +302,19 @@ public class ClienteUDP implements Runnable {
     /**
      * Envia mensagem RESPONSE.
      */
-    private void enviarResponse(int idMissao, int seq, boolean sucesso, InetAddress endereco, int porta) {
+    private void enviarResponse(boolean sucesso) {
         MensagemUDP msg = new MensagemUDP();
         msg.header.tipo = TipoMensagem.MSG_RESPONSE;
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = idMissao;
+        msg.header.idMissao = sessaoAtual.idMissao;
         //msg.header.timestamp = new Time(System.currentTimeMillis());
-        msg.header.seq = seq;
+        msg.header.seq = sessaoAtual.seqAtual;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = sucesso;
         msg.payload = null;
         
-        enviarMensagem(msg, endereco, porta);
+        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
         System.out.println("[ClienteUDP] RESPONSE enviado (sucesso=" + sucesso + ")");
     }
     
@@ -461,15 +464,8 @@ public class ClienteUDP implements Runnable {
             System.out.println("[ClienteUDP] PROGRESS enviado (seq=" + msg.header.seq + 
                              ", progresso=" + String.format("%.2f", progressoPerc) + "%%)");
             
-            // Aguardar ACK com timeout
-            long inicio = System.currentTimeMillis();
-            while (System.currentTimeMillis() - inicio < TIMEOUT_MS && sessaoAtual.aguardandoAck) {
-                try {
-                    Thread.sleep(100); //TODO: rever os timeouts
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
+            // Aguardar ACK (processamento acontece no laço principal de receção)
+            aguardarAck(TIMEOUT_MS);
             
             if (sessaoAtual.aguardandoAck) {
                 System.out.println("[ClienteUDP] Timeout aguardando ACK - Retransmitindo PROGRESS (tentativa " + (tentativas + 1) + ")");
@@ -504,15 +500,8 @@ public class ClienteUDP implements Runnable {
             System.out.println("[ClienteUDP] COMPLETED enviado (seq=" + msg.header.seq + 
                              ", sucesso=" + sucesso + ")");
             
-            // Aguardar ACK com timeout
-            long inicio = System.currentTimeMillis();
-            while (System.currentTimeMillis() - inicio < TIMEOUT_MS && sessaoAtual.aguardandoAck) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
+            // Aguardar ACK (processamento acontece no laço principal de receção)
+            aguardarAck(TIMEOUT_MS);
             
             if (sessaoAtual.aguardandoAck) {
                 System.out.println("[ClienteUDP] Timeout aguardando ACK - Retransmitindo COMPLETED (tentativa " + (tentativas + 1) + ")");
@@ -530,6 +519,21 @@ public class ClienteUDP implements Runnable {
         if (maquina != null) {
             maquina.getContexto().transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
             maquina.getContexto().eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
+        }
+    }
+
+    /**
+     * Aguarda pela limpeza do sinal de aguardandoAck até timeoutMs.
+     * O processamento do ACK ocorre no laço principal de receção.
+     */
+    private void aguardarAck(long timeoutMs) {
+        long inicio = System.currentTimeMillis();
+        while (System.currentTimeMillis() - inicio < timeoutMs && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                return;
+            }
         }
     }
     

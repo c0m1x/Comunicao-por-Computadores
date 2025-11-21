@@ -179,6 +179,13 @@ public class ServidorUDP implements Runnable {
                 return;
             }
 
+            //Passo 6: Enviar ACK final para COMPLETED 
+            if(!enviarAckParaRover(sessao)) {
+                System.err.println("[ServidorUDP] Falha ao enviar ACK final para COMPLETED do rover " + sessao.rover.idRover);
+                finalizarSessao(sessao, false);
+                return;
+            }
+
             finalizarSessao(sessao, true);
             
         } catch (Exception e) {
@@ -387,11 +394,11 @@ public class ServidorUDP implements Runnable {
         long timeoutProgressMs = intervaloAtualizacao * 2;
 
         long inicioJanela = System.currentTimeMillis();
-        int ultimoSeq = sessao.ultimoSeqProgress;
+        int ultimoSeq = sessao.ultimoSeq;
         while (!sessao.completedRecebido) {
             // Se chegou novo progresso, reinicia janela
-            if (sessao.ultimoSeqProgress != ultimoSeq) {
-                ultimoSeq = sessao.ultimoSeqProgress;
+            if (sessao.ultimoSeq != ultimoSeq) {
+                ultimoSeq = sessao.ultimoSeq;
                 inicioJanela = System.currentTimeMillis();
             }
             // Timeout sem progresso nem completed
@@ -461,7 +468,6 @@ public class ServidorUDP implements Runnable {
                     break;
                     
                 case MSG_PROGRESS:
-                //TODO: tratar como os outros, fazer metodo separado para aguardar progress e aqui so atualizar a sessao
                     processarProgress(msg, idRover, pacote);
                     break;
                     
@@ -495,11 +501,11 @@ public class ServidorUDP implements Runnable {
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             if (sessao != null) {
                 sessao.recebendoProgresso = true;
-                sessao.ultimoSeqProgress = msg.header.seq;
-                enviarAckParaRover(msg, sessao);
-            }
+                sessao.ultimoSeq = msg.header.seq;
+                enviarAckParaRover(sessao);
         }
     }
+}
     
     /**
      * Processa mensagem COMPLETED do rover.
@@ -516,29 +522,25 @@ public class ServidorUDP implements Runnable {
         if (sessao != null) {
             sessao.completedRecebido = true;
             sessao.completedSucesso = msg.header.flagSucesso;
+            sessao.ultimoSeq = msg.header.seq;
         }
-        
-        // Enviar ACK
-        //TODO: VER se deixamos aqui ou se metemos no executar sessao missao
-        if (sessao != null) enviarAckParaRover(msg, sessao);
     }
     
     /**
      * Envia ACK para o rover (usado para PROGRESS e COMPLETED).
      */
-    //NOTA: talvez isto dar return de um boolean como os outros que enviam mensagem
-    private void enviarAckParaRover(MensagemUDP msgOriginal, SessaoServidorMissionLink sessao) {
+    private boolean enviarAckParaRover(SessaoServidorMissionLink sessao) {
         MensagemUDP ack = new MensagemUDP();
         ack.header.tipo = TipoMensagem.MSG_ACK;
         ack.header.idEmissor = 0; // Nave-Mãe
-        ack.header.idRecetor = msgOriginal.header.idEmissor;
-        ack.header.idMissao = msgOriginal.header.idMissao;
-        ack.header.seq = msgOriginal.header.seq;
+        ack.header.idRecetor = sessao.rover.idRover;
+        ack.header.idMissao = sessao.missao.idMissao;
+        ack.header.seq = sessao.ultimoSeq;
         ack.header.totalFragm = 1;
         ack.header.flagSucesso = true;
         ack.payload = null;
         
-        enviarMensagemUDP(ack, sessao);
+        return enviarMensagemUDP(ack, sessao);
     }
     
     /**
