@@ -213,12 +213,14 @@ public class ServidorUDP implements Runnable {
     }
     
     /**
-     * Aguarda RESPONSE do rover.
-     */
-    private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
-
-        //talvez adicionar aqui outro while para fazer retries no envio do hello se nao receber resposta com MAX_RETRIES
+ * Aguarda RESPONSE do rover com retry automático do HELLO.
+ */
+private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
+    int tentativas = 0;
+    
+    while (tentativas < MAX_RETRIES) {
         long inicio = System.currentTimeMillis();
+        
         while (System.currentTimeMillis() - inicio < TIMEOUT_MS) {
             if (sessao.responseRecebido) {
                 return sessao.responseSucesso;
@@ -229,8 +231,18 @@ public class ServidorUDP implements Runnable {
                 return false;
             }
         }
-        return false;
+        
+        // Timeout sem resposta - retry
+        tentativas++;
+        if (tentativas < MAX_RETRIES) {
+            if (!enviarHello(sessao)) {
+                return false;
+            }
+        }
     }
+
+    return false;
+}
     
     /**
      * Fragmenta e envia todos os fragmentos da missão.
