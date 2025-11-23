@@ -153,7 +153,6 @@ public class ServidorUDP implements Runnable {
             // Passo 2: Aguardar RESPONSE (processado em processarMensagemRecebida)
             if (!aguardarResponse(sessao)) {
                 System.err.println("[ServidorUDP] Timeout aguardando RESPONSE do rover " + sessao.rover.idRover);
-                //todo: implementar retry ou tratamento de erro
                 finalizarSessao(sessao, false);
                 return;
             }
