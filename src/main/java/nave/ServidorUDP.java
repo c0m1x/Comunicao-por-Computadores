@@ -460,7 +460,7 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
                     sessao.responseRecebido = true;
                     sessao.responseSucesso = msg.header.flagSucesso;
                     System.out.println("[ServidorUDP] RESPONSE recebido do rover " + idRover + 
-                                     " (sucesso=" + msg.header.flagSucesso + ")");
+                                     " (sucesso=" + msg.header.flagSucesso + ", seq=" + msg.header.seq + ")");
                     break;
                     
                 case MSG_ACK:
@@ -474,7 +474,7 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
                             }
                         }
                         System.out.println("[ServidorUDP] ACK recebido do rover " + idRover + 
-                                         " (faltam " + ack.missing.length + " fragmentos)");
+                                         " (faltam " + ack.missing.length + " fragmentos" + ", seq=" + msg.header.seq + ")");
                     }
                     break;
                     

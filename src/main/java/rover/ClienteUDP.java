@@ -162,6 +162,7 @@ public class ClienteUDP implements Runnable {
         
         if (dados != null) {
             sessaoAtual.fragmentosRecebidos.put(seq, dados);
+            sessaoAtual.seqAtual = seq;
         }
         
         // Verificar se recebemos todos os fragmentos
@@ -400,7 +401,6 @@ public class ClienteUDP implements Runnable {
         if (sessaoAtual == null) return;
         int missionId = sessaoAtual.idMissao;
         sessaoAtual.emExecucao = true;
-        sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS TODO: ajustar se necessário
         sessaoAtual.inicioMissao = System.currentTimeMillis();
         
         // Limpar dados (não mais necessários)
@@ -452,7 +452,7 @@ public class ClienteUDP implements Runnable {
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
         msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = sessaoAtual.seqAtual++;
+        msg.header.seq = ++sessaoAtual.seqAtual;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = true;
         
@@ -494,7 +494,7 @@ public class ClienteUDP implements Runnable {
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
         msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = sessaoAtual.seqAtual++;
+        msg.header.seq = ++sessaoAtual.seqAtual;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = sucesso;
         msg.payload = null; // COMPLETED não precisa payload
