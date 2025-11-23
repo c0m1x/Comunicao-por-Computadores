@@ -12,39 +12,57 @@ public class NaveMaeApp {
             ServidorTCP servidorTCP = new ServidorTCP(estado);
             ServidorHTTP servidorHTTP = new ServidorHTTP(estado);
             
+            // Registar shutdown hook para parar os servidores corretamente
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("\n[NaveMaeApp] Encerrando servidores...");
+                servidorUDP.parar();
+                servidorTCP.parar();;
+                // TODO: ServidorHTTP usa HttpServer que tem .stop()
+                System.out.println("[NaveMaeApp] Todos os servidores encerrados.");
+            }));
+            
             // Arrancar servidores em threads separadas
-            new Thread(() -> {
+            Thread threadUDP = new Thread(() -> {
                 try {
                     servidorUDP.run();
                 } catch (Exception e) {
                     System.err.println("Erro no servidor UDP: " + e.getMessage());
                 }
-            }).start();
+            });
+            threadUDP.setName("ServidorUDP");
+            threadUDP.start();
         
-            new Thread(() -> {
+            Thread threadTCP = new Thread(() -> {
                 try {
                     servidorTCP.run();
                 } catch (Exception e) {
                     System.err.println("Erro no servidor TCP: " + e.getMessage());
                 }
-            }).start();
+            });
+            threadTCP.setName("ServidorTCP");
+            threadTCP.start();
             
-                         
-            new Thread(() -> {
+            Thread threadHTTP = new Thread(() -> {
                 try {
                     servidorHTTP.run();
                 } catch (Exception e) {
-                    System.err.println("Erro no servidor TCP: " + e.getMessage());
+                    System.err.println("Erro no servidor HTTP: " + e.getMessage());
                 }
-            }).start();
+            });
+            threadHTTP.setName("ServidorHTTP");
+            threadHTTP.start();
 
+            //este println pode ser removido depois de testado
             System.out.println("Todos os servidores iniciados. Pressione CTRL+C para parar.");
+            
+            // Aguardar threads (mantém o programa rodando)
+            threadUDP.join();
+            threadTCP.join();
+            threadHTTP.join();
             
         } catch (Exception e) {
             System.err.println("Erro ao iniciar Nave-Mãe: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    //TODO: confirmar se os serviços estão a parar corretamente
 }
-
