@@ -9,8 +9,6 @@ import lib.TipoMensagem;
  */
 public class CabecalhoUDP implements Serializable{
 
-    //todo: perceber para que serve - assim é sus
-    private static final long serialVersionUID = 1L;
     public TipoMensagem tipo;
     public int idEmissor;
     public int idRecetor;

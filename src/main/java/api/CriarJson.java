@@ -37,7 +37,6 @@ public class CriarJson {
                 + "\"velocidade\":" + r.velocidade + ","
                 + "\"estadoOperacional\":\"" + escape(r.estadoRover.toString()) + "\","
                 + "\"idMissaoAtual\":" + r.idMissaoAtual + ","
-                + "\"progressoMissao\":" + r.progressoMissao + ","
                 + "\"temMissao\":" + r.temMissao
                 + "}";
     }

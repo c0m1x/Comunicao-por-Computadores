@@ -36,8 +36,6 @@ public class GestaoEstado {
         this.historicoTelemetria = new ConcurrentLinkedQueue<>();
         this.missoesConcluidas = new ConcurrentSkipListSet<>();
 
-        // NOTA: Missões para testar, depois tirar daqui
-
         // uma missao que ocupe mais de 512 bytes para testar fragmentação
         Missao m1 = new Missao(1, "Explorar cratera A " + "x".repeat(500), Missao.EstadoMissao.PENDENTE, 30, 5);
         Missao m2 = new Missao(2, "Coletar amostras do solo", Missao.EstadoMissao.PENDENTE, 50, 5);
@@ -205,12 +203,7 @@ public class GestaoEstado {
             }
         }
 
-        // atualizar Rover que está a executar a missão
-        for (Rover r : rovers.values()) {
-            if (r.idMissaoAtual == p.idMissao) {
-                r.progressoMissao = p.progressoPercentagem;
-            }
-        }
+        missao.progressoMissao = p.progressoPercentagem;
     }
 
     /** Atualiza o progresso de uma missão associada a um rover. - funciona como wrapper*/

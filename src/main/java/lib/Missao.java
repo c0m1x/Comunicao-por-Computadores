@@ -28,6 +28,7 @@ public class Missao implements Serializable {
     public int prioridade; // 1-5
 
     public EstadoMissao estadoMissao;
+    public float progressoMissao;
 
     public Missao() {
         this.idMissao = 0;
@@ -35,6 +36,7 @@ public class Missao implements Serializable {
         this.estadoMissao = EstadoMissao.PENDENTE;
         this.duracaoMissao = 0;
         this.intervaloAtualizacao = 0;
+        this.progressoMissao = 0.0f;
     }
 
     public Missao(int idMissao, String tarefa, EstadoMissao estadoMissao, long duracaoMissao, long intervaloAtualizacao) {
@@ -53,6 +55,7 @@ public class Missao implements Serializable {
             this.intervaloAtualizacao = intervaloAtualizacao;
         }
         this.inicioMissao = 0;
+        this.progressoMissao = 0.0f;
     }
 
     /** Constrói uma Missao a partir de um PayloadMissao. */
@@ -67,10 +70,10 @@ public class Missao implements Serializable {
         this.inicioMissao = p.inicioMissao;
         this.prioridade = p.prioridade;
         this.estadoMissao = EstadoMissao.PENDENTE;
+        this.progressoMissao = 0.0f;
     }
 
-    /** Converte esta Missao para um Mensagens.PayloadMissao (compatibilidade).
-     * Nota: campos de estado não são copiados para o Payload.
+    /** Converte esta Missao para um PayloadMissao (compatibilidade).
      */
     public PayloadMissao toPayload() {
         PayloadMissao p = new PayloadMissao();

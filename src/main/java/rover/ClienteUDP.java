@@ -4,13 +4,16 @@ import lib.SessaoClienteMissionLink;
 import lib.TipoMensagem;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.payloads.*;
+import lib.Rover.EstadoRover;
 
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import lib.Rover.EstadoRover;
+import java.util.List; 
+import java.util.Arrays;
+
+
 
 /**
  * Cliente UDP do Rover (MissionLink).
@@ -162,6 +165,7 @@ public class ClienteUDP implements Runnable {
         
         if (dados != null) {
             sessaoAtual.fragmentosRecebidos.put(seq, dados);
+            sessaoAtual.seqAtual = seq;
         }
         
         // Verificar se recebemos todos os fragmentos
@@ -207,7 +211,46 @@ public class ClienteUDP implements Runnable {
             System.out.println("[ClienteUDP] ACK recebido para seq=" + msg.header.seq + 
                              " (sucesso=" + msg.header.flagSucesso + ")");
             sessaoAtual.aguardandoAck = false;
+
+            // Se o ACK veio com progresso perdido, reenviar os PROGRESS
+            if (msg.payload instanceof PayloadAck) {
+                PayloadAck ack = (PayloadAck) msg.payload;
+                if (ack.missing != null && ack.missing.length > 0) {
+                    System.out.println("[ClienteUDP] Reenviando PROGRESS perdido: " + Arrays.toString(ack.missing));
+                    for (int seq : ack.missing) {
+                        // Reenviar PROGRESS correspondente ao seq
+                        reenviarProgress(seq);
+                    }
+                }
+            }
         }
+    }
+
+    /**
+     * Reenvia PROGRESS para o seq especificado, usando os dados mais recentes.
+     * (No modelo atual, reenvia o progresso atual, pois não armazena histórico)
+     */
+    private void reenviarProgress(int seq) {
+        if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
+
+        PayloadProgresso progresso = sessaoAtual.progressosEnviados.get(seq);
+        if (progresso == null) {
+            System.out.println("[ClienteUDP] Não há progresso salvo para seq=" + seq + ", ignorando reenvio.");
+            return;
+        }
+
+        MensagemUDP msg = new MensagemUDP();
+        msg.header.tipo = TipoMensagem.MSG_PROGRESS;
+        msg.header.idEmissor = idRover;
+        msg.header.idRecetor = 0; // Nave-Mãe
+        msg.header.idMissao = sessaoAtual.idMissao;
+        msg.header.seq = seq;
+        msg.header.totalFragm = 1;
+        msg.header.flagSucesso = true;
+        msg.payload = progresso;
+
+        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
+        System.out.println("[ClienteUDP] PROGRESS reenviado (seq=" + seq + ")");
     }
     
     /**
@@ -400,7 +443,6 @@ public class ClienteUDP implements Runnable {
         if (sessaoAtual == null) return;
         int missionId = sessaoAtual.idMissao;
         sessaoAtual.emExecucao = true;
-        sessaoAtual.seqAtual = 1; // Começa em 1 para PROGRESS TODO: ajustar se necessário
         sessaoAtual.inicioMissao = System.currentTimeMillis();
         
         // Limpar dados (não mais necessários)
@@ -452,7 +494,7 @@ public class ClienteUDP implements Runnable {
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
         msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = sessaoAtual.seqAtual++;
+        msg.header.seq = ++sessaoAtual.seqAtual;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = true;
         
@@ -462,6 +504,9 @@ public class ClienteUDP implements Runnable {
         progresso.tempoDecorrido = tempoDecorrido / 1000;
         progresso.progressoPercentagem = progressoPerc;
         msg.payload = progresso;
+
+        // Registrar progresso enviado
+        sessaoAtual.progressosEnviados.put(msg.header.seq, progresso);
         
         // Tentar enviar com retransmissão
         sessaoAtual.aguardandoAck = true;
@@ -494,7 +539,7 @@ public class ClienteUDP implements Runnable {
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
         msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = sessaoAtual.seqAtual++;
+        msg.header.seq = ++sessaoAtual.seqAtual;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = sucesso;
         msg.payload = null; // COMPLETED não precisa payload

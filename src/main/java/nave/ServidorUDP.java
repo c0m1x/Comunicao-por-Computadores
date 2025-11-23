@@ -153,7 +153,6 @@ public class ServidorUDP implements Runnable {
             // Passo 2: Aguardar RESPONSE (processado em processarMensagemRecebida)
             if (!aguardarResponse(sessao)) {
                 System.err.println("[ServidorUDP] Timeout aguardando RESPONSE do rover " + sessao.rover.idRover);
-                //todo: implementar retry ou tratamento de erro
                 finalizarSessao(sessao, false);
                 return;
             }
@@ -261,7 +260,7 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
             ByteArrayOutputStream atual = new ByteArrayOutputStream();
             for (byte[] bloco : blocos) {
                 if (bloco.length > TAMANHO_FRAGMENTO) {
-                    // Campo maior que o tamanho de fragmento — enviar sozinho (nota académica)
+                    // Campo maior que o tamanho de fragmento — enviar sozinho
                     if (atual.size() > 0) {
                         frags.add(atual.toByteArray());
                         atual.reset();
@@ -460,12 +459,14 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
                 case MSG_RESPONSE:
                     sessao.responseRecebido = true;
                     sessao.responseSucesso = msg.header.flagSucesso;
+                    sessao.ultimoSeq = msg.header.seq;
                     System.out.println("[ServidorUDP] RESPONSE recebido do rover " + idRover + 
-                                     " (sucesso=" + msg.header.flagSucesso + ")");
+                                     " (sucesso=" + msg.header.flagSucesso + ", seq=" + msg.header.seq + ")");
                     break;
                     
                 case MSG_ACK:
                     sessao.ackRecebido = true;
+                    sessao.ultimoSeq = msg.header.seq;
                     if (msg.payload instanceof PayloadAck) {
                         PayloadAck ack = (PayloadAck) msg.payload;
                         sessao.fragmentosPerdidos.clear();
@@ -475,7 +476,7 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
                             }
                         }
                         System.out.println("[ServidorUDP] ACK recebido do rover " + idRover + 
-                                         " (faltam " + ack.missing.length + " fragmentos)");
+                                         " (faltam " + ack.missing.length + " fragmentos" + ", seq=" + msg.header.seq + ")");
                     }
                     break;
                     
@@ -505,18 +506,37 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
             System.out.println("[ServidorUDP] PROGRESS recebido do rover " + idRover + 
                              " (seq=" + msg.header.seq + ", missão=" + progresso.idMissao + 
                              ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
-            
-            // Atualizar estado da missão no GestaoEstado
-            estado.atualizarProgresso(progresso);
 
-            // Enviar ACK
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             if (sessao != null) {
+                // Tratamento de duplicados e perdidos
+                int seqAtual = msg.header.seq;
+                int seqEsperado = sessao.ultimoSeq + 1;
+
+                // Duplicado: descarta
+                if (seqAtual == sessao.ultimoSeq) {
+                    System.out.println("[ServidorUDP] PROGRESS duplicado descartado (seq=" + seqAtual + ")");
+                    return;
+                }
+
+                // Perdidos: seq não é o próximo esperado
+                sessao.progressoPerdido = new ArrayList<>();
+                if (seqAtual > seqEsperado) {
+                    for (int s = seqEsperado; s < seqAtual; s++) {
+                        sessao.progressoPerdido.add(s);
+                    }
+                    System.out.println("[ServidorUDP] PROGRESS perdido detectado: " + sessao.progressoPerdido);
+                }
+
+                // Atualizar estado da missão no GestaoEstado
+                estado.atualizarProgresso(progresso);
+
+                // Enviar ACK, informando progresso perdido se houver
                 sessao.recebendoProgresso = true;
-                sessao.ultimoSeq = msg.header.seq;
+                sessao.ultimoSeq = seqAtual;
                 enviarAckParaRover(sessao);
+            }
         }
-    }
 }
     
     /**
@@ -549,9 +569,25 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
         ack.header.idMissao = sessao.missao.idMissao;
         ack.header.seq = sessao.ultimoSeq;
         ack.header.totalFragm = 1;
-        ack.header.flagSucesso = true;
-        ack.payload = null;
-        
+        // Se houver progresso perdido, flagSucesso = false
+        boolean temProgressoPerdido = sessao.progressoPerdido != null && !sessao.progressoPerdido.isEmpty();
+        ack.header.flagSucesso = !temProgressoPerdido;
+
+        if (temProgressoPerdido) {
+            PayloadAck payloadAck = new PayloadAck();
+            payloadAck.missingCount = sessao.progressoPerdido.size();
+            payloadAck.missing = new int[sessao.progressoPerdido.size()];
+            for (int i = 0; i < sessao.progressoPerdido.size(); i++) {
+                payloadAck.missing[i] = sessao.progressoPerdido.get(i);
+            }
+            ack.payload = payloadAck;
+        } else {
+            ack.payload = null;
+        }
+
+        // Limpa progressoPerdido após enviar ACK //TODO: rever se é aqui que deve ser limpo
+        sessao.progressoPerdido = null;
+
         return enviarMensagemUDP(ack, sessao);
     }
     

@@ -3,6 +3,7 @@ package lib;
 import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
  /**
      * Classe que representa uma sessão de envio de missão no servidor.
@@ -30,6 +31,9 @@ import java.util.Set;
         public int totalFragmentos = 0;
         public byte[][] fragmentos;
         public Set<Integer> fragmentosPerdidos = new HashSet<>();
+
+        // Progresso perdido (seqs de PROGRESS não recebidos)
+        public List<Integer> progressoPerdido = null;
         
         public SessaoServidorMissionLink(Rover rover, Missao missao) {
             this.rover = rover;
