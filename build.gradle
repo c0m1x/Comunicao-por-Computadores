@@ -36,3 +36,10 @@ tasks.register('runNaveMaeApp', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'nave.NaveMaeApp'
 }
+
+tasks.register('runGroundControlApp', JavaExec) {
+    group = 'application'
+    description = 'Run the GroundControlApp main class'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'api.gc.GroundControlApp'
+}
