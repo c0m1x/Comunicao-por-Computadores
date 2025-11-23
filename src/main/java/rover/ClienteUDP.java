@@ -147,7 +147,7 @@ public class ClienteUDP implements Runnable {
         int seq = msg.header.seq;
         
         // Atualizar total de fragmentos se necessário (primeira vez que recebemos um MISSION)
-        if (sessaoAtual.totalFragmentos == 0 && msg.header.totalFragm > 1) {
+        if (sessaoAtual.totalFragmentos == 0 && msg.header.totalFragm >= 1) {
             sessaoAtual.totalFragmentos = msg.header.totalFragm;
             System.out.println("[ClienteUDP] Total de fragmentos atualizado: " + sessaoAtual.totalFragmentos);
         }
