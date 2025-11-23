@@ -104,19 +104,6 @@ public class GestaoEstado {
         return missoes.remove(id);
     }
 
-
-    /** Atualiza progresso de missão e garante estado EM_ANDAMENTO. */
-    public void atualizarProgressoMissao(int idRover, int idMissao, float progressoPercent) {
-        Rover rover = obterRover(idRover);
-        Missao missao = obterMissao(idMissao);
-        if (rover == null || missao == null) return;
-
-        missao.progressoMissao = progressoPercent;
-
-        if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
-            missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
-        }
-    }
     /** Devolve a missão associada ao id, ou null se não existir. */
     public Missao obterMissao(int id) {
         return missoes.get(id);
@@ -195,13 +182,35 @@ public class GestaoEstado {
         return progressoMissoes;
     }
     
+    /**
+     * Atualiza o progresso de uma missão. Atualiza estado da missao e do rover
+     */
     public void atualizarProgresso(PayloadProgresso p) {
+        if (p == null) return;
+
         progressoMissoes.put(p.idMissao, p);
 
-        Missao m = missoes.get(p.idMissao);
-        if (m != null) {
-            m.progressoMissao = p.progressoPercentagem;
+        // atualizar a Missao
+        Missao missao = missoes.get(p.idMissao);
+        if (missao != null) {
+            if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
+                missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
+            }
+
+            if (p.progressoPercentagem >= 100.0f) {
+                missao.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
+                missoesConcluidas.add(p.idMissao);
+            }
         }
+
+        missao.progressoMissao = p.progressoPercentagem;
+    }
+
+    /** Atualiza o progresso de uma missão associada a um rover. - funciona como wrapper*/
+    public void atualizarProgressoMissao(int idRover, int idMissao, float progressoPercent) {
+        PayloadProgresso p = new PayloadProgresso(idMissao, 0, progressoPercent);
+
+        atualizarProgresso(p);
     }
 
     /** Marca uma missão como EM_ANDAMENTO quando é atribuída a um rover. */

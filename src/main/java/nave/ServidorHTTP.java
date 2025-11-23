@@ -27,6 +27,7 @@ public class ServidorHTTP {
         server.createContext("/rovers", this::handleRovers);
         server.createContext("/missoes", this::handleMissoes);
         server.createContext("/telemetria", this::handleTelemetria);
+        server.createContext("/telemetria/historico", this::handleTelemetria);
     }
 
     public void run() {

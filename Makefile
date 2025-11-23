@@ -26,6 +26,27 @@ run-rover3:
 run-nave:
 	gradle runNaveMaeApp
 
+run-demo:
+	(gradle runNaveMaeApp &) ; \
+	sleep 1 ; \
+	(gradle runGroundControlApp &) ; \
+	sleep 1 ; \
+	(gradle runRoverApp --args="1 0.0 0.0 5001" &)
+
+run-test-api:
+	@echo "Testando /rovers:"
+	curl -s http://localhost:8080/rovers | jq .
+	@echo "\nTestando /missoes:"
+	curl -s http://localhost:8080/missoes | jq .
+	@echo "\nTestando /telemetria/historico:"
+	curl -s http://localhost:8080/telemetria/historico | jq .
+
+#make build
+#java -cp build/libs/CC.jar api.gc.GroundControlApp
+
+run-ground-control:
+	gradle runGroundControlApp
+
 # Clean and build
 all: clean build
 
