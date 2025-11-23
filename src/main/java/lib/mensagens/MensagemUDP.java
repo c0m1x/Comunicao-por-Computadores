@@ -1,7 +1,11 @@
 package lib.mensagens;
 
-import java.io.Serializable;
 import lib.mensagens.payloads.PayloadUDP;
+import lib.TipoMensagem;
+
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Mensagem UDP (cabeçalho + payload).
@@ -16,8 +20,35 @@ import lib.mensagens.payloads.PayloadUDP;
         this.header = new CabecalhoUDP();
     }
 
+    public MensagemUDP(TipoMensagem tipo, int idMissao, PayloadUDP payload) {
+        this.header = new CabecalhoUDP();
+        this.header.tipo = tipo;
+        this.header.idMissao = idMissao;
+        this.payload = payload;
+    }
+    
     @Override
     public String toString() {
         return String.format("MensagemUDP{header=%s, payload=%s}", header, payload);
+    }
+
+    /** Serializa esta mensagem completa (header + payload). */
+    public byte[] toBytes() {
+
+        List<byte[]> blocos = payload.serializarPorCampos();
+        int totalBytes = 0;
+
+        for (byte[] b : blocos)
+            totalBytes += (4 + b.length);
+
+        ByteBuffer buf = ByteBuffer.allocate(4 + totalBytes);
+        buf.putInt(header.tipo.value);
+
+        for (byte[] b : blocos) {
+            buf.putInt(b.length);
+            buf.put(b);
+        }
+
+        return buf.array();
     }
 }

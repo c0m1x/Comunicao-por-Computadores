@@ -1,4 +1,6 @@
 package lib.mensagens.payloads;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Payload do progresso UDP.
@@ -24,4 +26,13 @@ public class PayloadProgresso extends PayloadUDP {
         return String.format("Progresso{missaoId=%d, tempoDecorrido=%ds, progresso=%.2f%%}",
             idMissao, tempoDecorrido, progressoPercentagem);
     }
+
+/**Criei porque tornei o metodo abstrato - ainda por corrigir */
+    @Override
+    public List<byte[]> serializarPorCampos() {
+        List<byte[]> blocos = new ArrayList<>();
+        // TODO: serializar campos específicos
+        return blocos;
+    }
+
 }
