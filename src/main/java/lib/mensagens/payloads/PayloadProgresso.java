@@ -1,5 +1,6 @@
 package lib.mensagens.payloads;
 import java.util.List;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
@@ -32,6 +33,16 @@ public class PayloadProgresso extends PayloadUDP {
     public List<byte[]> serializarPorCampos() {
         List<byte[]> blocos = new ArrayList<>();
         // TODO: serializar campos específicos
+        // rever se isto faz sentido, o metodo é abstrato mas os campos são especificos
+        
+        // idMissao (int - 4 bytes)
+        blocos.add(ByteBuffer.allocate(4).putInt(idMissao).array());
+        
+        // tempoDecorrido (long - 8 bytes)
+        blocos.add(ByteBuffer.allocate(8).putLong(tempoDecorrido).array());
+        
+        // progressoPercentagem (float - 4 bytes)
+        blocos.add(ByteBuffer.allocate(4).putFloat(progressoPercentagem).array());
         return blocos;
     }
 
