@@ -1,5 +1,7 @@
 package lib;
 
+import lib.mensagens.payloads.PayloadProgresso;
+
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,9 @@ import java.util.HashMap;
         public long duracaoMissao; // em ms
         public long inicioMissao; // timestamp de início
         public boolean aguardandoAck = false;
+        
+        // Armazena os progressos enviados por sequência
+        public Map<Integer, PayloadProgresso> progressosEnviados;
 
 
         //adicionar o resto dos campos necessários
@@ -39,6 +44,7 @@ import java.util.HashMap;
             this.seqAtual = 0;
             this.totalFragmentos = 0;
             this.fragmentosRecebidos = new HashMap<>();
+            this.progressosEnviados = new HashMap<>();
         }
 
     }
