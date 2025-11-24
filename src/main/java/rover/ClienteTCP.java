@@ -19,6 +19,8 @@ public class ClienteTCP implements Runnable {
         this.serverPort = serverPort;
     }
 
+
+    //DUVIDA: é preciso implementar tentativa de Reconexão automática do cliente TCP se a conexão cair?
     @Override
     public void run() {
         try (Socket sock = new Socket()) {

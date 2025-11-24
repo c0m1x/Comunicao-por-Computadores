@@ -21,8 +21,11 @@ public class ServidorTCP implements Runnable {
     private ServerSocket serverSocket;
     private GestaoEstado estado;
     private boolean running = true;
-    //TODO: meter isto dos callbacks a dar
+    //TODO: meter isto dos callbacks a dar, 
+    //DUVIDA: talvez uar isto dos callbacks na parte de mensagens de erro nas missoesn, quando o rover sabe que nao as consegue concluir, no lado do servidor udp?
     private TelemetriaCallback callback;
+
+    //DUVIDA: talvez implementar mecanismo de heartbeat para detetar rovers desconectados?
 
     public interface TelemetriaCallback {
         void onTelemetriaRecebida(int idRover, PayloadTelemetria telemetria);
