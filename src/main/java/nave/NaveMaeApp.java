@@ -16,8 +16,8 @@ public class NaveMaeApp {
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("\n[NaveMaeApp] Encerrando servidores...");
                 servidorUDP.parar();
-                servidorTCP.parar();;
-                // TODO: ServidorHTTP usa HttpServer que tem .stop()
+                servidorTCP.parar();
+                servidorHTTP.parar();
                 System.out.println("[NaveMaeApp] Todos os servidores encerrados.");
             }));
             
