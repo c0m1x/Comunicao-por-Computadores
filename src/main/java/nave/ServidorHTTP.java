@@ -128,4 +128,9 @@ public class ServidorHTTP {
 
         responder404(ex);
     }
+
+    public void parar() {
+        server.stop(0);
+        System.out.println("[HTTP] Servidor HTTP parado.");
+    }
 }
