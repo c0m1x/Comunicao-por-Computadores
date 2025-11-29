@@ -66,12 +66,30 @@ function setupFilters() {
 // ========== Connection Check ==========
 async function checkConnection() {
     try {
-        const response = await fetch(`${API_BASE}/rovers`);
+        console.log('[Connection] Testing connection to:', API_BASE);
+        const response = await fetch(`${API_BASE}/rovers`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        console.log('[Connection] Response received:', response.status, response.statusText);
         updateConnectionStatus(response.ok);
+        
+        if (response.ok) {
+            addActivity('success', 'Conexão estabelecida com a API');
+        } else {
+            addActivity('error', `Erro na conexão: HTTP ${response.status}`);
+        }
     } catch (error) {
-        console.error('[API] Connection failed:', error);
+        console.error('[Connection] Failed:', error);
+        console.error('[Connection] Error details:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+        });
         updateConnectionStatus(false);
-        addActivity('error', 'Falha na conexão com a API');
+        addActivity('error', 'Falha na conexão: ' + error.message);
     }
 }
 
@@ -104,42 +122,83 @@ async function loadAllData() {
 
 async function refreshRovers() {
     try {
-        console.log('[API] Fetching rovers...');
+        console.log('[API] Fetching rovers from:', `${API_BASE}/rovers`);
         const response = await fetch(`${API_BASE}/rovers`);
-        const rovers = await response.json();
         
-        console.log('[API] Rovers loaded:', rovers.length);
+        console.log('[API] Response status:', response.status);
+        console.log('[API] Response headers:', response.headers);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const text = await response.text();
+        console.log('[API] Raw response:', text);
+        
+        let rovers;
+        try {
+            rovers = JSON.parse(text);
+        } catch (parseError) {
+            console.error('[API] JSON parse error:', parseError);
+            throw new Error('Resposta inválida da API');
+        }
+        
+        console.log('[API] Rovers loaded:', rovers);
+        console.log('[API] Number of rovers:', Array.isArray(rovers) ? rovers.length : 'not an array');
         
         // Detect changes
         detectRoverChanges(rovers);
         
-        previousData.rovers = rovers;
-        renderRovers(rovers);
+        previousData.rovers = Array.isArray(rovers) ? rovers : [];
+        renderRovers(previousData.rovers);
         updateConnectionStatus(true);
+        
+        addActivity('success', `${previousData.rovers.length} rovers carregados`);
     } catch (error) {
         console.error('[API] Error loading rovers:', error);
-        showError('rovers-container', 'Erro ao carregar rovers');
+        addActivity('error', 'Erro ao carregar rovers: ' + error.message);
+        showError('rovers-container', 'Erro ao carregar rovers: ' + error.message);
         updateConnectionStatus(false);
     }
 }
 
 async function refreshMissions() {
     try {
-        console.log('[API] Fetching missions...');
+        console.log('[API] Fetching missions from:', `${API_BASE}/missoes`);
         const response = await fetch(`${API_BASE}/missoes`);
-        const missions = await response.json();
         
-        console.log('[API] Missions loaded:', missions.length);
+        console.log('[API] Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const text = await response.text();
+        console.log('[API] Raw response:', text);
+        
+        let missions;
+        try {
+            missions = JSON.parse(text);
+        } catch (parseError) {
+            console.error('[API] JSON parse error:', parseError);
+            throw new Error('Resposta inválida da API');
+        }
+        
+        console.log('[API] Missions loaded:', missions);
+        console.log('[API] Number of missions:', Array.isArray(missions) ? missions.length : 'not an array');
         
         // Detect changes
         detectMissionChanges(missions);
         
-        previousData.missions = missions;
-        renderMissions(missions);
+        previousData.missions = Array.isArray(missions) ? missions : [];
+        renderMissions(previousData.missions);
         updateConnectionStatus(true);
+        
+        addActivity('success', `${previousData.missions.length} missões carregadas`);
     } catch (error) {
         console.error('[API] Error loading missions:', error);
-        showError('missions-container', 'Erro ao carregar missões');
+        addActivity('error', 'Erro ao carregar missões: ' + error.message);
+        showError('missions-container', 'Erro ao carregar missões: ' + error.message);
         updateConnectionStatus(false);
     }
 }
@@ -214,13 +273,23 @@ function detectMissionChanges(newMissions) {
 function renderRovers(rovers) {
     const container = document.getElementById('rovers-container');
     
-    if (!rovers || rovers.length === 0) {
+    console.log('[Render] Rendering rovers:', rovers);
+    console.log('[Render] Is array?', Array.isArray(rovers));
+    console.log('[Render] Length:', rovers ? rovers.length : 'null/undefined');
+    
+    if (!rovers || !Array.isArray(rovers) || rovers.length === 0) {
         container.innerHTML = '<div class="empty-state">Nenhum rover registrado</div>';
+        console.log('[Render] No rovers to display');
         return;
     }
     
-    container.innerHTML = rovers.map(rover => createRoverCard(rover)).join('');
+    const html = rovers.map(rover => createRoverCard(rover)).join('');
+    console.log('[Render] Generated HTML length:', html.length);
+    
+    container.innerHTML = html;
     filterRovers();
+    
+    console.log('[Render] Rovers rendered successfully');
 }
 
 function createRoverCard(rover) {
@@ -270,13 +339,23 @@ function createRoverCard(rover) {
 function renderMissions(missions) {
     const container = document.getElementById('missions-container');
     
-    if (!missions || missions.length === 0) {
+    console.log('[Render] Rendering missions:', missions);
+    console.log('[Render] Is array?', Array.isArray(missions));
+    console.log('[Render] Length:', missions ? missions.length : 'null/undefined');
+    
+    if (!missions || !Array.isArray(missions) || missions.length === 0) {
         container.innerHTML = '<div class="empty-state">Nenhuma missão registrada</div>';
+        console.log('[Render] No missions to display');
         return;
     }
     
-    container.innerHTML = missions.map(mission => createMissionCard(mission)).join('');
+    const html = missions.map(mission => createMissionCard(mission)).join('');
+    console.log('[Render] Generated HTML length:', html.length);
+    
+    container.innerHTML = html;
     filterMissions();
+    
+    console.log('[Render] Missions rendered successfully');
 }
 
 function createMissionCard(mission) {
