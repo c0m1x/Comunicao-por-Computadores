@@ -34,7 +34,7 @@ public class NaveMaeApp {
                 try {
                     servidorHTTP.run();
                 } catch (Exception e) {
-                    System.err.println("Erro no servidor TCP: " + e.getMessage());
+                    System.err.println("Erro no servidor HTTP: " + e.getMessage());
                 }
             }).start();
 
