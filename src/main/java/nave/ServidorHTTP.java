@@ -4,9 +4,11 @@ import com.sun.net.httpserver.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URL;
 
 import api.CriarJson;
 import api.ObservacaoAPI;
+import api.StaticFileHandler;
 
 /*
  * Servidor HTTP para expor a API de observação.
@@ -22,12 +24,19 @@ public class ServidorHTTP {
     public ServidorHTTP(GestaoEstado estado) throws IOException {
         this.api = new ObservacaoAPI(estado);
 
+        URL uiURL = ServidorHTTP.class.getClassLoader()
+                                  .getResource("ui");
+        System.out.println("uiURL: " + uiURL);
+
         server = HttpServer.create(new InetSocketAddress(8080), 0);
 
         server.createContext("/rovers", this::handleRovers);
         server.createContext("/missoes", this::handleMissoes);
         server.createContext("/telemetria", this::handleTelemetria);
         server.createContext("/telemetria/historico", this::handleTelemetria);
+        server.createContext("/ui", new StaticFileHandler("ui"));
+        server.createContext("/ui/", new StaticFileHandler("ui"));
+
     }
 
     public void run() {
