@@ -1,7 +1,5 @@
 package rover;
 
-import lib.Rover;
-
 /**
  * Aplicação minimalista do Rover.
  * 
@@ -9,7 +7,9 @@ import lib.Rover;
  * - Cliente UDP: recebe HELLO/MISSION da Nave-Mãe
  * - Cliente TCP: envia telemetria periódica
  * 
- * Uso: java RoverApp [id] [posXinicial] [posYinicial] [portaLocal] [ipNave] 
+ * Uso: java RoverApp [id] [posX] [posY] [ipNave] [portaTcpNave] [portaUdp]
+ * 
+ * Valores por defeito: id=1, pos=(0,0), ipNave=127.0.0.1, portaTcpNave=5001, portaUdp=9010+id
  */
 public class RoverApp {
 
@@ -20,38 +20,51 @@ public class RoverApp {
         int roverId = 1;
         float posX = 0.0f;
         float posY = 0.0f;
-        int portaLocal = 5001;
         String ipNave = "127.0.0.1";
+        int portaTcpNave = 5001; // Porta do servidor TCP da nave
+        int portaUdp = -1; // -1 significa calcular automaticamente (9010 + id)
 
         // Parse argumentos da linha de comando
-        if (args.length >= 3) {
+        if (args.length >= 1) {
             try {
                 roverId = Integer.parseInt(args[0]);
-                posX = Float.parseFloat(args[1]);
-                posY = Float.parseFloat(args[2]);
+                if (args.length >= 2) {
+                    posX = Float.parseFloat(args[1]);
+                }
+                if (args.length >= 3) {
+                    posY = Float.parseFloat(args[2]);
+                }
                 if (args.length >= 4) {
-                    portaLocal = Integer.parseInt(args[3]);
+                    ipNave = args[3];
                 }
                 if (args.length >= 5) {
-                    ipNave = args[4];
+                    portaTcpNave = Integer.parseInt(args[4]);
+                }
+                if (args.length >= 6) {
+                    portaUdp = Integer.parseInt(args[5]);
                 }
 
             } catch (NumberFormatException e) {
                 System.err.println("Erro: formato inválido");
-                System.err.println("Uso: RoverApp <id> <posX> <posY> [portaLocal] [ipNave]");
-                System.err.println("Usando valores padrão: id=1, pos=(0,0), porta=5001 ");
+                System.err.println("Uso: RoverApp <id> [posX] [posY] [ipNave] [portaTcpNave] [portaUdp]");
+                System.err.println("Usando valores padrão: id=1, pos=(0,0), ipNave=127.0.0.1, portaTcpNave=5001, portaUdp=9010+id");
             }
         }
 
-        System.out.printf("Rover ID: %d | Posição: (%.2f, %.2f) | IP Nave: %s | Porta: %d%n", 
-                         roverId, posX, posY, ipNave, portaLocal);
+        // Calcular porta UDP se não foi especificada
+        if (portaUdp <= 0) {
+            portaUdp = 9010 + roverId;
+        }
+        
+        System.out.printf("Rover ID: %d | Posição: (%.2f, %.2f) | IP Nave: %s | Porta TCP Nave: %d | Porta UDP: %d%n", 
+                         roverId, posX, posY, ipNave, portaTcpNave, portaUdp);
 
         try {
             MaquinaEstados maquina = new MaquinaEstados(roverId, posX, posY);
             
             // Criar clientes
-            ClienteUDP clienteUDP = new ClienteUDP(roverId, maquina);
-            ClienteTCP clienteTCP = new ClienteTCP(maquina.getContexto(), ipNave, portaLocal);
+            ClienteUDP clienteUDP = new ClienteUDP(roverId, portaUdp, maquina);
+            ClienteTCP clienteTCP = new ClienteTCP(maquina.getContexto(), ipNave, portaTcpNave);
             
             // Arrancar clientes em threads separadas
             new Thread(() -> {
