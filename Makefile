@@ -53,9 +53,6 @@ run-full:
 #make build
 #java -cp build/libs/CC.jar api.gc.GroundControlApp
 
-run-ground-control:
-	gradle runGroundControlApp
-
 run-deploy:
 	gradle jarNaveMae jarRover jarGroundControl
 	cp build/libs/NaveMae.jar Dockerized-Coreemu-Template-main/volume/
