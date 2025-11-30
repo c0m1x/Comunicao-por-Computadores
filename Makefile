@@ -1,18 +1,22 @@
 .PHONY: build clean run-rover run-nave 
 
-# Build the project
 build:
 	gradle build
 
-# Clean build artifacts
 clean:
 	gradle clean
+
+demo-kill:
+	@echo "A matar todos os processos Java anteriores..."
+	- pkill -f "api.gc.GroundControlApp"
+	- pkill -f "nave.NaveMaeApp"
+	- pkill -f "rover.RoverApp"
+	@echo "OK"
 
 # Run RoverApp (uso: make run-rover ARGS="<id> <x> <y> <porta>")
 run-rover:
 	gradle runRoverApp --args="$(ARGS)"
 
-# Run multiple rovers
 run-rover1:
 	gradle runRoverApp --args="1 0.0 0.0 5001"
 
@@ -20,11 +24,14 @@ run-rover2:
 	gradle runRoverApp --args="2 10.0 0.0 5002"
 
 run-rover3:
-	gradle runRoverApp --args="3 0.0 10.0 5001"
+	gradle runRoverApp --args="3 0.0 10.0 5003"
 
 # Run NaveMaeApp
 run-nave:
 	gradle runNaveMaeApp
+
+run-ground-control:
+	gradle runGroundControlApp
 
 run-demo:
 	(gradle runNaveMaeApp &) ; \
@@ -33,13 +40,15 @@ run-demo:
 	sleep 1 ; \
 	(gradle runRoverApp --args="1 0.0 0.0 5001" &)
 
-run-test-api:
-	@echo "Testando /rovers:"
-	curl -s http://localhost:8080/rovers | jq .
-	@echo "\nTestando /missoes:"
-	curl -s http://localhost:8080/missoes | jq .
-	@echo "\nTestando /telemetria/historico:"
-	curl -s http://localhost:8080/telemetria/historico | jq .
+run-full:
+	make demo-kill
+	(gradle runNaveMaeApp > logs_nave.txt &) ; \
+	sleep 1 ; \
+	(gradle runGroundControlApp > logs_gc.txt &) ; \
+	sleep 1 ; \
+	(gradle runRoverApp --args="1 0.0 0.0 5001" > logs_r1.txt &) ; \
+	(gradle runRoverApp --args="2 5.0 3.0 5002" > logs_r2.txt &) ; \
+	echo "Sistema iniciado: Nave + GC + Rovers"
 
 #make build
 #java -cp build/libs/CC.jar api.gc.GroundControlApp
@@ -54,6 +63,10 @@ run-deploy:
 	cp build/libs/GroundControl.jar Dockerized-Coreemu-Template-main/volume/
 	@echo "JARs deployed to Dockerized-Coreemu-Template-main/volume/"
 
+run-test-api:
+	@echo "Testing /rovers:" ; \
+	curl -s http://localhost:8080/rovers | jq .
+	
 # Clean and build
 all: clean build
 

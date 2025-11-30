@@ -1,4 +1,4 @@
-package api;
+package nave.api;
 
 import nave.GestaoEstado;
 import lib.Missao;

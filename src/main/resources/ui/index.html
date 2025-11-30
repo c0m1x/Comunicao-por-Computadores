@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ground Control - Mission Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>Ground Control</h1>
+            <div class="status-bar">
+                <div class="status-item" id="connection-status">
+                    <span id="status-indicator"></span> <span id="status-text">Conectando...</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">API:</span> http://localhost:8080
+                </div>
+                <div class="status-item">
+                    <span class="label">Atualizado:</span> <span id="last-update">--:--:--</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-value" id="total-rovers">0</div>
+                <div class="stat-label">Rovers Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="rovers-disponivel">0</div>
+                <div class="stat-label">Rovers Disponíveis</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="missoes-ativas">0</div>
+                <div class="stat-label">Missões Ativas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="missoes-concluidas">0</div>
+                <div class="stat-label">Missões Concluídas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="progresso-medio">0%</div>
+                <div class="stat-label">Progresso Médio</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="bateria-media">0%</div>
+                <div class="stat-label">Bateria Média</div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard">
+            <!-- Rovers Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Rovers</h2>
+                    <div class="section-controls">
+                        <button class="filter-btn active" data-filter="all">Todos</button>
+                        <button class="filter-btn" data-filter="disponivel">Disponíveis</button>
+                        <button class="filter-btn" data-filter="em-missao">Em Missão</button>
+                        <button class="icon-btn" onclick="refreshRovers()" title="Atualizar">
+                            <span>↻</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-container" id="rovers-container">
+                    <div class="loading-state">Carregando rovers...</div>
+                </div>
+            </div>
+
+            <!-- Missions Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Missões</h2>
+                    <div class="section-controls">
+                        <button class="filter-btn active" data-filter="all">Todas</button>
+                        <button class="filter-btn" data-filter="pendente">Pendentes</button>
+                        <button class="filter-btn" data-filter="em_execucao">Em Execução</button>
+                        <button class="filter-btn" data-filter="concluida">Concluídas</button>
+                        <button class="icon-btn" onclick="refreshMissions()" title="Atualizar">
+                            <span>↻</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-container" id="missions-container">
+                    <div class="loading-state">Carregando missões...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Progress Timeline -->
+        <div class="section timeline-section">
+            <div class="section-header">
+                <h2>Progresso das Missões Ativas</h2>
+                <button class="icon-btn" onclick="refreshMissions()" title="Atualizar">
+                    <span>↻</span>
+                </button>
+            </div>
+            <div id="mission-timeline">
+                <div class="loading-state">Carregando progresso...</div>
+            </div>
+        </div>
+
+        <!-- Telemetry Section (Full Width) -->
+        <div class="section telemetry-section">
+            <div class="section-header">
+                <h2>Telemetria em Tempo Real</h2>
+                <div class="section-controls">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="auto-scroll-toggle" checked>
+                        <span>Auto-scroll</span>
+                    </label>
+                    <button class="icon-btn" onclick="refreshTelemetry()" title="Atualizar">
+                        <span>↻</span>
+                    </button>
+                </div>
+            </div>
+            <div class="telemetry-stream" id="telemetry-stream">
+                <div class="loading-state">Carregando telemetria...</div>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="section activity-section">
+            <div class="section-header">
+                <h2>Registro de Atividades</h2>
+                <button class="icon-btn" onclick="clearActivityLog()" title="Limpar">
+                    <span>✕</span>
+                </button>
+            </div>
+            <div class="activity-log" id="activity-log">
+                <div class="activity-item">
+                    <span class="activity-time">--:--:--</span>
+                    <span class="activity-message">Sistema iniciado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

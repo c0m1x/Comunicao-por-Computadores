@@ -1,9 +1,10 @@
-package api.gc;
+package gc;
 
 import lib.mensagens.payloads.PayloadMissao;
-import api.gc.models.MissaoModel;
 
 import java.util.Scanner;
+
+import gc.models.MissaoModel;
 
 /**
  * interface interativa
@@ -13,7 +14,7 @@ public class GroundControlApp {
     public static void main(String[] args) {
 
         GroundControlAPI api = new GroundControlAPI("http://localhost:8080");
-        GestaoEnvioMissoes missionSender = new GestaoEnvioMissoes(5000); // porta MissionLink
+        GestaoEnvioMissoes missionSender = new GestaoEnvioMissoes(9001); // porta MissionLink
 
         Scanner sc = new Scanner(System.in);
 

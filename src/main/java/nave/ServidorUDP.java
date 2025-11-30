@@ -585,8 +585,9 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
             ack.payload = null;
         }
 
-        // Limpa progressoPerdido após enviar ACK //TODO: rever se é aqui que deve ser limpo
-        sessao.progressoPerdido = null;
+        if (enviado && sessao.progressoPerdido != null) {
+            sessao.progressoPerdido.clear();
+        }
 
         return enviarMensagemUDP(ack, sessao);
     }

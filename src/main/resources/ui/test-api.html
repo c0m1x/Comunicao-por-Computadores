@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #222;
+        }
+        pre {
+            background: #111;
+            border: 1px solid #222;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+    </style>
+</head>
+<body>
+    <h1>Ground Control - API Tester</h1>
+    
+    <div>
+        <button onclick="testRovers()">Test /rovers</button>
+        <button onclick="testMissions()">Test /missoes</button>
+        <button onclick="testTelemetry()">Test /telemetria/historico</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <h2>Log:</h2>
+    <pre id="log"></pre>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString('pt-PT');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logEl.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        async function testRovers() {
+            log('Testing /rovers endpoint...', 'info');
+            try {
+                log('→ Fetching: ' + API_BASE + '/rovers');
+                const response = await fetch(`${API_BASE}/rovers`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                log('← Status: ' + response.status + ' ' + response.statusText, 
+                    response.ok ? 'success' : 'error');
+                log('← Headers: ' + JSON.stringify(Array.from(response.headers.entries())));
+                
+                const text = await response.text();
+                log('← Raw Response: ' + text);
+                
+                if (response.ok) {
+                    try {
+                        const json = JSON.parse(text);
+                        log('✓ JSON parsed successfully', 'success');
+                        log('→ Data type: ' + (Array.isArray(json) ? 'Array' : typeof json));
+                        log('→ Length/Size: ' + (Array.isArray(json) ? json.length : Object.keys(json).length));
+                        log('→ Data: ' + JSON.stringify(json, null, 2));
+                    } catch (e) {
+                        log('✗ JSON parse error: ' + e.message, 'error');
+                    }
+                } else {
+                    log('✗ Request failed', 'error');
+                }
+            } catch (error) {
+                log('✗ Fetch error: ' + error.message, 'error');
+                log('  Name: ' + error.name);
+                log('  Stack: ' + error.stack);
+            }
+            log('-------------------');
+        }
+        
+        async function testMissions() {
+            log('Testing /missoes endpoint...', 'info');
+            try {
+                log('→ Fetching: ' + API_BASE + '/missoes');
+                const response = await fetch(`${API_BASE}/missoes`);
+                
+                log('← Status: ' + response.status + ' ' + response.statusText,
+                    response.ok ? 'success' : 'error');
+                
+                const text = await response.text();
+                log('← Raw Response: ' + text);
+                
+                if (response.ok) {
+                    try {
+                        const json = JSON.parse(text);
+                        log('✓ JSON parsed successfully', 'success');
+                        log('→ Array length: ' + (Array.isArray(json) ? json.length : 'not an array'));
+                        log('→ Data: ' + JSON.stringify(json, null, 2));
+                    } catch (e) {
+                        log('✗ JSON parse error: ' + e.message, 'error');
+                    }
+                }
+            } catch (error) {
+                log('✗ Fetch error: ' + error.message, 'error');
+            }
+            log('-------------------');
+        }
+        
+        async function testTelemetry() {
+            log('Testing /telemetria/historico endpoint...', 'info');
+            try {
+                log('→ Fetching: ' + API_BASE + '/telemetria/historico');
+                const response = await fetch(`${API_BASE}/telemetria/historico`);
+                
+                log('← Status: ' + response.status + ' ' + response.statusText,
+                    response.ok ? 'success' : 'error');
+                
+                const text = await response.text();
+                log('← Raw Response: ' + text.substring(0, 500) + (text.length > 500 ? '...' : ''));
+                
+                if (response.ok) {
+                    try {
+                        const json = JSON.parse(text);
+                        log('✓ JSON parsed successfully', 'success');
+                        log('→ Array length: ' + (Array.isArray(json) ? json.length : 'not an array'));
+                    } catch (e) {
+                        log('✗ JSON parse error: ' + e.message, 'error');
+                    }
+                }
+            } catch (error) {
+                log('✗ Fetch error: ' + error.message, 'error');
+            }
+            log('-------------------');
+        }
+        
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            log('API Tester loaded', 'success');
+            log('API Base URL: ' + API_BASE, 'info');
+            log('-------------------');
+        });
+    </script>
+</body>
+</html>

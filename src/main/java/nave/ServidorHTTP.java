@@ -1,12 +1,15 @@
 package nave;
 
 import com.sun.net.httpserver.*;
+
+import nave.api.CriarJson;
+import nave.api.ObservacaoAPI;
+import nave.api.StaticFileHandler;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-
-import api.CriarJson;
-import api.ObservacaoAPI;
+import java.net.URL;
 
 /*
  * Servidor HTTP para expor a API de observação.
@@ -22,12 +25,19 @@ public class ServidorHTTP {
     public ServidorHTTP(GestaoEstado estado) throws IOException {
         this.api = new ObservacaoAPI(estado);
 
+        URL uiURL = ServidorHTTP.class.getClassLoader()
+                                  .getResource("ui");
+        System.out.println("uiURL: " + uiURL);
+
         server = HttpServer.create(new InetSocketAddress(8080), 0);
 
         server.createContext("/rovers", this::handleRovers);
         server.createContext("/missoes", this::handleMissoes);
         server.createContext("/telemetria", this::handleTelemetria);
         server.createContext("/telemetria/historico", this::handleTelemetria);
+        server.createContext("/ui", new StaticFileHandler("ui"));
+        server.createContext("/ui/", new StaticFileHandler("ui"));
+
     }
 
     public void run() {
