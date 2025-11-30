@@ -1,5 +1,5 @@
 
-package api;
+package nave.api;
 
 import lib.Rover;
 import lib.Missao;

@@ -1,14 +1,15 @@
 package nave;
 
 import com.sun.net.httpserver.*;
+
+import nave.api.CriarJson;
+import nave.api.ObservacaoAPI;
+import nave.api.StaticFileHandler;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URL;
-
-import api.CriarJson;
-import api.ObservacaoAPI;
-import api.StaticFileHandler;
 
 /*
  * Servidor HTTP para expor a API de observação.

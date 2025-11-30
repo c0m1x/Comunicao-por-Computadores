@@ -1,4 +1,4 @@
-package api.gc.models;
+package gc.models;
 
 public class RoverModel {
     public int idRover;

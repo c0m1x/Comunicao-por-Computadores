@@ -1,7 +1,8 @@
-package api.gc;
+package gc;
 
-import api.gc.models.*;
 import java.util.*;
+
+import gc.models.*;
 
 public class ParserJson {
 
