@@ -1,6 +1,9 @@
 services:
   core:
-    image: ghcr.io/eivarin/coreemu:coreemu-9.2.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: coreemu-java:latest
     container_name: core
     command: core-daemon
     environment:
@@ -13,7 +16,10 @@ services:
     stdin_open: true 
     tty: true
   core-for-mac:
-    image: ghcr.io/eivarin/coreemu:coreemu-9.2.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: coreemu-java:latest
     container_name: core
     command: core-daemon
     environment:
