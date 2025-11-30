@@ -585,9 +585,10 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
             ack.payload = null;
         }
 
-        if (enviado && sessao.progressoPerdido != null) {
+        //de onde vem esta variavel enviado?
+       // if (enviado && sessao.progressoPerdido != null) {
             sessao.progressoPerdido.clear();
-        }
+      //  }
 
         return enviarMensagemUDP(ack, sessao);
     }
