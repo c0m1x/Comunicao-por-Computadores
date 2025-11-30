@@ -499,41 +499,61 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
     
     /**
      * Processa mensagem PROGRESS do rover.
+     * Trata duplicados, perdas e envia ACK de confirmação.
      */
     private void processarProgress(MensagemUDP msg, int idRover, DatagramPacket pacote) {
         if (msg.payload instanceof PayloadProgresso) {
             PayloadProgresso progresso = (PayloadProgresso) msg.payload;
+            int seqRecebido = msg.header.seq;
+            
             System.out.println("[ServidorUDP] PROGRESS recebido do rover " + idRover + 
-                             " (seq=" + msg.header.seq + ", missão=" + progresso.idMissao + 
+                             " (seq=" + seqRecebido + ", missão=" + progresso.idMissao + 
                              ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
 
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             if (sessao != null) {
-                // Tratamento de duplicados e perdidos
-                int seqAtual = msg.header.seq;
-                int seqEsperado = sessao.ultimoSeq + 1;
-
-                // Duplicado: descarta
-                if (seqAtual == sessao.ultimoSeq) {
-                    System.out.println("[ServidorUDP] PROGRESS duplicado descartado (seq=" + seqAtual + ")");
+                // Tratamento de duplicados - SEMPRE enviar ACK para duplicados
+                // (o rover pode não ter recebido o ACK anterior)
+                if (seqRecebido == sessao.ultimoSeq) {
+                    System.out.println("[ServidorUDP] PROGRESS duplicado (seq=" + seqRecebido + ") - Reenviando ACK");
+                    sessao.progressoPerdido = new ArrayList<>(); // Limpar lista de perdidos
+                    enviarAckParaRover(sessao);
+                    return;
+                }
+                
+                // Se seq é menor que o último processado, é retransmissão muito antiga - enviar ACK
+                if (seqRecebido < sessao.ultimoSeq) {
+                    System.out.println("[ServidorUDP] PROGRESS antigo (seq=" + seqRecebido + 
+                                     ", último=" + sessao.ultimoSeq + ") - Enviando ACK");
+                    // Usar o seq recebido para o ACK
+                    int seqOriginal = sessao.ultimoSeq;
+                    sessao.ultimoSeq = seqRecebido;
+                    sessao.progressoPerdido = new ArrayList<>();
+                    enviarAckParaRover(sessao);
+                    sessao.ultimoSeq = seqOriginal; // Restaurar
                     return;
                 }
 
-                // Perdidos: seq não é o próximo esperado
+                // Verificar perdas: seq não é o próximo esperado
+                int seqEsperado = sessao.ultimoSeq + 1;
                 sessao.progressoPerdido = new ArrayList<>();
-                if (seqAtual > seqEsperado) {
-                    for (int s = seqEsperado; s < seqAtual; s++) {
+                
+                if (seqRecebido > seqEsperado) {
+                    // Houve salto de sequência - alguns PROGRESS foram perdidos
+                    for (int s = seqEsperado; s < seqRecebido; s++) {
                         sessao.progressoPerdido.add(s);
                     }
-                    System.out.println("[ServidorUDP] PROGRESS perdido detectado: " + sessao.progressoPerdido);
+                    System.out.println("[ServidorUDP] PROGRESS perdido detectado: seqs " + sessao.progressoPerdido);
                 }
 
                 // Atualizar estado da missão no GestaoEstado
                 estado.atualizarProgresso(progresso);
 
-                // Enviar ACK, informando progresso perdido se houver
+                // Atualizar sessão
                 sessao.recebendoProgresso = true;
-                sessao.ultimoSeq = seqAtual;
+                sessao.ultimoSeq = seqRecebido;
+                
+                // Enviar ACK, informando progresso perdido se houver
                 enviarAckParaRover(sessao);
             }
         }

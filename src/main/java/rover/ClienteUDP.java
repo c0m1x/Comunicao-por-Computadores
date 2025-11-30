@@ -29,7 +29,8 @@ import java.util.Arrays;
  */
 public class ClienteUDP implements Runnable {
     
-    private static final int TIMEOUT_MS = 10000;
+    private static final int TIMEOUT_MS = 3000; // Reduzido para responder mais rápido a perdas
+    private static final int MAX_RETRIES = 5;   // Aumentado para maior tolerância a perdas
     
     private int idRover;
     private int porta;
@@ -205,24 +206,40 @@ public class ClienteUDP implements Runnable {
     
     /**
      * Processa mensagem ACK (para PROGRESS e COMPLETED).
+     * Valida que o ACK corresponde ao seq esperado.
      */
     private void processarAck(MensagemUDP msg) {
-        if (sessaoAtual != null && sessaoAtual.emExecucao && msg.header.idMissao == sessaoAtual.idMissao) {
-            System.out.println("[ClienteUDP] ACK recebido para seq=" + msg.header.seq + 
+        if (sessaoAtual == null || !sessaoAtual.emExecucao || msg.header.idMissao != sessaoAtual.idMissao) {
+            return;
+        }
+        
+        int seqRecebido = msg.header.seq;
+        
+        // Verificar se é o ACK que estamos à espera
+        if (sessaoAtual.aguardandoAck && seqRecebido == sessaoAtual.seqAckEsperado) {
+            System.out.println("[ClienteUDP] ACK válido recebido para seq=" + seqRecebido + 
                              " (sucesso=" + msg.header.flagSucesso + ")");
+            sessaoAtual.ultimoSeqConfirmado = seqRecebido;
             sessaoAtual.aguardandoAck = false;
 
             // Se o ACK veio com progresso perdido, reenviar os PROGRESS
             if (msg.payload instanceof PayloadAck) {
                 PayloadAck ack = (PayloadAck) msg.payload;
                 if (ack.missing != null && ack.missing.length > 0) {
-                    System.out.println("[ClienteUDP] Reenviando PROGRESS perdido: " + Arrays.toString(ack.missing));
+                    System.out.println("[ClienteUDP] Servidor pediu reenvio de PROGRESS perdidos: " + Arrays.toString(ack.missing));
                     for (int seq : ack.missing) {
-                        // Reenviar PROGRESS correspondente ao seq
                         reenviarProgress(seq);
                     }
                 }
             }
+        } else if (seqRecebido < sessaoAtual.seqAckEsperado) {
+            // ACK antigo/duplicado - ignorar
+            System.out.println("[ClienteUDP] ACK antigo ignorado (recebido=" + seqRecebido + 
+                             ", esperado=" + sessaoAtual.seqAckEsperado + ")");
+        } else {
+            // ACK para seq futuro - não deveria acontecer, mas registar
+            System.out.println("[ClienteUDP] ACK inesperado para seq=" + seqRecebido + 
+                             " (esperado=" + sessaoAtual.seqAckEsperado + ")");
         }
     }
 
@@ -484,16 +501,19 @@ public class ClienteUDP implements Runnable {
     
     /**
      * Envia mensagem PROGRESS para a Nave-Mãe.
+     * Implementa retransmissão robusta com validação de seq do ACK.
      */
     private void enviarProgress(float progressoPerc, long tempoDecorrido) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
+        
+        int seqParaEnviar = ++sessaoAtual.seqAtual;
         
         MensagemUDP msg = new MensagemUDP();
         msg.header.tipo = TipoMensagem.MSG_PROGRESS;
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
         msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = ++sessaoAtual.seqAtual;
+        msg.header.seq = seqParaEnviar;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = true;
         
@@ -504,66 +524,99 @@ public class ClienteUDP implements Runnable {
         progresso.progressoPercentagem = progressoPerc;
         msg.payload = progresso;
 
-        // Registrar progresso enviado
-        sessaoAtual.progressosEnviados.put(msg.header.seq, progresso);
+        // Registrar progresso enviado para possível retransmissão
+        sessaoAtual.progressosEnviados.put(seqParaEnviar, progresso);
         
         // Tentar enviar com retransmissão
         sessaoAtual.aguardandoAck = true;
+        sessaoAtual.seqAckEsperado = seqParaEnviar; // Guardar o seq que esperamos no ACK
+        
         int tentativas = 0;
-        while (tentativas < 3 && sessaoAtual.aguardandoAck) {
+        while (tentativas < MAX_RETRIES && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
             enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
-            System.out.println("[ClienteUDP] PROGRESS enviado (seq=" + msg.header.seq + 
-                             ", progresso=" + String.format("%.2f", progressoPerc) + "%%)");
             
-            // Aguardar ACK (processamento acontece no laço principal de receção)
-            aguardarAck(TIMEOUT_MS);
-            
-            if (sessaoAtual.aguardandoAck) {
-                System.out.println("[ClienteUDP] Timeout aguardando ACK - Retransmitindo PROGRESS (tentativa " + (tentativas + 1) + ")");
-                tentativas++;
+            if (tentativas == 0) {
+                System.out.println("[ClienteUDP] PROGRESS enviado (seq=" + seqParaEnviar + 
+                                 ", progresso=" + String.format("%.2f", progressoPerc) + "%%)");
             } else {
-                break; // ACK recebido
+                System.out.println("[ClienteUDP] PROGRESS retransmitido (seq=" + seqParaEnviar + 
+                                 ", tentativa " + tentativas + ")");
             }
+            
+            // Aguardar ACK com o seq correto
+            if (aguardarAckParaSeq(seqParaEnviar, TIMEOUT_MS)) {
+                System.out.println("[ClienteUDP] ACK recebido para seq=" + seqParaEnviar);
+                break; // ACK correto recebido
+            }
+            
+            tentativas++;
+            if (tentativas < MAX_RETRIES && sessaoAtual != null && sessaoAtual.aguardandoAck) {
+                System.out.println("[ClienteUDP] Timeout aguardando ACK para seq=" + seqParaEnviar + 
+                                 " - Retransmitindo (tentativa " + tentativas + "/" + MAX_RETRIES + ")");
+            }
+        }
+        
+        if (tentativas >= MAX_RETRIES && sessaoAtual != null && sessaoAtual.aguardandoAck) {
+            System.out.println("[ClienteUDP] AVISO: Máximo de retransmissões atingido para PROGRESS seq=" + seqParaEnviar);
+            sessaoAtual.aguardandoAck = false;
         }
     }
     
     /**
      * Envia mensagem COMPLETED para a Nave-Mãe.
+     * Implementa retransmissão robusta com validação de seq do ACK.
+     * DUVIDA: por vezes no core o completed nunca é recebido na nave mae, talvez usar estrategia de burst de pacotes para enviar o completed?
      */
     private void enviarCompleted(boolean sucesso) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
+        
+        int seqParaEnviar = ++sessaoAtual.seqAtual;
         
         MensagemUDP msg = new MensagemUDP();
         msg.header.tipo = TipoMensagem.MSG_COMPLETED;
         msg.header.idEmissor = idRover;
         msg.header.idRecetor = 0; // Nave-Mãe
         msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = ++sessaoAtual.seqAtual;
+        msg.header.seq = seqParaEnviar;
         msg.header.totalFragm = 1;
         msg.header.flagSucesso = sucesso;
         msg.payload = null; // COMPLETED não precisa payload
         
-        // Tentar enviar com retransmissão
+        // Tentar enviar com retransmissão (mais tentativas para COMPLETED que é crítico)
         sessaoAtual.aguardandoAck = true;
+        sessaoAtual.seqAckEsperado = seqParaEnviar;
+        
         int tentativas = 0;
-        while (tentativas < 3 && sessaoAtual.aguardandoAck) {
+        int maxTentativasCompleted = MAX_RETRIES + 2; // Mais tentativas para mensagem crítica
+        
+        while (tentativas < maxTentativasCompleted && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
             enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
-            System.out.println("[ClienteUDP] COMPLETED enviado (seq=" + msg.header.seq + 
-                             ", sucesso=" + sucesso + ")");
             
-            // Aguardar ACK (processamento acontece no laço principal de receção)
-            aguardarAck(TIMEOUT_MS);
-            
-            if (sessaoAtual.aguardandoAck) {
-                System.out.println("[ClienteUDP] Timeout aguardando ACK - Retransmitindo COMPLETED (tentativa " + (tentativas + 1) + ")");
-                tentativas++;
+            if (tentativas == 0) {
+                System.out.println("[ClienteUDP] COMPLETED enviado (seq=" + seqParaEnviar + 
+                                 ", sucesso=" + sucesso + ")");
             } else {
-                break; // ACK recebido
+                System.out.println("[ClienteUDP] COMPLETED retransmitido (seq=" + seqParaEnviar + 
+                                 ", tentativa " + tentativas + ")");
+            }
+            
+            // Aguardar ACK com o seq correto
+            if (aguardarAckParaSeq(seqParaEnviar, TIMEOUT_MS)) {
+                System.out.println("[ClienteUDP] ACK recebido para COMPLETED seq=" + seqParaEnviar);
+                break;
+            }
+            
+            tentativas++;
+            if (tentativas < maxTentativasCompleted && sessaoAtual != null && sessaoAtual.aguardandoAck) {
+                System.out.println("[ClienteUDP] Timeout aguardando ACK para COMPLETED - Retransmitindo (tentativa " + 
+                                 tentativas + "/" + maxTentativasCompleted + ")");
             }
         }
         
-        // Finalizar sessão completa
-        System.out.println("[ClienteUDP] Missão " + sessaoAtual.idMissao + " concluída");
+        // Finalizar sessão completa (mesmo sem confirmação, após max tentativas) REVER ISTO
+        int missionId = sessaoAtual.idMissao;
+        System.out.println("[ClienteUDP] Missão " + missionId + " concluída" + 
+                         (sessaoAtual.aguardandoAck ? " (sem confirmação ACK)" : ""));
         sessaoAtual = null;
         
         // Atualizar máquina de estados
@@ -574,18 +627,28 @@ public class ClienteUDP implements Runnable {
     }
 
     /**
-     * Aguarda pela limpeza do sinal de aguardandoAck até timeoutMs.
-     * O processamento do ACK ocorre no laço principal de receção.
+     * Aguarda ACK para um seq específico até timeoutMs.
+     * Retorna true se ACK válido foi recebido, false se timeout.
      */
-    private void aguardarAck(long timeoutMs) {
+    private boolean aguardarAckParaSeq(int seqEsperado, long timeoutMs) {
         long inicio = System.currentTimeMillis();
-        while (System.currentTimeMillis() - inicio < timeoutMs && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
+        while (System.currentTimeMillis() - inicio < timeoutMs && running) {
+            if (sessaoAtual == null || !sessaoAtual.emExecucao) {
+                return false;
+            }
+            
+            // Verificar se o ACK para este seq foi confirmado
+            if (!sessaoAtual.aguardandoAck && sessaoAtual.ultimoSeqConfirmado >= seqEsperado) {
+                return true;
+            }
+            
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
-                return;
+                return false;
             }
         }
+        return false; // Timeout
     }
     
     public void parar() {

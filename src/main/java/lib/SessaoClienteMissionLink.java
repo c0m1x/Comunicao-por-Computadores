@@ -30,6 +30,10 @@ import java.util.HashMap;
         public long inicioMissao; // timestamp de início
         public boolean aguardandoAck = false;
         
+        // Controlo de ACK com validação de sequência
+        public int seqAckEsperado = 0;      // seq que esperamos confirmar
+        public int ultimoSeqConfirmado = 0; // último seq confirmado com sucesso
+        
         // Armazena os progressos enviados por sequência
         public Map<Integer, PayloadProgresso> progressosEnviados;
 
