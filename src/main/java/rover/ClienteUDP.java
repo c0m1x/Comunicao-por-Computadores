@@ -193,7 +193,10 @@ public class ClienteUDP implements Runnable {
         
         if (dados != null) {
             sessaoAtual.fragmentosRecebidos.put(seq, dados);
-            sessaoAtual.seqAtual = seq;
+            // Manter o maior seq recebido (mesmo com retransmissões, para evitar regressões)
+            if (seq > sessaoAtual.seqAtual) {
+                sessaoAtual.seqAtual = seq;
+            }
         }
         
         // Verificar se recebemos todos os fragmentos
@@ -216,6 +219,10 @@ public class ClienteUDP implements Runnable {
                 if (reconstruirMissao()) {
                     System.out.println("[ClienteUDP] Missão recebida com sucesso!");
                     enviarAck();
+                    // Guardar o seq do ACK para que o primeiro PROGRESS use seq+1
+                    // O servidor guarda ultimoSeq = seqAtual do ACK, e espera PROGRESS com ultimoSeq+1
+                    System.out.println("[ClienteUDP] SeqAtual após ACK: " + sessaoAtual.seqAtual + 
+                                     " (próximo PROGRESS usará seq=" + (sessaoAtual.seqAtual + 1) + ")");
                     // Iniciar a reportagem em thread separada para não bloquear a receção
                     Thread t = new Thread(this::reportarMissao);
                     t.setDaemon(true);
@@ -271,8 +278,8 @@ public class ClienteUDP implements Runnable {
     }
 
     /**
-     * Reenvia PROGRESS para o seq especificado, usando os dados mais recentes.
-     * (No modelo atual, reenvia o progresso atual, pois não armazena histórico)
+     * Reenvia PROGRESS para o seq especificado, usando os dados guardados.
+     * Utiliza o mapa progressosEnviados para recuperar o payload original.
      */
     private void reenviarProgress(int seq) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
@@ -427,7 +434,8 @@ public class ClienteUDP implements Runnable {
         msg.payload = ack;
         
         enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
-        System.out.println("[ClienteUDP] ACK enviado (faltam " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos)");
+        System.out.println("[ClienteUDP] ACK enviado (seq=" + sessaoAtual.seqAtual + 
+                         ", faltam " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos)");
     }
     
     /**
