@@ -47,6 +47,15 @@ run-test-api:
 run-ground-control:
 	gradle runGroundControlApp
 
+run-deploy:
+	gradle jarNaveMae jarRover jarGroundControl
+	cp build/libs/NaveMae.jar Dockerized-Coreemu-Template-main/volume/
+	cp build/libs/Rover.jar Dockerized-Coreemu-Template-main/volume/
+	cp build/libs/GroundControl.jar Dockerized-Coreemu-Template-main/volume/
+	@echo "JARs deployed to Dockerized-Coreemu-Template-main/volume/"
+
 # Clean and build
 all: clean build
+
+
 
