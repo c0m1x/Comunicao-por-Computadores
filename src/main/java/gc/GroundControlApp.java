@@ -1,9 +1,10 @@
-package api.gc;
+package gc;
 
 import lib.mensagens.payloads.PayloadMissao;
-import api.gc.models.MissaoModel;
 
 import java.util.Scanner;
+
+import gc.models.MissaoModel;
 
 /**
  * interface interativa

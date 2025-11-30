@@ -1,13 +1,14 @@
-package api.gc;
+package gc;
 
 import lib.mensagens.MensagemUDP;
 import lib.TipoMensagem;
 import lib.mensagens.payloads.PayloadMissao;
-import api.gc.models.MissaoModel;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+
+import gc.models.MissaoModel;
 
 /**
  * Constroi missao e envia-la via UDP

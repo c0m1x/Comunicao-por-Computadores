@@ -1,4 +1,4 @@
-package api.gc.models;
+package gc.models;
 
 public class MissaoModel {
     public int idMissao;

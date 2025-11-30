@@ -1,4 +1,4 @@
-package api;
+package nave.api;
 
 import java.io.IOException;
 import java.io.InputStream;
