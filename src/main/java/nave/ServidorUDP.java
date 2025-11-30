@@ -185,6 +185,8 @@ public class ServidorUDP implements Runnable {
                 return;
             }
 
+            //TODO: rever que nao pode estar a finalizar sessao sem o rover ter recebido o ack e ele estar sempre a transmitir o completed
+
             finalizarSessao(sessao, true);
             
         } catch (Exception e) {
@@ -342,7 +344,7 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
         while (tentativas < MAX_RETRIES) {
             long inicio = System.currentTimeMillis();
             
-            while (System.currentTimeMillis() - inicio < TIMEOUT_MS) { //TODO: REVER se aqui não temos que usar outro timeout
+            while (System.currentTimeMillis() - inicio < TIMEOUT_MS) { 
                 if (sessao.ackRecebido) {
                     if (sessao.fragmentosPerdidos.isEmpty()) {
                         // ACK completo! Sucesso!
@@ -391,8 +393,6 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
      * Reinicia janela de timeout sempre que chega novo progresso.
      */
 
-     //TODO: talvez verificar se o seq é incremental, porque se nao for quer dizer que perdeu um pacote pelo meio e diz qual deles foi para pedir retransmissao
-     //tratar tambem de progressos duplicados a partir de seq
     private boolean aguardarProgress(SessaoServidorMissionLink sessao) {
 
         long intervaloAtualizacao = TIMEOUT_MS;
@@ -457,6 +457,11 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
 
             switch (msg.header.tipo) {
                 case MSG_RESPONSE:
+                    // Proteção contra RESPONSE duplicado
+                    if (sessao.responseRecebido) {
+                        System.out.println("[ServidorUDP] RESPONSE duplicado ignorado do rover " + idRover);
+                        break;
+                    }
                     sessao.responseRecebido = true;
                     sessao.responseSucesso = msg.header.flagSucesso;
                     sessao.ultimoSeq = msg.header.seq;
@@ -561,8 +566,21 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
     
     /**
      * Processa mensagem COMPLETED do rover.
+     * Trata duplicados reenviando ACK (rover pode não ter recebido).
+     * 
      */
     private void processarCompleted(MensagemUDP msg, int idRover, DatagramPacket pacote) {
+        SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
+        
+        // Proteção contra COMPLETED duplicado - reenviar ACK
+        if (sessao != null && sessao.completedRecebido) {
+            System.out.println("[ServidorUDP] COMPLETED duplicado do rover " + idRover + 
+                             " (seq=" + msg.header.seq + ") - Reenviando ACK");
+            sessao.ultimoSeq = msg.header.seq;
+            enviarAckParaRover(sessao);
+            return;
+        }
+        
         System.out.println("[ServidorUDP] COMPLETED recebido do rover " + idRover + 
                          " (seq=" + msg.header.seq + ", missão=" + msg.header.idMissao + 
                          ", sucesso=" + msg.header.flagSucesso + ")");
@@ -570,7 +588,6 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
         estado.concluirMissao(idRover, msg.header.idMissao, msg.header.flagSucesso);
         
         // Marcar na sessão
-        SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         if (sessao != null) {
             sessao.completedRecebido = true;
             sessao.completedSucesso = msg.header.flagSucesso;

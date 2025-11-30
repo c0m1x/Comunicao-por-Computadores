@@ -117,21 +117,48 @@ public class ClienteUDP implements Runnable {
     /**
      * Processa mensagem HELLO.
      * Verifica se está disponível e responde.
+     * Trata HELLOs duplicados e protege sessões em execução.
      */
     private void processarHello(MensagemUDP msg, InetAddress endereco, int porta) {
         System.out.println("[ClienteUDP] HELLO recebido - Missão ID: " + msg.header.idMissao);
+        
+        // Proteção contra HELLO duplicado para a mesma missão
+        if (sessaoAtual != null && sessaoAtual.idMissao == msg.header.idMissao) {
+            System.out.println("[ClienteUDP] HELLO duplicado para missão " + msg.header.idMissao + " - Reenviando RESPONSE");
+            // Reenviar RESPONSE (servidor pode não ter recebido)
+            enviarResponse(!sessaoAtual.emExecucao);
+            return;
+        }
+        
+        // Proteção: não aceitar nova missão se já está em execução
+        if (sessaoAtual != null && sessaoAtual.emExecucao) {
+            System.out.println("[ClienteUDP] HELLO ignorado - Rover já está em execução de missão " + sessaoAtual.idMissao);
+            // Responder que não está disponível
+            // Criar sessão temporária para enviar RESPONSE negativo
+            SessaoClienteMissionLink sessaoTemp = new SessaoClienteMissionLink(msg.header.idMissao, endereco, porta);
+            sessaoTemp.seqAtual = msg.header.seq;
+            SessaoClienteMissionLink sessaoAnterior = sessaoAtual;
+            sessaoAtual = sessaoTemp;
+            enviarResponse(false);
+            sessaoAtual = sessaoAnterior;
+            return;
+        }
         
         boolean disponivel = (maquina != null && maquina.getEstadoAtual() == EstadoRover.ESTADO_DISPONIVEL);
         
         if (disponivel){
             // Criar nova sessão de missão
             sessaoAtual = new SessaoClienteMissionLink(msg.header.idMissao, endereco, porta);
-            
+            sessaoAtual.seqAtual = msg.header.seq;
             System.out.println("[ClienteUDP] Rover disponível - Aguardando fragmentos MISSION");
         } else {
             System.out.println("[ClienteUDP] Rover não disponível para missão");
+            // Criar sessão temporária para enviar RESPONSE negativo
+            SessaoClienteMissionLink sessaoTemp = new SessaoClienteMissionLink(msg.header.idMissao, endereco, porta);
+            sessaoTemp.seqAtual = msg.header.seq;
+            sessaoAtual = sessaoTemp;
         }
-        sessaoAtual.seqAtual = msg.header.seq;
+        
         // Enviar RESPONSE
         enviarResponse(disponivel);
     }
