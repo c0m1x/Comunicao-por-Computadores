@@ -601,6 +601,7 @@ public class ClienteUDP implements Runnable {
      * Envia mensagem COMPLETED para a Nave-Mãe.
      * Implementa retransmissão robusta com validação de seq do ACK.
      * DUVIDA: por vezes no core o completed nunca é recebido na nave mae, talvez usar estrategia de burst de pacotes para enviar o completed?
+     * TODO: REVER ISTO DO COMPLETED PORQUE A NAVE NUNCA RECEBE NO CORE PODE SER ALGUM OUTRO PROBLEMA 
      */
     private void enviarCompleted(boolean sucesso) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
