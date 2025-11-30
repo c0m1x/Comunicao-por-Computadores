@@ -286,7 +286,6 @@ public class ClienteUDP implements Runnable {
 
             DataInputStream dis = new DataInputStream(new ByteArrayInputStream(dadosCompletos));
 
-            //TODO: depois de ler payload, passar a missao para máquina de estados
             PayloadMissao payload = new PayloadMissao();
 
             // int idMissao
