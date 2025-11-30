@@ -1,0 +1,32 @@
+services:
+  core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: coreemu-java:latest
+    container_name: core
+    command: core-daemon
+    environment:
+      - DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./volume:/volume
+      - ./.bashrc:/root/.bashrc
+    privileged: true
+    stdin_open: true 
+    tty: true
+  core-for-mac:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: coreemu-java:latest
+    container_name: core
+    command: core-daemon
+    environment:
+      - DISPLAY
+    volumes:
+      - ./volume:/volume
+      - ./.bashrc:/root/.bashrc
+    privileged: true
+    stdin_open: true 
+    tty: true

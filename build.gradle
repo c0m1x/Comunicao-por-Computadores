@@ -43,3 +43,39 @@ tasks.register('runGroundControlApp', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'api.gc.GroundControlApp'
 }
+
+// JAR executável para NaveMae
+tasks.register('jarNaveMae', Jar) {
+    group = 'build'
+    description = 'Creates an executable JAR for NaveMaeApp'
+    archiveBaseName = 'NaveMae'
+    archiveVersion = ''
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'nave.NaveMaeApp'
+    }
+}
+
+// JAR executável para Rover
+tasks.register('jarRover', Jar) {
+    group = 'build'
+    description = 'Creates an executable JAR for RoverApp'
+    archiveBaseName = 'Rover'
+    archiveVersion = ''
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'rover.RoverApp'
+    }
+}
+
+// JAR executável para GroundControl
+tasks.register('jarGroundControl', Jar) {
+    group = 'build'
+    description = 'Creates an executable JAR for GroundControlApp'
+    archiveBaseName = 'GroundControl'
+    archiveVersion = ''
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'api.gc.GroundControlApp'
+    }
+}
