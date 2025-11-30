@@ -40,9 +40,9 @@ public class ClienteUDP implements Runnable {
     // Controle da sessão completa da missão 
     private SessaoClienteMissionLink sessaoAtual = null;
     
-    public ClienteUDP(int idRover, MaquinaEstados maquina) {
+    public ClienteUDP(int idRover, int porta, MaquinaEstados maquina) {
         this.idRover = idRover;
-        this.porta = 9010 + idRover; // Porta baseada no ID
+        this.porta = porta;
         this.maquina = maquina;
     }
     
