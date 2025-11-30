@@ -13,18 +13,18 @@ demo-kill:
 	- pkill -f "rover.RoverApp"
 	@echo "OK"
 
-# Run RoverApp (uso: make run-rover ARGS="<id> <x> <y> <porta>")
+# Run RoverApp (uso: make run-rover ARGS="<id> <posX> <posY> <ipNave> <portaTcpNave> <portaUdp>")
 run-rover:
 	gradle runRoverApp --args="$(ARGS)"
 
 run-rover1:
-	gradle runRoverApp --args="1 0.0 0.0 5001"
+	gradle runRoverApp --args="1 0.0 0.0 127.0.0.1 5001 9011"
 
 run-rover2:
-	gradle runRoverApp --args="2 10.0 0.0 5002"
+	gradle runRoverApp --args="2 10.0 0.0 127.0.0.1 5001 9012"
 
 run-rover3:
-	gradle runRoverApp --args="3 0.0 10.0 5003"
+	gradle runRoverApp --args="3 0.0 10.0 127.0.0.1 5001 9013"
 
 # Run NaveMaeApp
 run-nave:
@@ -38,7 +38,7 @@ run-demo:
 	sleep 1 ; \
 	(gradle runGroundControlApp &) ; \
 	sleep 1 ; \
-	(gradle runRoverApp --args="1 0.0 0.0 5001" &)
+	(gradle runRoverApp --args="1 0.0 0.0 127.0.0.1 5001 9011" &)
 
 run-full:
 	make demo-kill
@@ -46,8 +46,8 @@ run-full:
 	sleep 1 ; \
 	(gradle runGroundControlApp > logs_gc.txt &) ; \
 	sleep 1 ; \
-	(gradle runRoverApp --args="1 0.0 0.0 5001" > logs_r1.txt &) ; \
-	(gradle runRoverApp --args="2 5.0 3.0 5002" > logs_r2.txt &) ; \
+	(gradle runRoverApp --args="1 0.0 0.0 127.0.0.1 5001 9011" > logs_r1.txt &) ; \
+	(gradle runRoverApp --args="2 5.0 3.0 127.0.0.1 5001 9012" > logs_r2.txt &) ; \
 	echo "Sistema iniciado: Nave + GC + Rovers"
 
 #make build
