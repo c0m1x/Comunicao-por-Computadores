@@ -3,13 +3,13 @@ package rover;
 import lib.SessaoClienteMissionLink;
 import lib.TipoMensagem;
 import lib.mensagens.MensagemUDP;
+import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
 import lib.Rover.EstadoRover;
 
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Arrays;
 
@@ -89,7 +89,7 @@ public class ClienteUDP implements Runnable {
      * Processa mensagem recebida da Nave-Mãe.
      */
     private void processarMensagem(DatagramPacket pacote) {
-        MensagemUDP msg = deserializarMensagem(pacote.getData(), pacote.getLength());
+        MensagemUDP msg = SerializadorUDP.deserializarMensagem(pacote.getData(), pacote.getLength());
 
         if (msg == null || msg.header == null) {
             return;
@@ -185,21 +185,23 @@ public class ClienteUDP implements Runnable {
         
         System.out.println("[ClienteUDP] Fragmento recebido: seq=" + seq + "/" + (msg.header.totalFragm + 1));
         
-        // Extrair dados do fragmento
-        byte[] dados = null;
-        try {
-            dados = extrairDadosFragmento(msg.payload);
-        } catch (Exception e) {
-            System.err.println("[ClienteUDP] Erro ao extrair fragmento: " + e.getMessage());
+        // Extrair FragmentoPayload
+        if (!(msg.payload instanceof FragmentoPayload)) {
+            System.err.println("[ClienteUDP] Payload não é FragmentoPayload");
             return;
         }
         
-        if (dados != null) {
-            sessaoAtual.fragmentosRecebidos.put(seq, dados);
-            // Manter o maior seq recebido (mesmo com retransmissões, para evitar regressões)
+        FragmentoPayload fragmento = (FragmentoPayload) msg.payload;
+        
+        if (fragmento.temDados()) {
+            sessaoAtual.fragmentosRecebidos.put(seq, fragmento);
+            // Manter o maior seq recebido
             if (seq > sessaoAtual.seqAtual) {
                 sessaoAtual.seqAtual = seq;
             }
+            
+            // Agregar campos no serializador
+            sessaoAtual.serializador.agregarCampos(fragmento);
         }
         
         // Verificar se recebemos todos os fragmentos
@@ -209,7 +211,6 @@ public class ClienteUDP implements Runnable {
         System.out.println("[ClienteUDP] Progresso: " + fragmentosRecebidos + "/" + fragmentosEsperados);
         
         // Após receber alguns fragmentos, enviar ACK
-        // Só processar se já soubermos quantos fragmentos esperar
         if (fragmentosEsperados > 0 && 
             (fragmentosRecebidos >= fragmentosEsperados || 
              (fragmentosRecebidos > 0 && fragmentosRecebidos % 5 == 0))) {
@@ -222,11 +223,8 @@ public class ClienteUDP implements Runnable {
                 if (reconstruirMissao()) {
                     System.out.println("[ClienteUDP] Missão recebida com sucesso!");
                     enviarAck();
-                    // Guardar o seq do ACK para que o primeiro PROGRESS use seq+1
-                    // O servidor guarda ultimoSeq = seqAtual do ACK, e espera PROGRESS com ultimoSeq+1
                     System.out.println("[ClienteUDP] SeqAtual após ACK: " + sessaoAtual.seqAtual + 
                                      " (próximo PROGRESS usará seq=" + (sessaoAtual.seqAtual + 1) + ")");
-                    // Iniciar a reportagem em thread separada para não bloquear a receção
                     Thread t = new Thread(this::reportarMissao);
                     t.setDaemon(true);
                     t.start();
@@ -234,7 +232,6 @@ public class ClienteUDP implements Runnable {
                     System.err.println("[ClienteUDP] Erro ao reconstruir missão");
                 }
             } else {
-                // Enviar ACK com fragmentos perdidos
                 System.out.println("[ClienteUDP] Solicitando retransmissão de " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos");
                 enviarAck();
             }
@@ -314,62 +311,23 @@ public class ClienteUDP implements Runnable {
     }
     
     /**
-     * Reconstrói a missão a partir dos fragmentos.
+     * Reconstrói a missão a partir dos campos identificados.
+     * Usa o DesserializadorUDP para reconstruir o payload.
      */
     private boolean reconstruirMissao() {
         try {
-            // Ordenar fragmentos por sequência
-            List<Integer> seqs = new ArrayList<>(sessaoAtual.fragmentosRecebidos.keySet());
-            Collections.sort(seqs);
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            for (int seq : seqs) {
-                byte[] fragmento = sessaoAtual.fragmentosRecebidos.get(seq);
-                baos.write(fragmento);
+            // Verificar se missão está completa
+            if (!sessaoAtual.serializador.missaoCompleta()) {
+                System.err.println("[ClienteUDP] Missão incompleta - campos em falta");
+                return false;
             }
-
-            byte[] dadosCompletos = baos.toByteArray();
-
-            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(dadosCompletos));
-
-            PayloadMissao payload = new PayloadMissao();
-
-            // int idMissao
-            payload.idMissao = dis.readInt();
-
-            // float x1,y1,x2,y2
-            payload.x1 = dis.readFloat();
-            payload.y1 = dis.readFloat();
-            payload.x2 = dis.readFloat();
-            payload.y2 = dis.readFloat();
-
-            // String tarefa
-            int tarefaLen = dis.readInt();
-            if (tarefaLen > 0) {
-                byte[] tb = new byte[tarefaLen];
-                dis.readFully(tb);
-                payload.tarefa = new String(tb, java.nio.charset.StandardCharsets.UTF_8);
-            } else {
-                payload.tarefa = "";
-            }
-
-            // tempos em segundos
-            long durSeg = dis.readLong();
-            long intSeg = dis.readLong();
-            long iniSeg = dis.readLong();
-
-            payload.duracaoMissao = durSeg;
-            payload.intervaloAtualizacao = intSeg;
-            payload.inicioMissao = iniSeg;
-
-            // prioridade
-            payload.prioridade = dis.readInt();
+            
+            // Reconstruir payload usando o protocolo
+            PayloadMissao payload = sessaoAtual.serializador.reconstruirMissao();
 
             // intervalos já vêm em segundos, converter para ms (com mínimo de 200ms)
             sessaoAtual.intervaloAtualizacao = Math.max(200, (int) (payload.intervaloAtualizacao * 1000));
             sessaoAtual.duracaoMissao = payload.duracaoMissao * 1000;
-
-
 
             System.out.println("[ClienteUDP] Missão reconstruída: " + payload);
 
@@ -446,7 +404,7 @@ public class ClienteUDP implements Runnable {
      */
     private void enviarMensagem(MensagemUDP msg, InetAddress endereco, int porta) {
         try {
-            byte[] dados = serializarObjeto(msg);
+            byte[] dados = sessaoAtual.serializador.serializarObjeto(msg);
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
             socket.send(pacote);
         } catch (IOException e) {
@@ -492,33 +450,6 @@ public class ClienteUDP implements Runnable {
         return false;
     }
     
-    // ==================== MÉTODOS DE SERIALIZAÇÃO ====================
-    
-    /**
-     * Serializa objeto para bytes.
-     */
-    private byte[] serializarObjeto(Object obj) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(obj);
-        oos.flush();
-        return baos.toByteArray();
-    }
-    
-    /**
-     * Deserializa bytes para MensagemUDP.
-     */
-    private MensagemUDP deserializarMensagem(byte[] dados, int length) {
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(dados, 0, length);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            return (MensagemUDP) ois.readObject();
-        } catch (Exception e) {
-            System.err.println("[ClienteUDP] Erro ao deserializar: " + e.getMessage());
-            return null;
-        }
-    }
-    
     // ==================== MÉTODOS AUXILIARES ====================
     
     /**
@@ -533,16 +464,6 @@ public class ClienteUDP implements Runnable {
     }
     
     /**
-     * Extrai dados de um payload de fragmento.
-     */
-    private byte[] extrairDadosFragmento(PayloadUDP payload) throws Exception {
-        // Tentar acessar campo 'dados' via reflexão
-        java.lang.reflect.Field field = payload.getClass().getDeclaredField("dados");
-        field.setAccessible(true);
-        return (byte[]) field.get(payload);
-    }
-    
-    /**
      * Inicia a reportagem da missão
      */
     private void reportarMissao() {
@@ -554,6 +475,7 @@ public class ClienteUDP implements Runnable {
         
         // Limpar dados (não mais necessários)
         sessaoAtual.fragmentosRecebidos = null;
+        sessaoAtual.serializador.limpar();
         
         // Iniciar envio de progresso
         System.out.println("[ClienteUDP] Iniciada a execução da missão " + missionId);
