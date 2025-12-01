@@ -1,3 +1,4 @@
+package lib;
 /**
  * Interface funcional para condições de espera.
  */
