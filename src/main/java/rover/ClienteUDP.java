@@ -508,11 +508,19 @@ public class ClienteUDP implements Runnable {
                 
                 if (sessaoAtual == null || !sessaoAtual.emExecucao) break;
                 
-                // Calcular progresso
                 // Atualizar lógica da missão antes de reportar
                 if (maquina != null) {
                     maquina.atualizar();
                 }
+                
+                // Verificar condições de erro que impedem continuar a missão
+                PayloadErro.CodigoErro erroDetectado = verificarCondicoesErro();
+                if (erroDetectado != null) {
+                    System.out.println("[ClienteUDP] Erro detectado: " + erroDetectado.descricaoPadrao);
+                    enviarErro(erroDetectado, null);
+                    return; // Termina a reportagem
+                }
+                
                 long tempoDecorrido = System.currentTimeMillis() - sessaoAtual.inicioMissao;
                 float progressoPerc = maquina.getContexto().getProgresso();
                 
@@ -531,6 +539,102 @@ public class ClienteUDP implements Runnable {
         }
         
         System.out.println("[ClienteUDP] Execução da missão " + missionId + " terminada");
+    }
+
+    /**
+     * Verifica condições de erro que impedem o rover de continuar a missão.
+     * @return Código de erro se houver problema, null se tudo OK
+     */
+    private PayloadErro.CodigoErro verificarCondicoesErro() {
+        if (maquina == null || maquina.getContexto() == null) {
+            return null;
+        }
+        
+        ContextoRover ctx = maquina.getContexto();
+        
+        // Bateria crítica (<10%) - não consegue terminar
+        if (ctx.bateria < 10.0f) {
+            return PayloadErro.CodigoErro.ERRO_BATERIA_CRITICA;
+        }
+        
+        // Estado de falha na máquina de estados
+        if (ctx.getEstado() == EstadoRover.ESTADO_FALHA) {
+            return PayloadErro.CodigoErro.ERRO_HARDWARE;
+        }
+        
+        return null; // Sem erros
+    }
+
+    /**
+     * Envia mensagem de ERRO para a Nave-Mãe indicando que não consegue completar a missão.
+     * Implementa retransmissão robusta como o COMPLETED.
+     */
+    private void enviarErro(PayloadErro.CodigoErro codigoErro, String descricaoExtra) {
+        if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
+        
+        ContextoRover ctx = maquina.getContexto();
+        int seqParaEnviar = ++sessaoAtual.seqAtual;
+        
+        MensagemUDP msg = new MensagemUDP();
+        msg.header.tipo = TipoMensagem.MSG_ERROR;
+        msg.header.idEmissor = idRover;
+        msg.header.idRecetor = 0; // Nave-Mãe
+        msg.header.idMissao = sessaoAtual.idMissao;
+        msg.header.seq = seqParaEnviar;
+        msg.header.totalFragm = 1;
+        msg.header.flagSucesso = false; // Indica falha
+        
+        // Criar payload com detalhes do erro
+        PayloadErro payloadErro = new PayloadErro(
+            sessaoAtual.idMissao,
+            codigoErro,
+            descricaoExtra,
+            ctx.progressoMissao,
+            ctx.bateria,
+            ctx.posicaoX,
+            ctx.posicaoY
+        );
+        msg.payload = payloadErro;
+        
+        // Tentar enviar com retransmissão (como COMPLETED, é crítico)
+        sessaoAtual.aguardandoAck = true;
+        sessaoAtual.seqAckEsperado = seqParaEnviar;
+        
+        int tentativas = 0;
+        int maxTentativasErro = MAX_RETRIES + 2; // Mais tentativas para mensagem crítica
+        
+        while (tentativas < maxTentativasErro && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
+            enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
+            
+            if (tentativas == 0) {
+                System.out.println("[ClienteUDP] ERRO enviado (seq=" + seqParaEnviar + 
+                                 ", codigo=" + codigoErro.codigo + ", " + codigoErro.descricaoPadrao + ")");
+            } else {
+                System.out.println("[ClienteUDP] ERRO retransmitido (seq=" + seqParaEnviar + 
+                                 ", tentativa " + tentativas + ")");
+            }
+            
+            // Aguardar ACK
+            if (aguardarAckParaSeq(seqParaEnviar, TIMEOUT_MS)) {
+                System.out.println("[ClienteUDP] ACK recebido para ERRO seq=" + seqParaEnviar);
+                break;
+            }
+            
+            tentativas++;
+        }
+        
+        // Finalizar sessão (missão falhou)
+        int missionId = sessaoAtual.idMissao;
+        System.out.println("[ClienteUDP] Missão " + missionId + " abortada por erro: " + codigoErro.descricaoPadrao +
+                         (sessaoAtual.aguardandoAck ? " (sem confirmação ACK)" : ""));
+        sessaoAtual.emExecucao = false;
+        sessaoAtual = null;
+        
+        // Atualizar máquina de estados para FALHA
+        if (maquina != null) {
+            ctx.transicionarEstado(EstadoRover.ESTADO_FALHA);
+            ctx.eventoPendente = EventoRelevante.EVENTO_ERRO_MISSAO;
+        }
     }
 
     

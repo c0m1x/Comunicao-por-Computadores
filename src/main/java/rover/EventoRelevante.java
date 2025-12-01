@@ -10,5 +10,6 @@ public enum EventoRelevante {
     EVENTO_BATERIA_BAIXA,
     EVENTO_MUDANCA_ESTADO,
     EVENTO_ERRO,
+    EVENTO_ERRO_MISSAO,      // Erro que impede conclusão da missão (enviado via UDP)
     EVENTO_CHECKPOINT_MISSAO
 }

@@ -244,5 +244,28 @@ public class GestaoEstado {
         rover.idMissaoAtual = -1;
         rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
     }
+
+    /** 
+     * Marca uma missão como falhada devido a um erro do rover.
+     * Atualiza estado do rover e da missão, registando o motivo da falha.
+     */
+    public void falharMissao(int idRover, int idMissao, int codigoErro, String descricaoErro) {
+        Rover rover = obterRover(idRover);
+        Missao missao = obterMissao(idMissao);
+        
+        System.out.println("[GestaoEstado] Missão " + idMissao + " falhou - Rover " + idRover + 
+                         ": " + descricaoErro + " (código " + codigoErro + ")");
+
+        if (missao != null) {
+            missao.estadoMissao = Missao.EstadoMissao.FALHADA;
+        }
+
+        if (rover != null) {
+            rover.temMissao = false;
+            rover.idMissaoAtual = -1;
+            // Manter rover em estado de FALHA até recuperar
+            rover.estadoRover = Rover.EstadoRover.ESTADO_FALHA;
+        }
+    }
 }
 

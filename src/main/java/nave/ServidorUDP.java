@@ -406,7 +406,7 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
 
         long inicioJanela = System.currentTimeMillis();
         int ultimoSeq = sessao.ultimoSeq;
-        while (!sessao.completedRecebido) {
+        while (!sessao.completedRecebido || !sessao.erroRecebido) {
             // Se chegou novo progresso, reinicia janela
             if (sessao.ultimoSeq != ultimoSeq) {
                 ultimoSeq = sessao.ultimoSeq;
@@ -491,6 +491,10 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
                     
                 case MSG_COMPLETED:
                     processarCompleted(msg, idRover, pacote);
+                    break;
+                
+                case MSG_ERROR:
+                    processarErro(msg, idRover, pacote);
                     break;
                     
                 default:
@@ -595,6 +599,60 @@ private boolean aguardarResponse(SessaoServidorMissionLink sessao) {
         }
     }
     
+    /**
+     * Processa mensagem ERROR do rover.
+     * Indica que o rover não conseguiu completar a missão devido a erro.
+     * Trata duplicados reenviando ACK. 
+     */
+    private void processarErro(MensagemUDP msg, int idRover, DatagramPacket pacote) {
+        SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
+        
+        // Proteção contra ERROR duplicado - reenviar ACK
+        if (sessao != null && sessao.erroRecebido) {
+            System.out.println("[ServidorUDP] ERROR duplicado do rover " + idRover + 
+                             " (seq=" + msg.header.seq + ") - Reenviando ACK");
+            sessao.ultimoSeq = msg.header.seq;
+            enviarAckParaRover(sessao);
+            return;
+        }
+
+        //Extrair detalhes do erro 
+        String descricaoErro = "Erro desconhecido";
+        int codigoErro = 0;
+        float progressoNoErro = 0;
+        float bateriaNoErro = 0;
+
+        if (msg.payload instanceof PayloadErro) {
+            PayloadErro erro = (PayloadErro) msg.payload;
+            codigoErro = erro.codigoErro;
+            descricaoErro = erro.descricao;
+            progressoNoErro = erro.progressoAtual;
+            bateriaNoErro = erro.bateria;
+
+            System.out.println("[ServidorUDP] ERROR recebido do rover " + idRover + 
+                         " (seq=" + msg.header.seq + ", missão=" + msg.header.idMissao + ")");
+            System.out.println("[ServidorUDP] Detalhes do erro: código=" + codigoErro + 
+                             ", descrição=" + descricaoErro + 
+                             ", progressoMissão=" + String.format("%.2f", progressoNoErro) + "%" +
+                             ", bateria=" + String.format("%.2f", bateriaNoErro) + "%");
+        }
+        
+        System.out.println("[ServidorUDP] ERROR recebido do rover " + idRover + 
+                         " (seq=" + msg.header.seq + ", missão=" + msg.header.idMissao + 
+                         "- Payload não reconhecido)");
+
+        // Atualizar estado via GestaoEstado
+       estado.falharMissao(idRover, msg.header.idMissao, codigoErro, descricaoErro);
+        
+        // Marcar na sessão
+        if (sessao != null) {
+            sessao.erroRecebido = true;
+            sessao.ultimoSeq = msg.header.seq;
+            enviarAckParaRover(sessao);
+        }
+
+    }
+
     /**
      * Envia ACK para o rover (usado para PROGRESS e COMPLETED).
      */
