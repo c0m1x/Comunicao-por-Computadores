@@ -14,9 +14,11 @@ public class PayloadAck extends PayloadUDP {
 
     public int missingCount;
     public int[] missing; // indice de fragmentos em falta
+    public boolean finalAck; // Flag indicando que este é o ACK final (para COMPLETED/ERROR)
 
     public PayloadAck() {
         this.missing = new int[0];
+        this.finalAck = false;
     }
 
     @Override
