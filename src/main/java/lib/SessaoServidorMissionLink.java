@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
 
+import lib.mensagens.payloads.FragmentoPayload;
+import lib.mensagens.SerializadorUDP;
+
  /**
      * Classe que representa uma sessão de envio de missão no servidor.
      */
@@ -28,17 +31,21 @@ import java.util.List;
         public boolean erroRecebido = false;  // Indica se recebeu MSG_ERROR do rover
 
         
-        // Fragmentação
+        // Fragmentação (nova versão com campos identificados)
         public int totalFragmentos = 0;
-        public byte[][] fragmentos;
+        public List<FragmentoPayload> fragmentosPayload;
         public Set<Integer> fragmentosPerdidos = new HashSet<>();
 
         // Progresso perdido (seqs de PROGRESS não recebidos)
         public List<Integer> progressoPerdido = null;
         
+        // Serializador para serialização/desserialização
+        public SerializadorUDP serializador;
+        
         public SessaoServidorMissionLink(Rover rover, Missao missao) {
             this.rover = rover;
             this.missao = missao;
+            this.serializador = new SerializadorUDP();
             try {
                 this.enderecoRover = InetAddress.getByName(rover.enderecoHost);
             } catch (Exception e) {
