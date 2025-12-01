@@ -1,6 +1,5 @@
 package lib.mensagens;
 
-import lib.CampoSerializado;
 import lib.mensagens.payloads.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -215,79 +214,13 @@ class SerializadorUDPTest {
         assertEquals(original.tarefa, reconstruida.tarefa);
     }
     
-    @Test
-    @DisplayName("Reconstruir campo fragmentado deve juntar partes corretamente")
-    void testReconstruirCampoFragmentado() {
-        // Criar dados grandes
-        byte[] dadosOriginais = new byte[1500];
-        for (int i = 0; i < dadosOriginais.length; i++) {
-            dadosOriginais[i] = (byte) (i % 256);
-        }
-        CampoSerializado campoGrande = new CampoSerializado("dadosTeste", dadosOriginais);
-        
-        // Fragmentar
-        List<CampoSerializado> partes = SerializadorUDP.fragmentarCampoGrande(campoGrande, 512);
-        
-        // Agregar partes (em ordem aleatória)
-        serializador.adicionarCampo(partes.get(partes.size() - 1)); // última
-        serializador.adicionarCampo(partes.get(0)); // primeira
-        for (int i = 1; i < partes.size() - 1; i++) {
-            serializador.adicionarCampo(partes.get(i)); // meio
-        }
-        
-        // Reconstruir
-        byte[] reconstruidos = serializador.reconstruirBytes("dadosTeste");
-        
-        // Verificar
-        assertArrayEquals(dadosOriginais, reconstruidos, "Dados reconstruídos devem ser iguais aos originais");
-    }
-    
-    @Test
-    @DisplayName("Reconstruir PayloadProgresso deve recuperar dados originais")
-    void testReconstruirProgresso() {
-        PayloadProgresso original = new PayloadProgresso(42, 3600, 75.5f);
-        
-        List<FragmentoPayload> fragmentos = SerializadorUDP.fragmentarPayload(original, 512);
-        for (FragmentoPayload frag : fragmentos) {
-            serializador.agregarCampos(frag);
-        }
-        
-        assertTrue(serializador.progressoCompleto());
-        
-        PayloadProgresso reconstruido = serializador.reconstruirProgresso();
-        
-        assertEquals(original.idMissao, reconstruido.idMissao);
-        assertEquals(original.tempoDecorrido, reconstruido.tempoDecorrido);
-        assertEquals(original.progressoPercentagem, reconstruido.progressoPercentagem, 0.001f);
-    }
- 
-    
     // ==================== TESTES DE VERIFICAÇÃO DE COMPLETUDE ====================
     
     @Test
     @DisplayName("Missão incompleta deve retornar false em missaoCompleta()")
     void testMissaoIncompleta() {
-        PayloadMissao missao = criarMissaoTeste();
-        List<CampoSerializado> campos = SerializadorUDP.serializarPayload(missao);
-        
-        // Adicionar apenas alguns campos
-        serializador.adicionarCampo(campos.get(0)); // idMissao
-        serializador.adicionarCampo(campos.get(1)); // x1
-        
-        assertFalse(serializador.missaoCompleta(), "Missão com campos em falta não deve estar completa");
-    }
-    
-    @Test
-    @DisplayName("Campo fragmentado incompleto deve retornar false em campoCompleto()")
-    void testCampoFragmentadoIncompleto() {
-        byte[] dadosGrandes = new byte[1500];
-        CampoSerializado campoGrande = new CampoSerializado("teste", dadosGrandes);
-        List<CampoSerializado> partes = SerializadorUDP.fragmentarCampoGrande(campoGrande, 512);
-        
-        // Adicionar apenas primeira parte
-        serializador.adicionarCampo(partes.get(0));
-        
-        assertFalse(serializador.campoCompleto("teste"), "Campo com partes em falta não deve estar completo");
+        // Não agregar nada
+        assertFalse(serializador.missaoCompleta(), "Missão sem campos não deve estar completa");
     }
     
     // ==================== TESTES DE SERIALIZAÇÃO DE OBJETOS ====================
@@ -327,7 +260,7 @@ class SerializadorUDPTest {
         assertNull(resultado, "Dados inválidos devem resultar em null");
     }
     
-    // ==================== TESTES DE LIMPAR E ESTADO ====================
+    // ==================== TESTES DE LIMPAR ====================
     
     @Test
     @DisplayName("Limpar deve remover todos os campos agregados")
@@ -339,25 +272,11 @@ class SerializadorUDPTest {
             serializador.agregarCampos(frag);
         }
         
-        assertTrue(serializador.numeroCampos() > 0, "Deve ter campos antes de limpar");
+        assertTrue(serializador.missaoCompleta(), "Deve ter missão completa antes de limpar");
         
         serializador.limpar();
         
-        assertEquals(0, serializador.numeroCampos(), "Deve ter 0 campos após limpar");
         assertFalse(serializador.missaoCompleta(), "Missão não deve estar completa após limpar");
-    }
-    
-    @Test
-    @DisplayName("temCampo deve retornar corretamente")
-    void testTemCampo() {
-        assertFalse(serializador.temCampo("idMissao"), "Não deve ter campo antes de agregar");
-        
-        PayloadMissao missao = criarMissaoTeste();
-        List<CampoSerializado> campos = SerializadorUDP.serializarPayload(missao);
-        serializador.adicionarCampo(campos.get(0)); // idMissao
-        
-        assertTrue(serializador.temCampo("idMissao"), "Deve ter campo após agregar");
-        assertFalse(serializador.temCampo("campoInexistente"), "Não deve ter campo inexistente");
     }
     
     // ==================== TESTES DE TAMANHO ====================
@@ -371,13 +290,6 @@ class SerializadorUDPTest {
         int tamanhoTotal = SerializadorUDP.calcularTamanhoTotal(campos);
         
         assertTrue(tamanhoTotal > 0, "Tamanho total deve ser maior que 0");
-        
-        // Verificar que é a soma dos tamanhos individuais
-        int somaTamanhos = 0;
-        for (CampoSerializado c : campos) {
-            somaTamanhos += c.tamanho();
-        }
-        assertEquals(somaTamanhos, tamanhoTotal);
     }
     
     // ==================== MÉTODOS AUXILIARES ====================

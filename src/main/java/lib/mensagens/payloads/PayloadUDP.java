@@ -1,5 +1,6 @@
 package lib.mensagens.payloads;
 
+import lib.mensagens.CampoSerializado;
 import java.util.List;
 
 /**
@@ -10,9 +11,9 @@ import java.util.List;
 public abstract class PayloadUDP implements Payload {
     
     /**
-     * Serializa os campos do payload em blocos independentes.
-     * Cada bloco representa um campo completo que não deve ser dividido.
-     * @return Lista de arrays de bytes, um por campo
+     * Serializa os campos do payload em CampoSerializado com nome identificador.
+     * Usado para fragmentação e reconstrução independente da ordem.
+     * @return Lista de campos serializados com nomes
      */
-    public abstract List<byte[]> serializarPorCampos();
+    public abstract List<CampoSerializado> serializarCampos();
 }

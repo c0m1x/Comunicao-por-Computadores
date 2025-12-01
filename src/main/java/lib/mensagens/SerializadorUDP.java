@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Módulo unificado de serialização/desserialização para mensagens UDP.
@@ -44,131 +43,29 @@ public class SerializadorUDP {
         "idMissao", "tempoDecorrido", "progressoPercentagem"
     };
     
-    /** Lista de nomes de campos esperados para PayloadAck */
-    private static final String[] CAMPOS_ACK = {
-        "missingCount", "missing"
-    };
-    
-    /** Lista de nomes de campos esperados para PayloadErro */
-    private static final String[] CAMPOS_ERRO = {
-        "idMissao", "codigoErro", "descricao", "progressoAtual",
-        "bateria", "posicaoX", "posicaoY", "timestampErro"
-    };
-    
-    // Funções auxiliares de conversão (estáticas)
-    private static final Function<Integer, byte[]> intToBytes = 
-        val -> ByteBuffer.allocate(4).putInt(val).array();
-    private static final Function<Float, byte[]> floatToBytes = 
-        val -> ByteBuffer.allocate(4).putFloat(val).array();
-    private static final Function<Long, byte[]> longToBytes = 
-        val -> ByteBuffer.allocate(8).putLong(val).array();
-    
     // ==================== CONSTRUTORES ====================
     
     public SerializadorUDP() {
         this.camposPorNome = new HashMap<>();
     }
     
-    /**
-     * Cria instância inicializada com campos existentes.
-     */
-    public SerializadorUDP(Map<String, List<CampoSerializado>> camposIniciais) {
-        this.camposPorNome = camposIniciais != null ? camposIniciais : new HashMap<>();
-    }
-    
     // ==================== SERIALIZAÇÃO DE PAYLOADS (ESTÁTICO) ====================
     
     /**
      * Serializa um Payload em lista de campos identificados.
-     * Suporta todos os tipos de payload do protocolo.
+     * Delega a serialização para cada tipo de payload.
      * 
      * @param payload Payload a serializar
      * @return Lista de campos serializados com nomes
      */
     public static List<CampoSerializado> serializarPayload(Payload payload) {
-        if (payload instanceof PayloadMissao) {
-            return serializarMissao((PayloadMissao) payload);
-        } else if (payload instanceof PayloadProgresso) {
-            return serializarProgresso((PayloadProgresso) payload);
-        } else if (payload instanceof PayloadAck) {
-            return serializarAck((PayloadAck) payload);
-        } else if (payload instanceof PayloadErro) {
-            return serializarErro((PayloadErro) payload);
+        if (payload instanceof PayloadUDP) {
+            return ((PayloadUDP) payload).serializarCampos();
         } else if (payload instanceof FragmentoPayload) {
             FragmentoPayload frag = (FragmentoPayload) payload;
             return frag.campos != null ? frag.campos : new ArrayList<>();
         }
         return new ArrayList<>();
-    }
-    
-    private static List<CampoSerializado> serializarMissao(PayloadMissao p) {
-        List<CampoSerializado> campos = new ArrayList<>();
-        
-        campos.add(new CampoSerializado("idMissao", intToBytes.apply(p.idMissao)));
-        campos.add(new CampoSerializado("x1", floatToBytes.apply(p.x1)));
-        campos.add(new CampoSerializado("y1", floatToBytes.apply(p.y1)));
-        campos.add(new CampoSerializado("x2", floatToBytes.apply(p.x2)));
-        campos.add(new CampoSerializado("y2", floatToBytes.apply(p.y2)));
-        
-        byte[] tarefaBytes = (p.tarefa == null) ? new byte[0] : p.tarefa.getBytes(StandardCharsets.UTF_8);
-        ByteBuffer tarefaBuf = ByteBuffer.allocate(4 + tarefaBytes.length);
-        tarefaBuf.putInt(tarefaBytes.length);
-        tarefaBuf.put(tarefaBytes);
-        campos.add(new CampoSerializado("tarefa", tarefaBuf.array()));
-        
-        campos.add(new CampoSerializado("duracaoMissao", longToBytes.apply(p.duracaoMissao)));
-        campos.add(new CampoSerializado("intervaloAtualizacao", longToBytes.apply(p.intervaloAtualizacao)));
-        campos.add(new CampoSerializado("inicioMissao", longToBytes.apply(p.inicioMissao)));
-        campos.add(new CampoSerializado("prioridade", intToBytes.apply(p.prioridade)));
-        
-        return campos;
-    }
-    
-    private static List<CampoSerializado> serializarProgresso(PayloadProgresso p) {
-        List<CampoSerializado> campos = new ArrayList<>();
-        
-        campos.add(new CampoSerializado("idMissao", intToBytes.apply(p.idMissao)));
-        campos.add(new CampoSerializado("tempoDecorrido", longToBytes.apply(p.tempoDecorrido)));
-        campos.add(new CampoSerializado("progressoPercentagem", floatToBytes.apply(p.progressoPercentagem)));
-        
-        return campos;
-    }
-    
-    private static List<CampoSerializado> serializarAck(PayloadAck p) {
-        List<CampoSerializado> campos = new ArrayList<>();
-        
-        campos.add(new CampoSerializado("missingCount", intToBytes.apply(p.missingCount)));
-        
-        int[] missing = p.missing != null ? p.missing : new int[0];
-        ByteBuffer buf = ByteBuffer.allocate(4 + missing.length * 4);
-        buf.putInt(missing.length);
-        for (int seq : missing) {
-            buf.putInt(seq);
-        }
-        campos.add(new CampoSerializado("missing", buf.array()));
-        
-        return campos;
-    }
-    
-    private static List<CampoSerializado> serializarErro(PayloadErro p) {
-        List<CampoSerializado> campos = new ArrayList<>();
-        
-        campos.add(new CampoSerializado("idMissao", intToBytes.apply(p.idMissao)));
-        campos.add(new CampoSerializado("codigoErro", intToBytes.apply(p.codigoErro)));
-        
-        byte[] descBytes = p.descricao != null ? p.descricao.getBytes(StandardCharsets.UTF_8) : new byte[0];
-        ByteBuffer descBuf = ByteBuffer.allocate(4 + descBytes.length);
-        descBuf.putInt(descBytes.length);
-        descBuf.put(descBytes);
-        campos.add(new CampoSerializado("descricao", descBuf.array()));
-        
-        campos.add(new CampoSerializado("progressoAtual", floatToBytes.apply(p.progressoAtual)));
-        campos.add(new CampoSerializado("bateria", floatToBytes.apply(p.bateria)));
-        campos.add(new CampoSerializado("posicaoX", floatToBytes.apply(p.posicaoX)));
-        campos.add(new CampoSerializado("posicaoY", floatToBytes.apply(p.posicaoY)));
-        campos.add(new CampoSerializado("timestampErro", longToBytes.apply(p.timestampErro)));
-        
-        return campos;
     }
     
     // ==================== FRAGMENTAÇÃO (ESTÁTICO) ====================
@@ -248,7 +145,7 @@ public class SerializadorUDP {
         List<CampoSerializado> partes = new ArrayList<>();
         byte[] dados = campo.dados;
         
-        int overheadPorParte = 2 + campo.nome.length() + 4 + 4 + 4;
+        int overheadPorParte = 2 + campo.nome.length() + 4 + 2 + 2;
         int tamanhoUtilPorParte = tamanhoMaximo - overheadPorParte;
         
         if (tamanhoUtilPorParte <= 0) {
@@ -271,11 +168,6 @@ public class SerializadorUDP {
         return partes;
     }
     
-    // ==================== SERIALIZAÇÃO DE OBJETOS (ESTÁTICO) ====================
-    
-    /**
-     * Serializa objeto para bytes (usando ObjectOutputStream).
-     */
     // ==================== SERIALIZAÇÃO DE OBJETOS ====================
     
     /**
@@ -308,7 +200,7 @@ public class SerializadorUDP {
     public static int calcularTamanhoTotal(List<CampoSerializado> campos) {
         int total = 0;
         for (CampoSerializado c : campos) {
-            total += c.tamanho();
+            total += c.tamanhoSerializado();
         }
         return total;
     }
@@ -329,27 +221,10 @@ public class SerializadorUDP {
     }
     
     /**
-     * Adiciona um campo diretamente.
-     */
-    public void adicionarCampo(CampoSerializado campo) {
-        if (campo == null) return;
-        camposPorNome
-            .computeIfAbsent(campo.nome, k -> new ArrayList<>())
-            .add(campo);
-    }
-    
-    /**
      * Limpa todos os campos agregados.
      */
     public void limpar() {
         camposPorNome.clear();
-    }
-    
-    /**
-     * @return Mapa de campos por nome (para inspeção)
-     */
-    public Map<String, List<CampoSerializado>> getCamposPorNome() {
-        return camposPorNome;
     }
     
     // ==================== VERIFICAÇÃO DE COMPLETUDE (INSTÂNCIA) ====================
@@ -362,14 +237,6 @@ public class SerializadorUDP {
         return camposCompletos(CAMPOS_PROGRESSO);
     }
     
-    public boolean ackCompleto() {
-        return camposCompletos(CAMPOS_ACK);
-    }
-    
-    public boolean erroCompleto() {
-        return camposCompletos(CAMPOS_ERRO);
-    }
-    
     private boolean camposCompletos(String[] nomesCampos) {
         for (String nome : nomesCampos) {
             if (!campoCompleto(nome)) {
@@ -379,7 +246,7 @@ public class SerializadorUDP {
         return true;
     }
     
-    public boolean campoCompleto(String nomeCampo) {
+    private boolean campoCompleto(String nomeCampo) {
         List<CampoSerializado> partes = camposPorNome.get(nomeCampo);
         if (partes == null || partes.isEmpty()) {
             return false;
@@ -441,7 +308,7 @@ public class SerializadorUDP {
     /**
      * Reconstrói os bytes de um campo a partir das suas partes.
      */
-    public byte[] reconstruirBytes(String nomeCampo) {
+    private byte[] reconstruirBytes(String nomeCampo) {
         List<CampoSerializado> partes = camposPorNome.get(nomeCampo);
         if (partes == null || partes.isEmpty()) {
             throw new IllegalStateException("Campo não encontrado: " + nomeCampo);
@@ -474,22 +341,22 @@ public class SerializadorUDP {
         return resultado;
     }
     
-    public int lerInt(String nome) {
+    private int lerInt(String nome) {
         byte[] dados = reconstruirBytes(nome);
         return ByteBuffer.wrap(dados).getInt();
     }
     
-    public float lerFloat(String nome) {
+    private float lerFloat(String nome) {
         byte[] dados = reconstruirBytes(nome);
         return ByteBuffer.wrap(dados).getFloat();
     }
     
-    public long lerLong(String nome) {
+    private long lerLong(String nome) {
         byte[] dados = reconstruirBytes(nome);
         return ByteBuffer.wrap(dados).getLong();
     }
     
-    public String lerString(String nome) {
+    private String lerString(String nome) {
         byte[] dados = reconstruirBytes(nome);
         ByteBuffer buf = ByteBuffer.wrap(dados);
         int len = buf.getInt();
@@ -497,17 +364,5 @@ public class SerializadorUDP {
         byte[] strBytes = new byte[len];
         buf.get(strBytes);
         return new String(strBytes, StandardCharsets.UTF_8);
-    }
-    
-    public int[] lerIntArray(String nome) {
-        byte[] dados = reconstruirBytes(nome);
-        ByteBuffer buf = ByteBuffer.wrap(dados);
-        int len = buf.getInt();
-        if (len <= 0) return new int[0];
-        int[] result = new int[len];
-        for (int i = 0; i < len; i++) {
-            result[i] = buf.getInt();
-        }
-        return result;
     }
 }

@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import lib.mensagens.CampoSerializado;
+
 /**
  * Payload para mensagens de erro UDP.
  * Usado quando o rover não consegue completar uma missão.
@@ -70,37 +72,24 @@ public class PayloadErro extends PayloadUDP {
     }
 
     @Override
-    public List<byte[]> serializarPorCampos() {
-        List<byte[]> blocos = new ArrayList<>();
+    public List<CampoSerializado> serializarCampos() {
+        List<CampoSerializado> campos = new ArrayList<>();
 
-        // idMissao (int - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putInt(idMissao).array());
+        campos.add(new CampoSerializado("idMissao", ByteBuffer.allocate(4).putInt(idMissao).array()));
+        campos.add(new CampoSerializado("codigoErro", ByteBuffer.allocate(4).putInt(codigoErro).array()));
 
-        // codigoErro (int - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putInt(codigoErro).array());
-
-        // descricao (String - tamanho + bytes UTF-8)
         byte[] descBytes = descricao != null ? descricao.getBytes(StandardCharsets.UTF_8) : new byte[0];
         ByteBuffer descBuf = ByteBuffer.allocate(4 + descBytes.length);
         descBuf.putInt(descBytes.length);
         descBuf.put(descBytes);
-        blocos.add(descBuf.array());
+        campos.add(new CampoSerializado("descricao", descBuf.array()));
 
-        // progressoAtual (float - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putFloat(progressoAtual).array());
+        campos.add(new CampoSerializado("progressoAtual", ByteBuffer.allocate(4).putFloat(progressoAtual).array()));
+        campos.add(new CampoSerializado("bateria", ByteBuffer.allocate(4).putFloat(bateria).array()));
+        campos.add(new CampoSerializado("posicaoX", ByteBuffer.allocate(4).putFloat(posicaoX).array()));
+        campos.add(new CampoSerializado("posicaoY", ByteBuffer.allocate(4).putFloat(posicaoY).array()));
+        campos.add(new CampoSerializado("timestampErro", ByteBuffer.allocate(8).putLong(timestampErro).array()));
 
-        // bateria (float - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putFloat(bateria).array());
-
-        // posicaoX (float - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putFloat(posicaoX).array());
-
-        // posicaoY (float - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putFloat(posicaoY).array());
-
-        // timestampErro (long - 8 bytes)
-        blocos.add(ByteBuffer.allocate(8).putLong(timestampErro).array());
-
-        return blocos;
+        return campos;
     }
 }

@@ -5,10 +5,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import lib.mensagens.CampoSerializado;
+
 /**
  * Payload do ACK UDP.
  */
-
 public class PayloadAck extends PayloadUDP {
 
     public int missingCount;
@@ -24,29 +25,19 @@ public class PayloadAck extends PayloadUDP {
     }
 
     @Override
-    public List<byte[]> serializarPorCampos() {
-        List<byte[]> blocos = new ArrayList<>();
+    public List<CampoSerializado> serializarCampos() {
+        List<CampoSerializado> campos = new ArrayList<>();
 
-        // missingCount (int - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putInt(missingCount).array());
+        campos.add(new CampoSerializado("missingCount", ByteBuffer.allocate(4).putInt(missingCount).array()));
 
-        // Tamanho do array (int - 4 bytes)
-        if(missing==null) {
-            missing = new int[0];
+        int[] arr = missing != null ? missing : new int[0];
+        ByteBuffer buf = ByteBuffer.allocate(4 + arr.length * 4);
+        buf.putInt(arr.length);
+        for (int seq : arr) {
+            buf.putInt(seq);
         }
-        int arrayLength = missing.length;
-        
-        blocos.add(ByteBuffer.allocate(4).putInt(arrayLength).array());
-        
-        // Array de inteiros (cada int - 4 bytes)
-        if (arrayLength > 0) {
-            ByteBuffer buffer = ByteBuffer.allocate(arrayLength * 4);
-            for (int seq : missing) {
-                buffer.putInt(seq);
-            }
-            blocos.add(buffer.array());
-        }
-        return blocos;
+        campos.add(new CampoSerializado("missing", buf.array()));
+
+        return campos;
     }
-
 }

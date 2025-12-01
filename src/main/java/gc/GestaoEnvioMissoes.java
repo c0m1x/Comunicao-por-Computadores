@@ -1,6 +1,7 @@
 package gc;
 
 import lib.mensagens.MensagemUDP;
+import lib.mensagens.SerializadorUDP;
 import lib.TipoMensagem;
 import lib.mensagens.payloads.PayloadMissao;
 
@@ -16,9 +17,11 @@ import gc.models.MissaoModel;
 public class GestaoEnvioMissoes {
 
     private final int portaNaveMae;
+    private final SerializadorUDP serializador;
 
     public GestaoEnvioMissoes(int porta) {
         this.portaNaveMae = porta;
+        this.serializador = new SerializadorUDP();
     }
 
     public void enviarMissao(MissaoModel missao) throws Exception {
@@ -28,7 +31,7 @@ public class GestaoEnvioMissoes {
         payload.tarefa = missao.tarefa;
 
         MensagemUDP mensagem = new MensagemUDP(TipoMensagem.MSG_MISSION, missao.idMissao, payload);
-        byte[] data = mensagem.toBytes();
+        byte[] data = serializador.serializarObjeto(mensagem);
 
         DatagramSocket socket = new DatagramSocket();
         DatagramPacket packet = new DatagramPacket(

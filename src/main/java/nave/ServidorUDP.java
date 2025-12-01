@@ -249,11 +249,26 @@ public class ServidorUDP implements Runnable {
      */
     private boolean enviarFragmentosMissao(SessaoServidorMissionLink sessao) {
         try {
-            // 1) Serializar e fragmentar payload usando o serializador da sessão
             PayloadMissao payload = sessao.missao.toPayload();
+            
+            // Verificar se precisa de fragmentação
+            if (!SerializadorUDP.precisaFragmentacao(payload, TAMANHO_FRAGMENTO)) {
+                // Enviar missão diretamente sem fragmentação
+                System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                        " não precisa de fragmentação - enviando diretamente");
+                
+                sessao.totalFragmentos = 1;
+                
+                MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_MISSION, sessao, 2, false);
+                msg.header.totalFragm = 1;
+                msg.payload = payload; // Payload direto, não fragmentado
+                
+                return enviarMensagemUDP(msg, sessao);
+            }
+            
+            // Precisa fragmentação - serializar e fragmentar payload
             List<FragmentoPayload> fragmentos = SerializadorUDP.fragmentarPayload(payload, TAMANHO_FRAGMENTO);
             
-            // 2) Guardar na sessão
             sessao.totalFragmentos = fragmentos.size();
             sessao.fragmentosPayload = fragmentos;
 
@@ -265,7 +280,7 @@ public class ServidorUDP implements Runnable {
                     ": " + tamanhoTotal + " bytes em " + sessao.totalFragmentos + 
                     " fragmentos (máx " + TAMANHO_FRAGMENTO + " bytes cada)");
 
-            // 3) Enviar todos os fragmentos
+            // Enviar todos os fragmentos
             for (int i = 0; i < sessao.totalFragmentos; i++) {
                 if (!enviarFragmentoPayload(sessao, i + 2, fragmentos.get(i))) {
                     return false;

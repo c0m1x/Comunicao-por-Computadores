@@ -168,6 +168,7 @@ public class ClienteUDP implements Runnable {
     
     /**
      * Processa fragmento MISSION.
+     * Suporta tanto PayloadMissao direto (sem fragmentação) quanto FragmentoPayload.
      */
     private void processarMission(MensagemUDP msg) {
         if (sessaoAtual == null || sessaoAtual.idMissao != msg.header.idMissao) {
@@ -177,6 +178,39 @@ public class ClienteUDP implements Runnable {
         
         int seq = msg.header.seq;
         
+        // Verificar se é PayloadMissao direto (sem fragmentação)
+        if (msg.payload instanceof PayloadMissao) {
+            System.out.println("[ClienteUDP] Missão recebida diretamente (sem fragmentação)");
+            PayloadMissao payload = (PayloadMissao) msg.payload;
+            
+            // intervalos já vêm em segundos, converter para ms (com mínimo de 200ms)
+            sessaoAtual.intervaloAtualizacao = Math.max(200, (int) (payload.intervaloAtualizacao * 1000));
+            sessaoAtual.duracaoMissao = payload.duracaoMissao * 1000;
+            sessaoAtual.seqAtual = seq;
+            sessaoAtual.totalFragmentos = 1;
+            
+            System.out.println("[ClienteUDP] Missão recebida: " + payload);
+
+            // Atualizar máquina de estados
+            if (maquina != null) {
+                maquina.receberMissao(payload);
+            }
+            
+            // Enviar ACK de confirmação
+            sessaoAtual.fragmentosPerdidos = new ArrayList<>();
+            enviarAck();
+            
+            System.out.println("[ClienteUDP] SeqAtual após ACK: " + sessaoAtual.seqAtual + 
+                             " (próximo PROGRESS usará seq=" + (sessaoAtual.seqAtual + 1) + ")");
+            
+            // Iniciar reportagem
+            Thread t = new Thread(this::reportarMissao);
+            t.setDaemon(true);
+            t.start();
+            return;
+        }
+        
+        // Caso contrário, é FragmentoPayload (com fragmentação)
         // Atualizar total de fragmentos se necessário (primeira vez que recebemos um MISSION)
         if (sessaoAtual.totalFragmentos == 0 && msg.header.totalFragm >= 1) {
             sessaoAtual.totalFragmentos = msg.header.totalFragm;
@@ -187,7 +221,7 @@ public class ClienteUDP implements Runnable {
         
         // Extrair FragmentoPayload
         if (!(msg.payload instanceof FragmentoPayload)) {
-            System.err.println("[ClienteUDP] Payload não é FragmentoPayload");
+            System.err.println("[ClienteUDP] Payload não é FragmentoPayload nem PayloadMissao");
             return;
         }
         
