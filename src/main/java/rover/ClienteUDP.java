@@ -56,6 +56,22 @@ public class ClienteUDP implements Runnable {
             socket = new DatagramSocket(porta);
             socket.setSoTimeout(100);
             System.out.println("[ClienteUDP] Rover " + idRover + " iniciado na porta " + porta);
+
+            // Thread que atualiza periodicamente a máquina de estados
+            Thread maquinaUpdater = new Thread(() -> {
+                while (running) {
+                    try {
+                        if (maquina != null) {
+                            maquina.atualizar();
+                        }
+                        Thread.sleep(1000); // Atualizar a cada 1s
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            });
+            maquinaUpdater.setDaemon(true);
+            maquinaUpdater.start();
             
             while (running) {
                 try {
