@@ -15,6 +15,10 @@ repositories {
 
 dependencies {
     // No external dependencies for the simple hello-world mains
+    
+    // JUnit 5 for testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.0'
 }
 
 application {
@@ -77,5 +81,35 @@ tasks.register('jarGroundControl', Jar) {
     from sourceSets.main.output
     manifest {
         attributes 'Main-Class': 'api.gc.GroundControlApp'
+    }
+}
+
+// Configure test task to use JUnit Platform
+test {
+    useJUnitPlatform()
+    
+    // Mostrar resultados dos testes no terminal
+    testLogging {
+        events "passed", "skipped", "failed"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        exceptionFormat "full"
+        
+        // Mostrar output standard dos testes
+        showStandardStreams = false
+        
+        // Formato mais detalhado
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                println "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                println "Resultado: ${result.resultType}"
+                println "Testes: ${result.testCount}"
+                println "   Passed: ${result.successfulTestCount}"
+                println "   Failed: ${result.failedTestCount}"
+                println "   Skipped: ${result.skippedTestCount}"
+                println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            }
+        }
     }
 }

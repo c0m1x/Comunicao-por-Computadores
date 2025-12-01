@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lib.*;
+import lib.mensagens.CampoSerializado;
 import lib.Condicao;
 import lib.mensagens.MensagemUDP;
+import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
 
 /**
@@ -245,85 +247,79 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Fragmenta e envia todos os fragmentos da missão.
-     * TODO: ver maneiras melhores de fazer a fragmentação por campos
+     * Usa o SerializadorUDP para fragmentação automática.
      */
     private boolean enviarFragmentosMissao(SessaoServidorMissionLink sessao) {
         try {
-            // 1) Obter payload da missão
             PayloadMissao payload = sessao.missao.toPayload();
-
-            // 2) Serializar campo a campo 
-            List<byte[]> blocos = payload.serializarPorCampos();
-
-            // 3) Empacotar blocos em fragmentos de até TAMANHO_FRAGMENTO sem dividir campos
-            List<byte[]> frags = new ArrayList<>();
-            ByteArrayOutputStream atual = new ByteArrayOutputStream();
-            for (byte[] bloco : blocos) {
-                if (bloco.length > TAMANHO_FRAGMENTO) {
-                    // Campo maior que o tamanho de fragmento — enviar sozinho
-                    if (atual.size() > 0) {
-                        frags.add(atual.toByteArray());
-                        atual.reset();
-                    }
-                    frags.add(bloco);
-                    continue;
-                }
-
-                if (atual.size() + bloco.length > TAMANHO_FRAGMENTO) {
-                    frags.add(atual.toByteArray());
-                    atual.reset();
-                }
-                atual.write(bloco);
+            
+            // Verificar se precisa de fragmentação
+            if (!SerializadorUDP.precisaFragmentacao(payload, TAMANHO_FRAGMENTO)) {
+                // Enviar missão diretamente sem fragmentação
+                System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                        " não precisa de fragmentação - enviando diretamente");
+                
+                sessao.totalFragmentos = 1;
+                
+                MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_MISSION, sessao, 2, false);
+                msg.header.totalFragm = 1;
+                msg.payload = payload; // Payload direto, não fragmentado
+                
+                return enviarMensagemUDP(msg, sessao);
             }
-            if (atual.size() > 0) {
-                frags.add(atual.toByteArray());
-            }
+            
+            // Precisa fragmentação - serializar e fragmentar payload
+            List<FragmentoPayload> fragmentos = SerializadorUDP.fragmentarPayload(payload, TAMANHO_FRAGMENTO);
+            
+            sessao.totalFragmentos = fragmentos.size();
+            sessao.fragmentosPayload = fragmentos;
 
-            // 4) Guardar na sessão
-            int totalFragmentos = frags.size();
-            sessao.totalFragmentos = totalFragmentos;
-            sessao.fragmentos = new byte[totalFragmentos][];
-            for (int i = 0; i < totalFragmentos; i++) sessao.fragmentos[i] = frags.get(i);
+            // Calcular tamanho total para log
+            List<CampoSerializado> campos = SerializadorUDP.serializarPayload(payload);
+            int tamanhoTotal = SerializadorUDP.calcularTamanhoTotal(campos);
+            
+            System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                    ": " + tamanhoTotal + " bytes em " + sessao.totalFragmentos + 
+                    " fragmentos (máx " + TAMANHO_FRAGMENTO + " bytes cada)");
 
-            System.out.println("[ServidorUDP] Enviando missão " + sessao.missao.idMissao +
-                    " em " + totalFragmentos + " fragmentos (empacotado por campos)");
-
-            // 5) Enviar todos os fragmentos
-            for (int i = 0; i < totalFragmentos; i++) {
-                if (!enviarFragmento(sessao, i + 2)) { // seq começa em 2
+            // Enviar todos os fragmentos
+            for (int i = 0; i < sessao.totalFragmentos; i++) {
+                if (!enviarFragmentoPayload(sessao, i + 2, fragmentos.get(i))) {
                     return false;
                 }
-                Thread.sleep(10); // Pequeno delay entre fragmentos
+                Thread.sleep(10);
             }
 
             return true;
             
         } catch (Exception e) {
             System.err.println("[ServidorUDP] Erro ao enviar fragmentos: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
-
-    
     
     /**
-     * Envia um fragmento específico.
+     * Envia um FragmentoPayload específico.
      */
-    private boolean enviarFragmento(SessaoServidorMissionLink sessao, int seq) {
-        int indice = seq - 2; // seq começa em 2, indice em 0
-        if (indice < 0 || indice >= sessao.fragmentos.length) {
-            return false;
-        }
-        
+    private boolean enviarFragmentoPayload(SessaoServidorMissionLink sessao, int seq, FragmentoPayload frag) {
         MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_MISSION, sessao, seq, false);
         msg.header.totalFragm = sessao.totalFragmentos;
-        
-        // Payload é o fragmento raw
-        FragmentoPayload frag = new FragmentoPayload();
-        frag.dados = sessao.fragmentos[indice];
         msg.payload = frag;
         
         return enviarMensagemUDP(msg, sessao);
+    }
+    
+    /**
+     * Envia um fragmento específico por índice (para retransmissões).
+     */
+    private boolean enviarFragmento(SessaoServidorMissionLink sessao, int seq) {
+        int indice = seq - 2; // seq começa em 2, indice em 0
+        if (indice < 0 || sessao.fragmentosPayload == null || indice >= sessao.fragmentosPayload.size()) {
+            return false;
+        }
+        
+        return enviarFragmentoPayload(sessao, seq, sessao.fragmentosPayload.get(indice));
     }
     
     /**
@@ -374,6 +370,7 @@ public class ServidorUDP implements Runnable {
         int ultimoSeq = sessao.ultimoSeq;
         // Continua enquanto NÃO recebeu COMPLETED E NÃO recebeu ERROR
         while (!sessao.completedRecebido && !sessao.erroRecebido) {
+            //NOTA: SE o progresso viesse fragmentado podia aproveitar que era por campos e se não recebesse todos os campos mesmo depois de retries e cenas, guadava o progresso das informações que tivesse
             // Se chegou novo progresso, reinicia janela
             if (sessao.ultimoSeq != ultimoSeq) {
                 ultimoSeq = sessao.ultimoSeq;
@@ -672,7 +669,7 @@ public class ServidorUDP implements Runnable {
                 return false;
             }
 
-            byte[] dados = serializarObjeto(msg);
+            byte[] dados = sessao.serializador.serializarObjeto(msg);
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
             socket.send(pacote);
 
@@ -688,28 +685,10 @@ public class ServidorUDP implements Runnable {
     // ==================== MÉTODOS DE SERIALIZAÇÃO ====================
     
     /**
-     * Serializa objeto para bytes.
-     */
-    private byte[] serializarObjeto(Object obj) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(obj);
-        oos.flush();
-        return baos.toByteArray();
-    }
-    
-    /**
      * Deserializa bytes para MensagemUDP.
      */
     private MensagemUDP deserializarMensagem(byte[] dados, int length) {
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(dados, 0, length);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            return (MensagemUDP) ois.readObject();
-        } catch (Exception e) {
-            System.err.println("[ServidorUDP] Erro ao deserializar: " + e.getMessage());
-            return null;
-        }
+        return SerializadorUDP.deserializarMensagem(dados, length);
     }
     
     // ==================== MÉTODOS AUXILIARES ====================

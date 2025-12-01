@@ -1,14 +1,15 @@
 package lib.mensagens.payloads;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Function;
+
+import lib.mensagens.CampoSerializado;
 
 /**
  * Payload da missão UDP.
  */
-
 public class PayloadMissao extends PayloadUDP {
 
     public int idMissao;
@@ -20,46 +21,28 @@ public class PayloadMissao extends PayloadUDP {
     public long inicioMissao;           // instante de início em segundos (epoch)
     public int prioridade; // 1-5
 
-
-
-    Function<Integer, byte[]> intBlock = (val) -> ByteBuffer.allocate(4).putInt(val).array();
-    Function<Float, byte[]> floatBlock = (val) -> ByteBuffer.allocate(4).putFloat(val).array();
-    Function<Long, byte[]> longBlock = (val) -> ByteBuffer.allocate(8).putLong(val).array();
-
-    /**
-     * Serializa os campos deste Payload em blocos independentes, por campo,
-     * para facilitar fragmentação sem quebrar campos.
-     * Formato por ordem
-     */
-
-
-    public List<byte[]> serializarPorCampos() {
-        List<byte[]> blocos = new ArrayList<>();
-
-        // idMissao
-        blocos.add(intBlock.apply(idMissao));
-
-        // coordenadas
-        blocos.add(floatBlock.apply(x1));
-        blocos.add(floatBlock.apply(y1));
-        blocos.add(floatBlock.apply(x2));
-        blocos.add(floatBlock.apply(y2));
-
-        // tarefa (String como length + bytes UTF-8)
+    @Override
+    public List<CampoSerializado> serializarCampos() {
+        List<CampoSerializado> campos = new ArrayList<>();
+        
+        campos.add(new CampoSerializado("idMissao", ByteBuffer.allocate(4).putInt(idMissao).array()));
+        campos.add(new CampoSerializado("x1", ByteBuffer.allocate(4).putFloat(x1).array()));
+        campos.add(new CampoSerializado("y1", ByteBuffer.allocate(4).putFloat(y1).array()));
+        campos.add(new CampoSerializado("x2", ByteBuffer.allocate(4).putFloat(x2).array()));
+        campos.add(new CampoSerializado("y2", ByteBuffer.allocate(4).putFloat(y2).array()));
+        
         byte[] tarefaBytes = (tarefa == null) ? new byte[0] : tarefa.getBytes(StandardCharsets.UTF_8);
-        blocos.add(intBlock.apply(tarefaBytes.length));
-        if (tarefaBytes.length > 0)
-            blocos.add(tarefaBytes);
-
-        // tempos em segundos (já armazenados assim)
-        blocos.add(longBlock.apply(duracaoMissao));
-        blocos.add(longBlock.apply(intervaloAtualizacao));
-        blocos.add(longBlock.apply(inicioMissao));
-
-        // prioridade
-        blocos.add(intBlock.apply(prioridade));
-
-        return blocos;
+        ByteBuffer tarefaBuf = ByteBuffer.allocate(4 + tarefaBytes.length);
+        tarefaBuf.putInt(tarefaBytes.length);
+        tarefaBuf.put(tarefaBytes);
+        campos.add(new CampoSerializado("tarefa", tarefaBuf.array()));
+        
+        campos.add(new CampoSerializado("duracaoMissao", ByteBuffer.allocate(8).putLong(duracaoMissao).array()));
+        campos.add(new CampoSerializado("intervaloAtualizacao", ByteBuffer.allocate(8).putLong(intervaloAtualizacao).array()));
+        campos.add(new CampoSerializado("inicioMissao", ByteBuffer.allocate(8).putLong(inicioMissao).array()));
+        campos.add(new CampoSerializado("prioridade", ByteBuffer.allocate(4).putInt(prioridade).array()));
+        
+        return campos;
     }
 
     @Override
@@ -68,5 +51,4 @@ public class PayloadMissao extends PayloadUDP {
             idMissao, x1, y1, x2, y2, tarefa, duracaoMissao,
             intervaloAtualizacao, prioridade);
     }
-
 }

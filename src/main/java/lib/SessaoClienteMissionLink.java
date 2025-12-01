@@ -1,9 +1,12 @@
 package lib;
 
 import lib.mensagens.payloads.PayloadProgresso;
+import lib.mensagens.payloads.FragmentoPayload;
+import lib.mensagens.SerializadorUDP;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -17,10 +20,13 @@ import java.util.HashMap;
         public InetAddress enderecoNave;
         public int portaNave;
         
-        // Recepção de missão
+        // Recepção de missão (nova versão com campos identificados)
         public int totalFragmentos;
-        public Map<Integer, byte[]> fragmentosRecebidos;
+        public Map<Integer, FragmentoPayload> fragmentosRecebidos;
         public List<Integer> fragmentosPerdidos;
+        
+        // Serializador para serialização/desserialização
+        public SerializadorUDP serializador;
         
         // Reportagem do progresso da missão
         public boolean emExecucao = false;
@@ -38,17 +44,16 @@ import java.util.HashMap;
         public Map<Integer, PayloadProgresso> progressosEnviados;
 
 
-        //adicionar o resto dos campos necessários
         public SessaoClienteMissionLink(int idMissao, InetAddress enderecoNave, int portaNave) {
             this.idMissao = idMissao;
             this.enderecoNave = enderecoNave;
             this.portaNave = portaNave;
-            //this.duracaoMissao = duracaoMissao;
-            //this.intervaloAtualizacao = intervaloAtualizacao;
             this.seqAtual = 0;
             this.totalFragmentos = 0;
             this.fragmentosRecebidos = new HashMap<>();
+            this.serializador = new SerializadorUDP();
             this.progressosEnviados = new HashMap<>();
+            this.fragmentosPerdidos = new ArrayList<>();
         }
 
     }

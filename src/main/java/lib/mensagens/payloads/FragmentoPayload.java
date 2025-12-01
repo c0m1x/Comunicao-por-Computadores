@@ -1,33 +1,74 @@
 package lib.mensagens.payloads;
-import java.util.List;
-import java.nio.ByteBuffer;
+
 import java.util.ArrayList;
+import java.util.List;
+
+import lib.mensagens.CampoSerializado;
 
 /**
- * Classe auxiliar para armazenar fragmentos de dados.
+ * Container para fragmentos de dados com campos identificados.
+ * 
+ * Cada fragmento transporta uma lista de CampoSerializado, permitindo:
+ * - Identificar campos pelo nome
+ * - Fragmentar campos grandes em múltiplas partes
+ * - Reconstruir independentemente da ordem de chegada
+ * 
+ * Usada no protocolo MissionLink para transmissão fiável de missões.
  */
-public class FragmentoPayload extends PayloadUDP {
-    public byte[] dados;
-
-    /**Criei porque tornei o metodo abstrato - ainda por corrigir */
-    @Override
-    public List<byte[]> serializarPorCampos() {
-        List<byte[]> blocos = new ArrayList<>();
-        // TODO: serializar campos específicos
-        // rever se isto faz sentido, o metodo é abstrato mas os campos são especificos
-        
-        if (dados == null || dados.length == 0) {
-            // Fragmento vazio - enviar só o tamanho 0
-            blocos.add(ByteBuffer.allocate(4).putInt(0).array());
-        } else {
-            // Tamanho do fragmento (int - 4 bytes)
-            blocos.add(ByteBuffer.allocate(4).putInt(dados.length).array());
-            
-            // Dados do fragmento
-            blocos.add(dados);
-        }
-        return blocos;
+public class FragmentoPayload implements Payload {
+  
+    /** Lista de campos serializados neste fragmento */
+    public List<CampoSerializado> campos;
+    
+    /** Construtor vazio para serialização */
+    public FragmentoPayload() {
+        this.campos = new ArrayList<>();
     }
-
+    
+    /** Construtor com lista de campos */
+    public FragmentoPayload(List<CampoSerializado> campos) {
+        this.campos = campos != null ? campos : new ArrayList<>();
+    }
+    
+    /** Adiciona um campo ao fragmento */
+    public void adicionarCampo(CampoSerializado campo) {
+        if (campos == null) {
+            campos = new ArrayList<>();
+        }
+        campos.add(campo);
+    }
+    
+    /** Adiciona um campo completo (não fragmentado) */
+    public void adicionarCampo(String nome, byte[] dados) {
+        adicionarCampo(new CampoSerializado(nome, dados));
+    }
+    
+    /** @return true se o fragmento contém campos */
+    public boolean temDados() {
+        return campos != null && !campos.isEmpty();
+    }
+    
+    /** @return número de campos neste fragmento */
+    public int numeroCampos() {
+        return campos != null ? campos.size() : 0;
+    }
+    
+    /** 
+     * @return tamanho total estimado dos dados (soma dos campos)
+     */
+    public int tamanhoEstimado() {
+        if (campos == null) return 0;
+        int total = 0;
+        for (CampoSerializado c : campos) {
+            total += c.tamanhoSerializado();
+        }
+        return total;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("FragmentoPayload{%d campos, ~%d bytes}", 
+                            numeroCampos(), tamanhoEstimado());
+    }
 }
     

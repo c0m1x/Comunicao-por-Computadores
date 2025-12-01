@@ -9,8 +9,7 @@ import lib.TipoMensagem;
  * Cabeçalho para mensagens TCP.
  */
 public class CabecalhoTCP implements Serializable {
-    //removi o TODO: o serialVersionUID é necessário para Serializable e é uma boa prática defini-lo explicitamente
-    private static final long serialVersionUID = 1L;
+    
     public TipoMensagem tipo;
     public int idEmissor;
     public int idRecetor;

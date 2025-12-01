@@ -1,12 +1,14 @@
 package lib.mensagens.payloads;
+
 import java.util.List;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import lib.mensagens.CampoSerializado;
+
 /**
  * Payload do progresso UDP.
  */
-
 public class PayloadProgresso extends PayloadUDP {
 
     public int idMissao;
@@ -28,22 +30,14 @@ public class PayloadProgresso extends PayloadUDP {
             idMissao, tempoDecorrido, progressoPercentagem);
     }
 
-/**Criei porque tornei o metodo abstrato - ainda por corrigir */
     @Override
-    public List<byte[]> serializarPorCampos() {
-        List<byte[]> blocos = new ArrayList<>();
-        // TODO: serializar campos específicos
-        // rever se isto faz sentido, o metodo é abstrato mas os campos são especificos
+    public List<CampoSerializado> serializarCampos() {
+        List<CampoSerializado> campos = new ArrayList<>();
         
-        // idMissao (int - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putInt(idMissao).array());
+        campos.add(new CampoSerializado("idMissao", ByteBuffer.allocate(4).putInt(idMissao).array()));
+        campos.add(new CampoSerializado("tempoDecorrido", ByteBuffer.allocate(8).putLong(tempoDecorrido).array()));
+        campos.add(new CampoSerializado("progressoPercentagem", ByteBuffer.allocate(4).putFloat(progressoPercentagem).array()));
         
-        // tempoDecorrido (long - 8 bytes)
-        blocos.add(ByteBuffer.allocate(8).putLong(tempoDecorrido).array());
-        
-        // progressoPercentagem (float - 4 bytes)
-        blocos.add(ByteBuffer.allocate(4).putFloat(progressoPercentagem).array());
-        return blocos;
+        return campos;
     }
-
 }
