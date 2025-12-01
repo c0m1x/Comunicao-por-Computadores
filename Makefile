@@ -64,6 +64,9 @@ run-test-api:
 	@echo "Testing /rovers:" ; \
 	curl -s http://localhost:8080/rovers | jq .
 	
+test-frag:
+	gradle cleanTest test
+	
 # Clean and build
 all: clean build
 
