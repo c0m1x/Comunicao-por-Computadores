@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lib.*;
+import lib.Condicao;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.payloads.*;
 
@@ -178,15 +179,16 @@ public class ServidorUDP implements Runnable {
                 return;
             }
 
-            //Passo 6: Enviar ACK final para COMPLETED 
-            if(!enviarAckParaRover(sessao)) {
-                System.err.println("[ServidorUDP] Falha ao enviar ACK final para COMPLETED do rover " + sessao.rover.idRover);
-                finalizarSessao(sessao, false);
-                return;
+            //Passo 6: Enviar ACK final 3 vezes para maior robustez (99.9% de entrega assumindo perda independente de 10%)
+            for (int i = 0; i < 3; i++) {
+                enviarAckFinalParaRover(sessao);
+                try {
+                    Thread.sleep(200); // 200ms entre repetições
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
-
-            //TODO: rever que nao pode estar a finalizar sessao sem o rover ter recebido o ack e ele estar sempre a transmitir o completed
-
+            
             finalizarSessao(sessao, true);
             
         } catch (Exception e) {
@@ -559,9 +561,9 @@ public class ServidorUDP implements Runnable {
         // Proteção contra ERROR duplicado - reenviar ACK
         if (sessao != null && sessao.erroRecebido) {
             System.out.println("[ServidorUDP] ERROR duplicado do rover " + idRover + 
-                             " (seq=" + msg.header.seq + ") - Reenviando ACK");
+                             " (seq=" + msg.header.seq + ") - Reenviar ACK final");
             sessao.ultimoSeq = msg.header.seq;
-            enviarAckParaRover(sessao);
+            enviarAckFinalParaRover(sessao);
             return;
         }
 
@@ -595,7 +597,16 @@ public class ServidorUDP implements Runnable {
         if (sessao != null) {
             sessao.erroRecebido = true;
             sessao.ultimoSeq = msg.header.seq;
-            enviarAckParaRover(sessao);
+            
+            // Enviar ACK final 3 vezes para garantir que rover recebe
+            for (int i = 0; i < 3; i++) {
+                enviarAckFinalParaRover(sessao);
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
 
     }
@@ -736,6 +747,35 @@ public class ServidorUDP implements Runnable {
         msg.header.flagSucesso = flagSucesso;
         return msg;
     }
-   
+    
+    /**
+     * Envia ACK final para o rover com flag finalAck=true.
+     * Este ACK indica ao rover que pode parar de retransmitir COMPLETED/ERROR.
+     */
+    private boolean enviarAckFinalParaRover(SessaoServidorMissionLink sessao) {
+        boolean temProgressoPerdido = sessao.progressoPerdido != null && !sessao.progressoPerdido.isEmpty();
+        MensagemUDP ack = criarMensagemBase(TipoMensagem.MSG_ACK, sessao, sessao.ultimoSeq, !temProgressoPerdido);
+
+        PayloadAck payloadAck = new PayloadAck();
+        payloadAck.finalAck = true; // Marca como ACK final
+        
+        if (temProgressoPerdido) {
+            payloadAck.missingCount = sessao.progressoPerdido.size();
+            payloadAck.missing = listaParaArray(sessao.progressoPerdido);
+        } else {
+            payloadAck.missingCount = 0;
+            payloadAck.missing = new int[0];
+        }
+        
+        ack.payload = payloadAck;
+
+        boolean enviado = enviarMensagemUDP(ack, sessao);
+        if (enviado) {
+            System.out.println("[ServidorUDP] ACK final enviado para rover " + sessao.rover.idRover + 
+                             " (seq=" + sessao.ultimoSeq + ", finalAck=true)");
+        }
+        return enviado;
+    }
+
 }
 

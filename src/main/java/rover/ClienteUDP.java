@@ -268,6 +268,18 @@ public class ClienteUDP implements Runnable {
         
         int seqRecebido = msg.header.seq;
         
+        // PRIORITY: Verificar se é ACK final (para COMPLETED/ERROR)
+        if (msg.payload instanceof PayloadAck) {
+            PayloadAck ack = (PayloadAck) msg.payload;
+            if (ack.finalAck) {
+                System.out.println("[ClienteUDP] ACK FINAL recebido (seq=" + seqRecebido + 
+                                 ") - parar todas as retransmissões");
+                sessaoAtual.ultimoSeqConfirmado = seqRecebido;
+                sessaoAtual.aguardandoAck = false;
+                return; // Parar imediatamente - não processar missing progress
+            }
+        }
+        
         // Verificar se é o ACK que estamos à espera
         if (sessaoAtual.aguardandoAck && seqRecebido == sessaoAtual.seqAckEsperado) {
             System.out.println("[ClienteUDP] ACK válido recebido para seq=" + seqRecebido + 
