@@ -120,6 +120,8 @@ public class SerializadorUDP {
         
         for (CampoSerializado campo : camposProcessados) {
             int tamanhoCampo = campo.tamanhoSerializado();
+
+            //TODO: inves de passar para o proximo caso nao caiba, tentar encontrar um campo que caiba, ja que nao temos que ter m conta a ordem deles
             
             if (tamanhoAtual + tamanhoCampo > tamanhoMaximo && fragmentoAtual.temDados()) {
                 fragmentos.add(fragmentoAtual);
