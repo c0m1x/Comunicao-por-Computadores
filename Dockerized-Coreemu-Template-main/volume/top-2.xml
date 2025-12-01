@@ -5,37 +5,37 @@
     <device id="1" name="nave-mae" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
       <position x="387.0" y="112.0" lat="47.57814836057446" lon="-122.12710949852567" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv3"/>
+        <service name="IPForward"/>
         <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
       </services>
     </device>
     <device id="2" name="rover1" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
       <position x="196.0" y="446.0" lat="47.57511226719528" lon="-122.12968317181466" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv3"/>
+        <service name="IPForward"/>
         <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
       </services>
     </device>
-    <device id="3" name="rover3" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+    <device id="3" name="rover2" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
       <position x="642.0" y="473.0" lat="47.57486682680619" lon="-122.12367344256391" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv3"/>
+        <service name="IPForward"/>
         <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
       </services>
     </device>
     <device id="4" name="n4" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
       <position x="386.0" y="288.0" lat="47.57654852492704" lon="-122.12712297325493" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv3"/>
+        <service name="IPForward"/>
         <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
       </services>
     </device>
   </devices>

@@ -708,8 +708,17 @@ public class ClienteUDP implements Runnable {
                          (semConfirmacao ? " (sem confirmação ACK)" : ""));
         
         if (maquina != null) {
+            // Limpar dados da missão no contexto (temMissao, idMissaoAtual, etc.)
+            maquina.getContexto().concluirMissao();
+            // Transicionar para o novo estado
             maquina.getContexto().transicionarEstado(novoEstado);
             maquina.getContexto().eventoPendente = evento;
+            
+            System.out.println("[ClienteUDP] Rover " + maquina.getContexto().idRover + 
+                             " agora em estado " + novoEstado + 
+                             " (temMissao=" + maquina.getContexto().temMissao + ")");
+
+            maquina.atualizar(); // atualização imediata
         }
     }
 
