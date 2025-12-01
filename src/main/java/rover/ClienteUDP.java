@@ -51,6 +51,22 @@ public class ClienteUDP implements Runnable {
             socket = new DatagramSocket(porta);
             socket.setSoTimeout(100);
             System.out.println("[ClienteUDP] Rover " + idRover + " iniciado na porta " + porta);
+
+            // Thread que atualiza periodicamente a máquina de estados
+            Thread maquinaUpdater = new Thread(() -> {
+                while (running) {
+                    try {
+                        if (maquina != null) {
+                            maquina.atualizar();
+                        }
+                        Thread.sleep(1000); // Atualizar a cada 1s
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            });
+            maquinaUpdater.setDaemon(true);
+            maquinaUpdater.start();
             
             while (running) {
                 try {
@@ -277,6 +293,18 @@ public class ClienteUDP implements Runnable {
         }
         
         int seqRecebido = msg.header.seq;
+        
+        // PRIORITY: Verificar se é ACK final (para COMPLETED/ERROR)
+        if (msg.payload instanceof PayloadAck) {
+            PayloadAck ack = (PayloadAck) msg.payload;
+            if (ack.finalAck) {
+                System.out.println("[ClienteUDP] ACK FINAL recebido (seq=" + seqRecebido + 
+                                 ") - parar todas as retransmissões");
+                sessaoAtual.ultimoSeqConfirmado = seqRecebido;
+                sessaoAtual.aguardandoAck = false;
+                return; // Parar imediatamente - não processar missing progress
+            }
+        }
         
         // Verificar se é o ACK que estamos à espera
         if (sessaoAtual.aguardandoAck && seqRecebido == sessaoAtual.seqAckEsperado) {
@@ -594,10 +622,14 @@ public class ClienteUDP implements Runnable {
             ctx.posicaoY
         );
         
-        int maxTentativasErro = MAX_RETRIES + 2; // Mais tentativas para mensagem crítica
-        enviarComRetry(msg, seqParaEnviar, maxTentativasErro, "ERRO (" + codigoErro.codigo + ")");
+        int maxTentativasErro = MAX_RETRIES * 3; // Mais tentativas para mensagem crítica
+        boolean confirmado = enviarComRetry(msg, seqParaEnviar, maxTentativasErro, "ERRO (" + codigoErro.codigo + ")");
         
-        // Finalizar sessão (missão falhou)
+        if (!confirmado) {
+            System.err.println("[ClienteUDP] AVISO: ERRO não foi confirmado após " + maxTentativasErro + " tentativas");
+        }
+
+        // Só actualizar estado DEPOIS de esgotar todas as tentativas
         finalizarMissaoComEstado(codigoErro.descricaoPadrao, EstadoRover.ESTADO_FALHA, EventoRelevante.EVENTO_ERRO_MISSAO);
     }
 
@@ -637,12 +669,17 @@ public class ClienteUDP implements Runnable {
         int seqParaEnviar = ++sessaoAtual.seqAtual;
         
         MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_COMPLETED, seqParaEnviar, sucesso);
-        msg.payload = null; // COMPLETED não precisa payload
+        msg.payload = null;
         
-        int maxTentativasCompleted = MAX_RETRIES + 2; // Mais tentativas para mensagem crítica
-        enviarComRetry(msg, seqParaEnviar, maxTentativasCompleted, "COMPLETED (sucesso=" + sucesso + ")");
+        // Aumentar drasticamente tentativas para mensagem crítica
+        int maxTentativasCompleted = MAX_RETRIES * 3; // ~45 segundos de tentativas
+        boolean confirmado = enviarComRetry(msg, seqParaEnviar, maxTentativasCompleted, "COMPLETED (sucesso=" + sucesso + ")");
         
-        // Finalizar sessão
+        if (!confirmado) {
+            System.err.println("[ClienteUDP] AVISO: COMPLETED não foi confirmado após " + maxTentativasCompleted + " tentativas");
+        }
+
+        // Só actualizar estado DEPOIS de esgotar todas as tentativas
         finalizarMissaoComEstado("concluída", EstadoRover.ESTADO_CONCLUIDO, EventoRelevante.EVENTO_FIM_MISSAO);
     }
     
