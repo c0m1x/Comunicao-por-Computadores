@@ -1,11 +1,9 @@
 package rover;
 
-import lib.mensagens.payloads.*;
 
 import java.time.Instant;
-
+import lib.mensagens.payloads.*;
 import lib.Rover.EstadoRover;
-import rover.EventoRelevante;
 
 
     /**
@@ -37,7 +35,7 @@ import rover.EventoRelevante;
         // timing / eventos
         public volatile long ultimoEnvioMensagem = 0; // nota: ver se é preciso isto para manter a nave a saber que o rover está ativo
         public volatile long ultimoEnvioTelemetria = 0;
-        public volatile EventoRelevante eventoPendente = EventoRelevante.EVENTO_NENHUM;
+        public volatile EventoRelevante eventoPendente = EventoRelevante.EVENTO_NENHUM; //serve para mandar telemetria quando algum evento acontece além dos intervalos normais
         public volatile EventoRelevante ultimoEvento = EventoRelevante.EVENTO_NENHUM;
 
         // constantes (ajustar conforme necessário)
@@ -114,6 +112,7 @@ import rover.EventoRelevante;
         }
 
         // Atualiza dinâmica (movimento, bateria, eventos) e progresso temporal
+        //TODO: rever lógica de movimento, ás vezes os rovers nao mudam de sitio
         public void atualizarDuranteMissao() {
                 if (!temMissao || missaoAtual == null) return;
 

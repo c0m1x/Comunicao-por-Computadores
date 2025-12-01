@@ -370,7 +370,8 @@ public class ServidorUDP implements Runnable {
 
         long inicioJanela = System.currentTimeMillis();
         int ultimoSeq = sessao.ultimoSeq;
-        while (!sessao.completedRecebido || !sessao.erroRecebido) {
+        // Continua enquanto NÃO recebeu COMPLETED E NÃO recebeu ERROR
+        while (!sessao.completedRecebido && !sessao.erroRecebido) {
             // Se chegou novo progresso, reinicia janela
             if (sessao.ultimoSeq != ultimoSeq) {
                 ultimoSeq = sessao.ultimoSeq;
@@ -386,7 +387,7 @@ public class ServidorUDP implements Runnable {
                 return false;
             }
         }
-        return true; // COMPLETED recebido
+        return true; // COMPLETED ou ERROR recebido
     }
     
     /**
@@ -628,7 +629,7 @@ public class ServidorUDP implements Runnable {
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
         if (sucesso) {
-            //talvez no caso de insucesso, reverter a missao para pendente ou para cancelada, dependendo do caso para ser reatribuida ao mesmo rover ou a outro diferente(implementar isto depois com msg erros)
+            //TODO: talvez no caso de insucesso, reverter a missao para pendente ou para cancelada, dependendo do caso para ser reatribuida ao mesmo rover ou a outro diferente(implementar isto depois com msg erros)
         }
         sessoesAtivas.remove(sessao.rover.idRover);
     }
