@@ -28,12 +28,9 @@ public class PayloadProgresso extends PayloadUDP {
             idMissao, tempoDecorrido, progressoPercentagem);
     }
 
-/**Criei porque tornei o metodo abstrato - ainda por corrigir */
     @Override
     public List<byte[]> serializarPorCampos() {
         List<byte[]> blocos = new ArrayList<>();
-        // TODO: serializar campos específicos
-        // rever se isto faz sentido, o metodo é abstrato mas os campos são especificos
         
         // idMissao (int - 4 bytes)
         blocos.add(ByteBuffer.allocate(4).putInt(idMissao).array());

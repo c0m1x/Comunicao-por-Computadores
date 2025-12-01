@@ -1,5 +1,6 @@
 package lib.mensagens;
 
+import lib.mensagens.payloads.Payload;
 import lib.mensagens.payloads.PayloadUDP;
 import lib.TipoMensagem;
 
@@ -14,13 +15,13 @@ import java.util.List;
  public class MensagemUDP implements Serializable {
 
     public CabecalhoUDP header;
-    public PayloadUDP payload; //isto esta sus, mas so nao teria o ponto se forem ficheiros separados, ver se ha maneira de nao ter
+    public Payload payload; // Pode ser PayloadUDP (estruturado) ou FragmentoPayload (raw)
 
     public MensagemUDP() {
         this.header = new CabecalhoUDP();
     }
 
-    public MensagemUDP(TipoMensagem tipo, int idMissao, PayloadUDP payload) {
+    public MensagemUDP(TipoMensagem tipo, int idMissao, Payload payload) {
         this.header = new CabecalhoUDP();
         this.header.tipo = tipo;
         this.header.idMissao = idMissao;
@@ -32,15 +33,26 @@ import java.util.List;
         return String.format("MensagemUDP{header=%s, payload=%s}", header, payload);
     }
 
-    /** Serializa esta mensagem completa (header + payload). */
+    /** 
+     * Serializa esta mensagem completa (header + payload).
+     * Apenas para PayloadUDP estruturados - FragmentoPayload já contém bytes raw.
+     * @throws IllegalStateException se o payload não for PayloadUDP
+     */
     public byte[] toBytes() {
-
-        List<byte[]> blocos = payload.serializarPorCampos();
+  
+        if (!(payload instanceof PayloadUDP)) {
+            throw new IllegalStateException(
+                "toBytes() só suporta PayloadUDP. FragmentoPayload já contém dados raw.");
+        }
+        
+        List<byte[]> blocos = ((PayloadUDP) payload).serializarPorCampos();
+        
         int totalBytes = 0;
 
-        for (byte[] b : blocos)
+        for (byte[] b : blocos){            
             totalBytes += (4 + b.length);
-
+        }
+        
         ByteBuffer buf = ByteBuffer.allocate(4 + totalBytes);
         buf.putInt(header.tipo.value);
 

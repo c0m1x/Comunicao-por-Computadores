@@ -1,14 +1,16 @@
 package lib.mensagens.payloads;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
+import lib.mensagens.CampoSerializado;
+
 /**
  * Payload da missão UDP.
  */
-
 public class PayloadMissao extends PayloadUDP {
 
     public int idMissao;
@@ -20,43 +22,33 @@ public class PayloadMissao extends PayloadUDP {
     public long inicioMissao;           // instante de início em segundos (epoch)
     public int prioridade; // 1-5
 
-
-
-    Function<Integer, byte[]> intBlock = (val) -> ByteBuffer.allocate(4).putInt(val).array();
-    Function<Float, byte[]> floatBlock = (val) -> ByteBuffer.allocate(4).putFloat(val).array();
-    Function<Long, byte[]> longBlock = (val) -> ByteBuffer.allocate(8).putLong(val).array();
+    // Funções auxiliares para serialização
+    private static final Function<Integer, byte[]> intBlock = (val) -> ByteBuffer.allocate(4).putInt(val).array();
+    private static final Function<Float, byte[]> floatBlock = (val) -> ByteBuffer.allocate(4).putFloat(val).array();
+    private static final Function<Long, byte[]> longBlock = (val) -> ByteBuffer.allocate(8).putLong(val).array();
 
     /**
-     * Serializa os campos deste Payload em blocos independentes, por campo,
-     * para facilitar fragmentação sem quebrar campos.
-     * Formato por ordem
+     * Serializa os campos deste Payload em blocos independentes (versão legacy).
+     *
      */
-
-
+    @Override
     public List<byte[]> serializarPorCampos() {
         List<byte[]> blocos = new ArrayList<>();
 
-        // idMissao
         blocos.add(intBlock.apply(idMissao));
-
-        // coordenadas
         blocos.add(floatBlock.apply(x1));
         blocos.add(floatBlock.apply(y1));
         blocos.add(floatBlock.apply(x2));
         blocos.add(floatBlock.apply(y2));
 
-        // tarefa (String como length + bytes UTF-8)
         byte[] tarefaBytes = (tarefa == null) ? new byte[0] : tarefa.getBytes(StandardCharsets.UTF_8);
         blocos.add(intBlock.apply(tarefaBytes.length));
         if (tarefaBytes.length > 0)
             blocos.add(tarefaBytes);
 
-        // tempos em segundos (já armazenados assim)
         blocos.add(longBlock.apply(duracaoMissao));
         blocos.add(longBlock.apply(intervaloAtualizacao));
         blocos.add(longBlock.apply(inicioMissao));
-
-        // prioridade
         blocos.add(intBlock.apply(prioridade));
 
         return blocos;
@@ -68,5 +60,4 @@ public class PayloadMissao extends PayloadUDP {
             idMissao, x1, y1, x2, y2, tarefa, duracaoMissao,
             intervaloAtualizacao, prioridade);
     }
-
 }
