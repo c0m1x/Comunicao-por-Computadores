@@ -15,7 +15,8 @@ public class Missao implements Serializable {
         PENDENTE,
         EM_ANDAMENTO,
         CONCLUIDA,
-        CANCELADA
+        CANCELADA,
+        FALHADA       // Missão abortada devido a erro (bateria baixa, obstáculo, etc.)
     }
 
     public int idMissao;

@@ -25,6 +25,7 @@ import java.util.List;
         public int ultimoSeq = 0;
         public boolean completedRecebido = false;
         public boolean completedSucesso = false;
+        public boolean erroRecebido = false;  // Indica se recebeu MSG_ERROR do rover
 
         
         // Fragmentação

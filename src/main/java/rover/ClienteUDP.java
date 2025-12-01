@@ -10,7 +10,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List; 
+import java.util.List;
 import java.util.Arrays;
 
 
@@ -279,7 +279,6 @@ public class ClienteUDP implements Runnable {
 
     /**
      * Reenvia PROGRESS para o seq especificado, usando os dados guardados.
-     * Utiliza o mapa progressosEnviados para recuperar o payload original.
      */
     private void reenviarProgress(int seq) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
@@ -290,17 +289,10 @@ public class ClienteUDP implements Runnable {
             return;
         }
 
-        MensagemUDP msg = new MensagemUDP();
-        msg.header.tipo = TipoMensagem.MSG_PROGRESS;
-        msg.header.idEmissor = idRover;
-        msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = seq;
-        msg.header.totalFragm = 1;
-        msg.header.flagSucesso = true;
+        MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_PROGRESS, seq, true);
         msg.payload = progresso;
 
-        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
+        enviarParaNave(msg);
         System.out.println("[ClienteUDP] PROGRESS reenviado (seq=" + seq + ")");
     }
     
@@ -392,22 +384,31 @@ public class ClienteUDP implements Runnable {
         }
     }
     
+    // ==================== MÉTODOS DE CRIAÇÃO DE MENSAGENS ====================
+    
+    /**
+     * Cria uma mensagem UDP base com campos comuns preenchidos.
+     */
+    private MensagemUDP criarMensagemBase(TipoMensagem tipo, int seq, boolean flagSucesso) {
+        MensagemUDP msg = new MensagemUDP();
+        msg.header.tipo = tipo;
+        msg.header.idEmissor = idRover;
+        msg.header.idRecetor = 0; // Nave-Mãe
+        msg.header.idMissao = sessaoAtual.idMissao;
+        msg.header.seq = seq;
+        msg.header.totalFragm = 1;
+        msg.header.flagSucesso = flagSucesso;
+        return msg;
+    }
+    
     /**
      * Envia mensagem RESPONSE.
      */
     private void enviarResponse(boolean sucesso) {
-        MensagemUDP msg = new MensagemUDP();
-        msg.header.tipo = TipoMensagem.MSG_RESPONSE;
-        msg.header.idEmissor = idRover;
-        msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = sessaoAtual.idMissao;
-        //msg.header.timestamp = new Time(System.currentTimeMillis());
-        msg.header.seq = sessaoAtual.seqAtual;
-        msg.header.totalFragm = 1;
-        msg.header.flagSucesso = sucesso;
+        MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_RESPONSE, sessaoAtual.seqAtual, sucesso);
         msg.payload = null;
         
-        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
+        enviarParaNave(msg);
         System.out.println("[ClienteUDP] RESPONSE enviado (sucesso=" + sucesso + ")");
     }
     
@@ -415,31 +416,30 @@ public class ClienteUDP implements Runnable {
      * Envia mensagem ACK.
      */
     private void enviarAck() {
-        MensagemUDP msg = new MensagemUDP();
-        msg.header.tipo = TipoMensagem.MSG_ACK;
-        msg.header.idEmissor = idRover;
-        msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = sessaoAtual.idMissao;
-        //msg.header.timestamp = new Time(System.currentTimeMillis());
-        msg.header.seq = sessaoAtual.seqAtual;
-        msg.header.totalFragm = 1;
-        msg.header.flagSucesso = sessaoAtual.fragmentosPerdidos.isEmpty();
+        boolean semPerdas = sessaoAtual.fragmentosPerdidos.isEmpty();
+        MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_ACK, sessaoAtual.seqAtual, semPerdas);
         
         PayloadAck ack = new PayloadAck();
         ack.missingCount = sessaoAtual.fragmentosPerdidos.size();
-        ack.missing = new int[sessaoAtual.fragmentosPerdidos.size()];
-        for (int i = 0; i < sessaoAtual.fragmentosPerdidos.size(); i++) {
-            ack.missing[i] = sessaoAtual.fragmentosPerdidos.get(i);
-        }
+        ack.missing = listaParaArray(sessaoAtual.fragmentosPerdidos);
         msg.payload = ack;
         
-        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
+        enviarParaNave(msg);
         System.out.println("[ClienteUDP] ACK enviado (seq=" + sessaoAtual.seqAtual + 
                          ", faltam " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos)");
     }
     
+    // ==================== MÉTODOS DE COMUNICAÇÃO ====================
+    
     /**
-     * Envia mensagem UDP.
+     * Envia mensagem UDP para a Nave-Mãe (usando sessão atual).
+     */
+    private void enviarParaNave(MensagemUDP msg) {
+        enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
+    }
+    
+    /**
+     * Envia mensagem UDP para endereço específico.
      */
     private void enviarMensagem(MensagemUDP msg, InetAddress endereco, int porta) {
         try {
@@ -450,6 +450,46 @@ public class ClienteUDP implements Runnable {
             System.err.println("[ClienteUDP] Erro ao enviar mensagem: " + e.getMessage());
         }
     }
+    
+    /**
+     * Envia mensagem com retransmissão até receber ACK ou atingir máximo de tentativas.
+     * @return true se ACK foi recebido, false se esgotou tentativas
+     */
+    private boolean enviarComRetry(MensagemUDP msg, int seqParaEnviar, int maxTentativas, String nomeMensagem) {
+        sessaoAtual.aguardandoAck = true;
+        sessaoAtual.seqAckEsperado = seqParaEnviar;
+        
+        int tentativas = 0;
+        while (tentativas < maxTentativas && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
+            enviarParaNave(msg);
+            
+            if (tentativas == 0) {
+                System.out.println("[ClienteUDP] " + nomeMensagem + " enviado (seq=" + seqParaEnviar + ")");
+            } else {
+                System.out.println("[ClienteUDP] " + nomeMensagem + " retransmitido (seq=" + seqParaEnviar + 
+                                 ", tentativa " + tentativas + ")");
+            }
+            
+            if (aguardarAckParaSeq(seqParaEnviar, TIMEOUT_MS)) {
+                System.out.println("[ClienteUDP] ACK recebido para " + nomeMensagem + " seq=" + seqParaEnviar);
+                return true;
+            }
+            
+            tentativas++;
+            if (tentativas < maxTentativas) {
+                System.out.println("[ClienteUDP] Timeout aguardando ACK para " + nomeMensagem + " seq=" + seqParaEnviar +
+                                    " - Tentando novamente...");
+            }
+        }
+        
+        if (sessaoAtual != null && sessaoAtual.aguardandoAck) {
+            System.out.println("[ClienteUDP] AVISO: Máximo de retransmissões atingido para " + nomeMensagem + " seq=" + seqParaEnviar);
+            sessaoAtual.aguardandoAck = false;
+        }
+        return false;
+    }
+    
+    // ==================== MÉTODOS DE SERIALIZAÇÃO ====================
     
     /**
      * Serializa objeto para bytes.
@@ -474,6 +514,19 @@ public class ClienteUDP implements Runnable {
             System.err.println("[ClienteUDP] Erro ao deserializar: " + e.getMessage());
             return null;
         }
+    }
+    
+    // ==================== MÉTODOS AUXILIARES ====================
+    
+    /**
+     * Converte List<Integer> para int[].
+     */
+    private int[] listaParaArray(List<Integer> lista) {
+        int[] array = new int[lista.size()];
+        for (int i = 0; i < lista.size(); i++) {
+            array[i] = lista.get(i);
+        }
+        return array;
     }
     
     /**
@@ -508,11 +561,19 @@ public class ClienteUDP implements Runnable {
                 
                 if (sessaoAtual == null || !sessaoAtual.emExecucao) break;
                 
-                // Calcular progresso
                 // Atualizar lógica da missão antes de reportar
                 if (maquina != null) {
                     maquina.atualizar();
                 }
+                
+                // Verificar condições de erro que impedem continuar a missão
+                PayloadErro.CodigoErro erroDetectado = verificarCondicoesErro();
+                if (erroDetectado != null) {
+                    System.out.println("[ClienteUDP] Erro detectado: " + erroDetectado.descricaoPadrao);
+                    enviarErro(erroDetectado, null);
+                    return; // Termina a reportagem
+                }
+                
                 long tempoDecorrido = System.currentTimeMillis() - sessaoAtual.inicioMissao;
                 float progressoPerc = maquina.getContexto().getProgresso();
                 
@@ -533,6 +594,58 @@ public class ClienteUDP implements Runnable {
         System.out.println("[ClienteUDP] Execução da missão " + missionId + " terminada");
     }
 
+    /**
+     * Verifica condições de erro que impedem o rover de continuar a missão.
+     * @return Código de erro se houver problema, null se tudo OK
+     */
+    private PayloadErro.CodigoErro verificarCondicoesErro() {
+        if (maquina == null || maquina.getContexto() == null) {
+            return null;
+        }
+        
+        ContextoRover ctx = maquina.getContexto();
+        
+        // Bateria crítica (<10%) - não consegue terminar
+        if (ctx.bateria < 10.0f) {
+            return PayloadErro.CodigoErro.ERRO_BATERIA_CRITICA;
+        }
+        
+        // Estado de falha na máquina de estados
+        if (ctx.getEstado() == EstadoRover.ESTADO_FALHA) {
+            return PayloadErro.CodigoErro.ERRO_HARDWARE;
+        }
+        
+        return null; // Sem erros
+    }
+
+    /**
+     * Envia mensagem de ERRO para a Nave-Mãe indicando que não consegue completar a missão.
+     * Implementa retransmissão robusta como o COMPLETED.
+     */
+    private void enviarErro(PayloadErro.CodigoErro codigoErro, String descricaoExtra) {
+        if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
+        
+        ContextoRover ctx = maquina.getContexto();
+        int seqParaEnviar = ++sessaoAtual.seqAtual;
+        
+        MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_ERROR, seqParaEnviar, false);
+        msg.payload = new PayloadErro(
+            sessaoAtual.idMissao,
+            codigoErro,
+            descricaoExtra,
+            ctx.progressoMissao,
+            ctx.bateria,
+            ctx.posicaoX,
+            ctx.posicaoY
+        );
+        
+        int maxTentativasErro = MAX_RETRIES + 2; // Mais tentativas para mensagem crítica
+        enviarComRetry(msg, seqParaEnviar, maxTentativasErro, "ERRO (" + codigoErro.codigo + ")");
+        
+        // Finalizar sessão (missão falhou)
+        finalizarMissaoComEstado(codigoErro.descricaoPadrao, EstadoRover.ESTADO_FALHA, EventoRelevante.EVENTO_ERRO_MISSAO);
+    }
+
     
     /**
      * Envia mensagem PROGRESS para a Nave-Mãe.
@@ -543,122 +656,57 @@ public class ClienteUDP implements Runnable {
         
         int seqParaEnviar = ++sessaoAtual.seqAtual;
         
-        MensagemUDP msg = new MensagemUDP();
-        msg.header.tipo = TipoMensagem.MSG_PROGRESS;
-        msg.header.idEmissor = idRover;
-        msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = seqParaEnviar;
-        msg.header.totalFragm = 1;
-        msg.header.flagSucesso = true;
+        MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_PROGRESS, seqParaEnviar, true);
         
         PayloadProgresso progresso = new PayloadProgresso();
         progresso.idMissao = sessaoAtual.idMissao;
-        // converter ms para segundos
-        progresso.tempoDecorrido = tempoDecorrido / 1000;
+        progresso.tempoDecorrido = tempoDecorrido / 1000; // converter ms para segundos
         progresso.progressoPercentagem = progressoPerc;
         msg.payload = progresso;
 
         // Registrar progresso enviado para possível retransmissão
         sessaoAtual.progressosEnviados.put(seqParaEnviar, progresso);
         
-        // Tentar enviar com retransmissão
-        sessaoAtual.aguardandoAck = true;
-        sessaoAtual.seqAckEsperado = seqParaEnviar; // Guardar o seq que esperamos no ACK
-        
-        int tentativas = 0;
-        while (tentativas < MAX_RETRIES && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
-            enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
-            
-            if (tentativas == 0) {
-                System.out.println("[ClienteUDP] PROGRESS enviado (seq=" + seqParaEnviar + 
-                                 ", progresso=" + String.format("%.2f", progressoPerc) + "%%)");
-            } else {
-                System.out.println("[ClienteUDP] PROGRESS retransmitido (seq=" + seqParaEnviar + 
-                                 ", tentativa " + tentativas + ")");
-            }
-            
-            // Aguardar ACK com o seq correto
-            if (aguardarAckParaSeq(seqParaEnviar, TIMEOUT_MS)) {
-                System.out.println("[ClienteUDP] ACK recebido para seq=" + seqParaEnviar);
-                break; // ACK correto recebido
-            }
-            
-            tentativas++;
-            if (tentativas < MAX_RETRIES && sessaoAtual != null && sessaoAtual.aguardandoAck) {
-                System.out.println("[ClienteUDP] Timeout aguardando ACK para seq=" + seqParaEnviar + 
-                                 " - Retransmitindo (tentativa " + tentativas + "/" + MAX_RETRIES + ")");
-            }
-        }
-        
-        if (tentativas >= MAX_RETRIES && sessaoAtual != null && sessaoAtual.aguardandoAck) {
-            System.out.println("[ClienteUDP] AVISO: Máximo de retransmissões atingido para PROGRESS seq=" + seqParaEnviar);
-            sessaoAtual.aguardandoAck = false;
-        }
+        enviarComRetry(msg, seqParaEnviar, MAX_RETRIES, 
+                      "PROGRESS (" + String.format("%.2f", progressoPerc) + "%)");
     }
     
     /**
      * Envia mensagem COMPLETED para a Nave-Mãe.
      * Implementa retransmissão robusta com validação de seq do ACK.
-     * DUVIDA: por vezes no core o completed nunca é recebido na nave mae, talvez usar estrategia de burst de pacotes para enviar o completed?
-     * TODO: REVER ISTO DO COMPLETED PORQUE A NAVE NUNCA RECEBE NO CORE PODE SER ALGUM OUTRO PROBLEMA 
+     * TODO: REVER - por vezes no CORE o COMPLETED nunca é recebido na nave mãe
      */
     private void enviarCompleted(boolean sucesso) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
         
         int seqParaEnviar = ++sessaoAtual.seqAtual;
         
-        MensagemUDP msg = new MensagemUDP();
-        msg.header.tipo = TipoMensagem.MSG_COMPLETED;
-        msg.header.idEmissor = idRover;
-        msg.header.idRecetor = 0; // Nave-Mãe
-        msg.header.idMissao = sessaoAtual.idMissao;
-        msg.header.seq = seqParaEnviar;
-        msg.header.totalFragm = 1;
-        msg.header.flagSucesso = sucesso;
+        MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_COMPLETED, seqParaEnviar, sucesso);
         msg.payload = null; // COMPLETED não precisa payload
         
-        // Tentar enviar com retransmissão (mais tentativas para COMPLETED que é crítico)
-        sessaoAtual.aguardandoAck = true;
-        sessaoAtual.seqAckEsperado = seqParaEnviar;
-        
-        int tentativas = 0;
         int maxTentativasCompleted = MAX_RETRIES + 2; // Mais tentativas para mensagem crítica
+        enviarComRetry(msg, seqParaEnviar, maxTentativasCompleted, "COMPLETED (sucesso=" + sucesso + ")");
         
-        while (tentativas < maxTentativasCompleted && sessaoAtual != null && sessaoAtual.aguardandoAck && running) {
-            enviarMensagem(msg, sessaoAtual.enderecoNave, sessaoAtual.portaNave);
-            
-            if (tentativas == 0) {
-                System.out.println("[ClienteUDP] COMPLETED enviado (seq=" + seqParaEnviar + 
-                                 ", sucesso=" + sucesso + ")");
-            } else {
-                System.out.println("[ClienteUDP] COMPLETED retransmitido (seq=" + seqParaEnviar + 
-                                 ", tentativa " + tentativas + ")");
-            }
-            
-            // Aguardar ACK com o seq correto
-            if (aguardarAckParaSeq(seqParaEnviar, TIMEOUT_MS)) {
-                System.out.println("[ClienteUDP] ACK recebido para COMPLETED seq=" + seqParaEnviar);
-                break;
-            }
-            
-            tentativas++;
-            if (tentativas < maxTentativasCompleted && sessaoAtual != null && sessaoAtual.aguardandoAck) {
-                System.out.println("[ClienteUDP] Timeout aguardando ACK para COMPLETED - Retransmitindo (tentativa " + 
-                                 tentativas + "/" + maxTentativasCompleted + ")");
-            }
-        }
-        
-        // Finalizar sessão completa (mesmo sem confirmação, após max tentativas) REVER ISTO
+        // Finalizar sessão
+        finalizarMissaoComEstado("concluída", EstadoRover.ESTADO_CONCLUIDO, EventoRelevante.EVENTO_FIM_MISSAO);
+    }
+    
+    /**
+     * Finaliza a missão atual e atualiza a máquina de estados.
+     */
+    private void finalizarMissaoComEstado(String descricao, EstadoRover novoEstado, EventoRelevante evento) {
         int missionId = sessaoAtual.idMissao;
-        System.out.println("[ClienteUDP] Missão " + missionId + " concluída" + 
-                         (sessaoAtual.aguardandoAck ? " (sem confirmação ACK)" : ""));
+        boolean semConfirmacao = sessaoAtual.aguardandoAck;
+        
+        sessaoAtual.emExecucao = false;
         sessaoAtual = null;
         
-        // Atualizar máquina de estados
+        System.out.println("[ClienteUDP] Missão " + missionId + " " + descricao + 
+                         (semConfirmacao ? " (sem confirmação ACK)" : ""));
+        
         if (maquina != null) {
-            maquina.getContexto().transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
-            maquina.getContexto().eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
+            maquina.getContexto().transicionarEstado(novoEstado);
+            maquina.getContexto().eventoPendente = evento;
         }
     }
 
