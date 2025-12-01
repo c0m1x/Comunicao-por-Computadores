@@ -13,6 +13,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Arrays;
 
+//TODO: atualizações da maquina de estados, porque quando termina a missao tem de voltar a disponivel, e como a maquina nao etsa a ser atualizada, o servidor depois acha sempre que o rover nao esta disponivel
+//mas também nao pode atualizar antes de enviar o completed, porque senao o servidor pensa que o rover ja esta disponivel e manda outra missao antes de enviar o completed da missao anterior
+//a maquina talvez tambem devesse ser atualizada sempre em intervalos de tempo para detetar os erros (bateria fraca e afins) 
 
 
 /**

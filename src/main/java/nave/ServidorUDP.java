@@ -207,14 +207,6 @@ public class ServidorUDP implements Runnable {
         // ==================== MÉTODOS DE ESPERA ====================
     
     /**
-     * Interface funcional para condições de espera.
-     */
-    @FunctionalInterface
-    private interface Condicao {
-        boolean verificar();
-    }
-    
-    /**
      * Aguarda uma condição ser satisfeita dentro de um timeout.
      * @return true se a condição foi satisfeita, false se timeout
      */
