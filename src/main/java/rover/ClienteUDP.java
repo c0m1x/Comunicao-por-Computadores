@@ -52,6 +52,7 @@ public class ClienteUDP implements Runnable {
             socket.setSoTimeout(100);
             System.out.println("[ClienteUDP] Rover " + idRover + " iniciado na porta " + porta);
 
+            //TODO: passar para a main, e ter a certezza que o rover volta a disponivel ao acabar a missao, nao esta a fazer isso ao testar no core
             // Thread que atualiza periodicamente a máquina de estados
             Thread maquinaUpdater = new Thread(() -> {
                 while (running) {
@@ -59,7 +60,7 @@ public class ClienteUDP implements Runnable {
                         if (maquina != null) {
                             maquina.atualizar();
                         }
-                        Thread.sleep(1000); // Atualizar a cada 1s
+                        Thread.sleep(2000); // Atualizar a cada 2s
                     } catch (InterruptedException e) {
                         break;
                     }
