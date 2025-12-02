@@ -176,9 +176,16 @@ public class ServidorTCP implements Runnable {
 
         estado.atualizarTelemetria(idRover, tel);
 
-        if (header.idMissao > 0 && header.idMissao != rover.idMissaoAtual) {
-            rover.idMissaoAtual = header.idMissao;
+        // Atualizar estado da missão com base na telemetria
+        if (header.idMissao > 0) {
+            if (header.idMissao != rover.idMissaoAtual) {
+                rover.idMissaoAtual = header.idMissao;
+            }
             rover.temMissao = true;
+        } else {
+            // Rover sem missão ativa (idMissao <= 0)
+            rover.temMissao = false;
+            rover.idMissaoAtual = -1;
         }
         
         System.out.printf("[ServidorTCP] Rover %d: pos=(%.2f, %.2f) bat=%.1f%% vel=%.2fm/s estado=%s missao=%d\n",

@@ -66,6 +66,20 @@ public class RoverApp {
             ClienteUDP clienteUDP = new ClienteUDP(roverId, portaUdp, maquina);
             ClienteTCP clienteTCP = new ClienteTCP(maquina.getContexto(), ipNave, portaTcpNave);
             
+            // Thread que atualiza periodicamente a máquina de estados
+            Thread maquinaUpdater = new Thread(() -> {
+                while (maquina.getContexto().ativo) {
+                    try {
+                        maquina.atualizar();
+                        Thread.sleep(2000); // Atualizar a cada 2s
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }, "MaquinaEstados");
+            maquinaUpdater.setDaemon(true);
+            maquinaUpdater.start();
+            
             // Arrancar clientes em threads separadas
             new Thread(() -> {
                 try {
