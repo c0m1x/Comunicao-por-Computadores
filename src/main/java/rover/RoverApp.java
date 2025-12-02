@@ -97,13 +97,13 @@ public class RoverApp {
                     System.err.println("Erro no cliente TCP: " + e.getMessage());
                 }
             }, "RoverTCP").start(); 
-            
-             
 
             // Shutdown hook para encerramento 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("\n[SHUTDOWN] Encerrando rover...");
                 maquina.getContexto().ativo = false;
+                clienteTCP.stop();
+                clienteUDP.parar();
             }));
             
             System.out.println("Rover iniciado. Pressione CTRL+C para parar.");

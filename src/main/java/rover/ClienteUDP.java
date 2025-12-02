@@ -485,6 +485,7 @@ public class ClienteUDP implements Runnable {
         }
         
         if (sessaoAtual != null && sessaoAtual.aguardandoAck) {
+            //TODO: se a nave mae for de pica, ele chega aqui, da o avisa e continua a tentar enviar progress, talvez arranjar maneira de ao chegar aqui, confirmar se a nave ainda está a ouvir ou não 
             System.out.println("[ClienteUDP] AVISO: Máximo de retransmissões atingido para " + nomeMensagem + " seq=" + seqParaEnviar);
             sessaoAtual.aguardandoAck = false;
         }
