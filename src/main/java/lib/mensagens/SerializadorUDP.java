@@ -115,28 +115,56 @@ public class SerializadorUDP {
         }
         
         // 2) Empacotar campos em fragmentos (otimizando espaço)
+        List<CampoSerializado> camposPendentes = new ArrayList<>(camposProcessados);
         FragmentoPayload fragmentoAtual = new FragmentoPayload();
         int tamanhoAtual = 0;
         
-        for (CampoSerializado campo : camposProcessados) {
-            int tamanhoCampo = campo.tamanhoSerializado();
-
-            //TODO: inves de passar para o proximo caso nao caiba, tentar encontrar um campo que caiba, ja que nao temos que ter m conta a ordem deles
+        while (!camposPendentes.isEmpty()) {
+            boolean encontrouCampo = false;
+            CampoSerializado melhorCampo = null;
+            int melhorIndice = -1;
+            int melhorDesperdicio = Integer.MAX_VALUE;
             
-            if (tamanhoAtual + tamanhoCampo > tamanhoMaximo && fragmentoAtual.temDados()) {
-                fragmentos.add(fragmentoAtual);
+            // Procurar o campo que melhor aproveita o espaço restante (best-fit)
+            int espacoRestante = tamanhoMaximo - tamanhoAtual;
+            for (int i = 0; i < camposPendentes.size(); i++) {
+                CampoSerializado campo = camposPendentes.get(i);
+                int tamanhoCampo = campo.tamanhoSerializado();
+                if (tamanhoCampo <= espacoRestante) {
+                    int desperdicio = espacoRestante - tamanhoCampo;
+                    if (desperdicio < melhorDesperdicio) {
+                        melhorDesperdicio = desperdicio;
+                        melhorCampo = campo;
+                        melhorIndice = i;
+                        encontrouCampo = true;
+                    }
+                }
+            }
+            if (encontrouCampo) {
+                // Adicionar o melhor campo encontrado ao fragmento atual
+                fragmentoAtual.adicionarCampo(melhorCampo);
+                tamanhoAtual += melhorCampo.tamanhoSerializado();
+                camposPendentes.remove(melhorIndice);
+            } else {
+                // Nenhum campo cabe - fechar fragmento atual e começar novo
+                if (fragmentoAtual.temDados()) {
+                    fragmentos.add(fragmentoAtual);
+                }
                 fragmentoAtual = new FragmentoPayload();
                 tamanhoAtual = 0;
+                // Adicionar o primeiro campo pendente ao novo fragmento
+                if (!camposPendentes.isEmpty()) {
+                    CampoSerializado campo = camposPendentes.remove(0);
+                    fragmentoAtual.adicionarCampo(campo);
+                    tamanhoAtual += campo.tamanhoSerializado();
+                }
             }
-            
-            fragmentoAtual.adicionarCampo(campo);
-            tamanhoAtual += tamanhoCampo;
         }
-        
+
         if (fragmentoAtual.temDados()) {
             fragmentos.add(fragmentoAtual);
         }
-        
+
         return fragmentos;
     }
     
