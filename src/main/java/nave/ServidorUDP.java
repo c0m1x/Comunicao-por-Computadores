@@ -407,17 +407,16 @@ public class ServidorUDP implements Runnable {
                 // Mensagem sem sessão ativa
                 return;
             }
-            /*  nota: nao sei se isto é preciso
-            // Atualizar endpoint da sessão com base no pacote recebido
-            if (sessao != null) {
-                if (pacote.getAddress() != null) {
-                    sessao.enderecoRover = pacote.getAddress();
-                }
-                if (pacote.getPort() > 0) {
-                    sessao.portaRover = pacote.getPort();
-                }
+            
+            // Atualizar endpoint da sessão apenas na primeira mensagem recebida.
+            // Após a primeira mensagem, mantemos o endereço fixo para consistência.
+            if (sessao.enderecoRover == null && pacote.getAddress() != null) {
+                sessao.enderecoRover = pacote.getAddress();
+                sessao.portaRover = pacote.getPort();
+                System.out.println("[ServidorUDP] Endpoint do rover " + idRover + 
+                                 " estabelecido: " + sessao.enderecoRover.getHostAddress() + 
+                                 ":" + sessao.portaRover);
             }
-                */
 
             switch (msg.header.tipo) {
                 case MSG_RESPONSE:
