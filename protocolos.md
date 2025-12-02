@@ -8,20 +8,24 @@ Cada mensagem ML inclui um **cabeçalho** e um **corpo (payload)**.
 
 | Campo          | Tipo    | Descrição                                                                                                    |
 | -------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
-| `type`       | ??      | Tipo da mensagem (`HELLO`,`RESPONSE`, `MISSION`, `ACK`)                                                |
+| `type`       | enum    | Tipo da mensagem (`HELLO`, `RESPONSE`, `MISSION`, `ACK`, `PROGRESS`, `COMPLETED`, `ERROR`)                     |
 | `seq`        | int     | Número de sequência                                                                                          |
-| `tot`        | int     | Número de total de fragmentos a enviar                                                                        |
-| `suc`        | boolean | Indica o sucesso ou não da receção da mensagem total, ou uma resposta positiva/negativa, por parte do rover |
+| `tot`        | int     | Número total de fragmentos a enviar                                                                          |
+| `suc`        | boolean | Indica o sucesso ou não da receção da mensagem total, ou uma resposta positiva/negativa                       |
 | `mission_id` | int     | Identificador único da missão                                                                                |
-| `timestamp`  | int     | Instante de criação                                                                                          |
+| `idEmissor`  | int     | Identificador do emissor (0 = Nave-Mãe, >0 = Rover)                                                          |
+| `idRecetor`  | int     | Identificador do recetor                                                                                      |
 | `payload`    |         | Dados específicos da mensagem                                                                                 |
 
 O conteúdo do payload varia consoante o tipo de mensagem:
 
-- `MISSION`: identificação, área geográfica, tarefa, duração, frequência das atualizações, data início, prioridade da missão
-- `ACK`: no caso de se terem perdido pacotes, indica quais os fragmentos que não recebeu
-- `RESPONSE`: vazio?
-- `HELLO`: vazio?
+- `HELLO`: vazio (apenas header com mission_id)
+- `RESPONSE`: vazio (header.flagSucesso indica disponibilidade)
+- `MISSION`: identificação, área geográfica (x1,y1,x2,y2), tarefa, duração, frequência das atualizações, data início, prioridade
+- `ACK`: missing[] (fragmentos/progress perdidos), finalAck (indica fim de sessão)
+- `PROGRESS`: idMissao, tempoDecorrido, progressoPercentagem
+- `COMPLETED`: vazio (header.flagSucesso indica sucesso/falha)
+- `ERROR`: idMissao, codigoErro, descricao, progressoAtual, bateria, posicaoX, posicaoY, timestampErro
 
 ### Mecanismo de Fiabilidade
 
@@ -53,64 +57,117 @@ a Nave-Mãe retransmite apenas esses pacotes.)
 
 ## Diagrama de sequência
 
-
 ```mermaid
 sequenceDiagram
     participant R as Rover
-    participant NM_UDP as Nave-Mãe 
+    participant NM as Nave-Mãe
 
-    Note over R,NM_UDP: Fase 1: Atribuição de Missão
+    Note over R,NM: ═══════ Fase 1: Handshake ═══════
 
-    NM_UDP->>R: HELLO (seq=1, mission_id="M-001")
-    R-->>NM_UDP: RESPONSE (seq=1, suc=true)
-
-    loop Até todos os fragmentos serem recebidos
-        Note over NM_UDP,R: Envio em lote de fragmentos da missão
-        NM_UDP->>R: MISSION (seq=2..N, payloads[])
-      
-        Note over R: Rover verifica fragmentos recebidos
-      
-        alt Existem fragmentos faltantes
-          R-->>NM_UDP: ACK (seq=N, missing=[3,5,7])
-            Note over NM_UDP,R: Retransmissão apenas dos fragmentos perdidos
-            NM_UDP->>R: MISSION (seq=3,5,7, payloads[])
-  
-        else Todos os fragmentos recebidos
-            R-->>NM_UDP: ACK (seq=N, missing=[])
-            Note over NM_UDP,R: Missão atribuída com sucesso
-        end
-    end
-
-    Note over R,NM_UDP: Fase 2: Execução e Reportagem de Progresso
-
-    loop Enquanto estiver em missão
-        Note over NM_UDP,R: Rover envia progresso nos intervalos definidos
-        Note over NM_UDP,R: A cada iteração o seq incrementa
-        
-        R->>NM_UDP: PROGRESS (seq=M, mission_id="M-001", payload[])
-
-        Note over R: Rover espera receber ACK da Nave-Mãe
-
-        alt Timeout sem ACK
-        Note over R, NM_UDP: Retransmissão de mensagem
-            R->>NM_UDP: PROGRESS (seq=M, mission_id="M-001", payload[])
-  
-        else ACK recebido
-            NM_UDP-->>R: ACK (seq=M, suc=true)
-        end
-    end
-
-    Note over R,NM_UDP: Fase 3: Conclusão da Missão
+    NM->>R: HELLO (seq=1, mission_id)
     
-    R->>NM_UDP: COMPLETED (seq=M+1, mission_id="M-001", suc=true)
-    Note over R: Rover espera receber ACK da Nave-Mãe
-    alt Timeout sem ACK
-    Note over R, NM_UDP: Rover retransmite mensagem
-    R->>NM_UDP: COMPLETED (seq=M+1, mission_id="M-001", suc=true)
-  
-        else ACK recebido
-            NM_UDP-->>R: ACK (seq=M, suc=true)
-        end
+    alt Timeout sem RESPONSE (máx 3 tentativas)
+        NM->>R: HELLO (seq=1, mission_id) [retry]
+    end
+    
+    alt Rover disponível
+        R-->>NM: RESPONSE (seq=1, suc=true)
+    else Rover ocupado/indisponível
+        R-->>NM: RESPONSE (seq=1, suc=false)
+        Note over NM: Sessão terminada - procurar outro rover
+    end
 
-    Note over NM_UDP,R: Sessão concluída com sucesso
+    Note over R,NM: ═══════ Fase 2: Envio da Missão ═══════
+
+    alt Missão pequena (< 512 bytes)
+        NM->>R: MISSION (seq=2, tot=1, payload=PayloadMissao)
+    else Missão grande (fragmentada)
+        loop Para cada fragmento i de N
+            NM->>R: MISSION (seq=i+1, tot=N, payload=FragmentoPayload)
+        end
+    end
+
+    Note over R: Rover verifica fragmentos recebidos
+
+    alt Fragmentos em falta
+        R-->>NM: ACK (seq=N+1, missing=[lista de seq])
+        loop Retransmissão seletiva
+            NM->>R: MISSION (seq=perdido, payload)
+        end
+        R-->>NM: ACK (seq=N+1, missing=[])
+    else Todos recebidos
+        R-->>NM: ACK (seq=N+1, missing=[])
+    end
+
+    Note over NM: Missão atribuída com sucesso
+    Note over R: Rover reconstrói PayloadMissao e inicia execução
+
+    Note over R,NM: ═══════ Fase 3: Reportagem de Progresso ═══════
+
+    loop A cada intervaloAtualizacao (enquanto progresso < 100%)
+        R->>NM: PROGRESS (seq=M, idMissao, tempoDecorrido, progresso%)
+        
+        alt Timeout sem ACK (máx 5 tentativas)
+            R->>NM: PROGRESS (seq=M) [retry]
+        end
+        
+        alt ACK com perdas detectadas
+            NM-->>R: ACK (seq=M, missing=[seqs perdidos])
+            loop Reenvio de PROGRESS perdidos
+                R->>NM: PROGRESS (seq=perdido) [reenvio]
+            end
+        else ACK normal
+            NM-->>R: ACK (seq=M, suc=true)
+        end
+        
+        Note over NM: Atualiza estado da missão
+    end
+
+    Note over R,NM: ═══════ Fase 4: Conclusão ═══════
+
+    alt Missão concluída com sucesso
+        R->>NM: COMPLETED (seq=M+1, suc=true)
+        
+        alt Timeout sem ACK (máx 15 tentativas)
+            R->>NM: COMPLETED [retry]
+        end
+        
+        NM-->>R: ACK (seq=M+1, finalAck=true)
+        NM-->>R: ACK (finalAck=true) [×3 para robustez]
+        
+        Note over NM: Estado missão → CONCLUIDA
+        Note over R: Estado rover → DISPONIVEL
+        
+    else Erro durante execução (bateria crítica, falha hardware, etc.)
+        R->>NM: ERROR (seq=M+1, codigoErro, descricao, progresso, bateria, posição)
+        
+        alt Timeout sem ACK (máx 15 tentativas)
+            R->>NM: ERROR [retry]
+        end
+        
+        NM-->>R: ACK (seq=M+1, finalAck=true)
+        NM-->>R: ACK (finalAck=true) [×3 para robustez]
+        
+        Note over NM: Estado missão → FALHADA
+        Note over R: Estado rover → FALHA
+    end
+
+    Note over R,NM: ═══════ Sessão Terminada ═══════
 ```
+
+### Notas de Implementação
+
+**Timeouts e Retries:**
+- HELLO/RESPONSE: timeout 5s, máx 3 tentativas
+- MISSION/ACK: timeout 5s, máx 3 tentativas
+- PROGRESS: timeout 3s, máx 5 tentativas
+- COMPLETED/ERROR: timeout 3s, máx 15 tentativas (mensagens críticas)
+
+**Fragmentação:**
+- Tamanho máximo por fragmento: 512 bytes
+- Campos serializados com nome identificador para reconstrução
+- Campos grandes são subdivididos com índice de parte
+
+**ACK Final:**
+- Flag `finalAck=true` indica ao rover para parar retransmissões
+- Enviado 3 vezes consecutivas para garantir entrega (99.9% assumindo 10% perda)
