@@ -1,10 +1,8 @@
 package rover;
 
-
 import java.time.Instant;
 import lib.mensagens.payloads.*;
 import lib.Rover.EstadoRover;
-
 
     /**
      * Contexto interno do Rover — contém lógica da máquina de estados e

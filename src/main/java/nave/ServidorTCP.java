@@ -7,12 +7,11 @@ import java.net.Socket;
 import lib.mensagens.payloads.*;
 import lib.mensagens.*;
 import lib.*;
-import lib.Rover.EstadoRover;
 
 /**
  * Servidor TCP da Nave-Mãe (TelemetryLink).
  * Recebe telemetria contínua dos rovers via TCP.
- * faz: gestao de sockets, threads, rececao e parsing de mensagens, callback, atualização de estado do river e missao e gestao de reconexoes
+ * faz: gestao de sockets, threads, rececao e parsing de mensagens, atualização de estado do river e missao e gestao de reconexoes
  */
 public class ServidorTCP implements Runnable {
 
@@ -21,25 +20,11 @@ public class ServidorTCP implements Runnable {
     private ServerSocket serverSocket;
     private GestaoEstado estado;
     private boolean running = true;
-    //TODO: meter isto dos callbacks a dar, 
-    //DUVIDA: talvez uar isto dos callbacks na parte de mensagens de erro nas missoesn, quando o rover sabe que nao as consegue concluir, no lado do servidor udp?
-    private TelemetriaCallback callback;
 
     //DUVIDA: talvez implementar mecanismo de heartbeat para detetar rovers desconectados?
 
-    public interface TelemetriaCallback {
-        void onTelemetriaRecebida(int idRover, PayloadTelemetria telemetria);
-        void onBateriaBaixa(int idRover, float nivelBateria);
-        void onRoverDesconectado(int idRover);
-        void onMudancaEstado(int idRover, EstadoRover novoEstado);
-    }
-
     public ServidorTCP(GestaoEstado estado) {
         this.estado = estado;
-    }
-    
-    public void setCallback(TelemetriaCallback callback) {
-        this.callback = callback;
     }
 
     @Override
@@ -64,7 +49,6 @@ public class ServidorTCP implements Runnable {
                 try {
                     serverSocket.close();
                 } catch (Exception e) {
-                    // Ignorar
                 }
             }
             System.out.println("[ServidorTCP] Encerrado");
@@ -73,9 +57,10 @@ public class ServidorTCP implements Runnable {
 
     private void handleClient(Socket client) {
         String remote = client.getRemoteSocketAddress().toString();
-        System.out.println("[ServidorTCP] Nova conexão: " + remote);
+        System.out.println("[ServidorTCP] Nova conexão TCP: " + remote);
         
         Integer idRoverConexao = null;
+        boolean roverIdentificado = false;
 
         try (ObjectInputStream ois = new ObjectInputStream(client.getInputStream())) {
             while (!client.isClosed() && running) {
@@ -84,9 +69,12 @@ public class ServidorTCP implements Runnable {
                 if (obj instanceof MensagemTCP) {
                     MensagemTCP msg = (MensagemTCP) obj;
                     
-                    // Nota: Identificar rover na primeira mensagem, ver se há maneira de isto ser feito so uma vez ao receber a primeira mensagem do socket
-                    idRoverConexao = msg.header.idEmissor;
-                    verificarOuCriarRover(idRoverConexao, remote);
+                    // Identificar rover apenas na primeira mensagem da conexão
+                    if (!roverIdentificado) {
+                        idRoverConexao = msg.header.idEmissor;
+                        registarConexaoRover(idRoverConexao, remote);
+                        roverIdentificado = true;
+                    }
 
                     processarMensagemTCP(msg);
                     
@@ -96,28 +84,29 @@ public class ServidorTCP implements Runnable {
             }
         } catch (Exception e) {
             if (running) {
-                System.out.println("[ServidorTCP] Rover desconectou: " + remote + " (" + e.getMessage() + ")");
+                System.out.println("[ServidorTCP] Conexão perdida: " + remote + " (" + e.getMessage() + ")");
             }
         } finally {
             if (idRoverConexao != null) {
-                marcarRoverDesconectado(idRoverConexao); //NOTA: ver se é preciso dizer que conectou e desconectou de cada vez que manda mensagem
+                marcarRoverDesconectado(idRoverConexao);
             }
             try {
                 client.close();
             } catch (Exception e) {
-                // Ignorar
             }
         }
     }
 
-    private void verificarOuCriarRover(int idRover, String endereco) {
+    private void registarConexaoRover(int idRover, String endereco) {
         Rover rover = estado.obterRover(idRover);
         if (rover == null) {
             rover = new Rover(idRover, 0.0f, 0.0f, extrairHost(endereco));
             estado.adicionarRover(idRover, rover);
-            System.out.println("[ServidorTCP] Rover " + idRover + " registrado no sistema (conexão: " + endereco + ")");
+            System.out.println("[ServidorTCP] Rover " + idRover + " registado (IP: " + extrairHost(endereco) + ")");
         } else {
-            System.out.println("[ServidorTCP] Rover " + idRover + " reconectado (conexão: " + endereco + ")");
+            // Atualizar IP caso tenha mudado
+            rover.enderecoHost = extrairHost(endereco);
+            System.out.println("[ServidorTCP] Rover " + idRover + " reconectado (IP: " + rover.enderecoHost + ")");
         }
     }
 
@@ -136,9 +125,6 @@ public class ServidorTCP implements Runnable {
         if (rover != null) {
             System.out.println("[ServidorTCP] Rover " + idRover + " desconectado");
             
-            if (callback != null) {
-                callback.onRoverDesconectado(idRover);
-            }
         }
     }
 
@@ -166,8 +152,6 @@ public class ServidorTCP implements Runnable {
             return;
         }
 
-        String estadoAnterior = rover.estadoRover.toString();
-
         rover.posicaoX = tel.posicaoX;
         rover.posicaoY = tel.posicaoY;
         rover.bateria = tel.bateria;
@@ -176,26 +160,21 @@ public class ServidorTCP implements Runnable {
 
         estado.atualizarTelemetria(idRover, tel);
 
-        if (header.idMissao > 0 && header.idMissao != rover.idMissaoAtual) {
-            rover.idMissaoAtual = header.idMissao;
+        // Atualizar estado da missão com base na telemetria
+        if (header.idMissao > 0) {
+            if (header.idMissao != rover.idMissaoAtual) {
+                rover.idMissaoAtual = header.idMissao;
+            }
             rover.temMissao = true;
+        } else {
+            // Rover sem missão ativa (idMissao <= 0)
+            rover.temMissao = false;
+            rover.idMissaoAtual = -1;
         }
         
         System.out.printf("[ServidorTCP] Rover %d: pos=(%.2f, %.2f) bat=%.1f%% vel=%.2fm/s estado=%s missao=%d\n",
             idRover, tel.posicaoX, tel.posicaoY, tel.bateria, tel.velocidade, 
             tel.estadoOperacional, rover.idMissaoAtual);
-
-        if (callback != null) {
-            callback.onTelemetriaRecebida(idRover, tel);
-
-            if (tel.bateria < 20.0f && tel.bateria > 0.0f) {
-                callback.onBateriaBaixa(idRover, tel.bateria);
-            }
-
-            if (estadoAnterior != null && !estadoAnterior.equals(tel.estadoOperacional.toString())) {
-                callback.onMudancaEstado(idRover, tel.estadoOperacional);
-            }
-        }
     }
 
     public void parar() {
@@ -204,7 +183,6 @@ public class ServidorTCP implements Runnable {
             try {
                 serverSocket.close();
             } catch (Exception e) {
-                // Ignorar
             }
         }
     }

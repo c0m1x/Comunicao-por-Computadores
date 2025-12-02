@@ -66,6 +66,20 @@ public class RoverApp {
             ClienteUDP clienteUDP = new ClienteUDP(roverId, portaUdp, maquina);
             ClienteTCP clienteTCP = new ClienteTCP(maquina.getContexto(), ipNave, portaTcpNave);
             
+            // Thread que atualiza periodicamente a máquina de estados
+            Thread maquinaUpdater = new Thread(() -> {
+                while (maquina.getContexto().ativo) {
+                    try {
+                        maquina.atualizar();
+                        Thread.sleep(2000); // Atualizar a cada 2s
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }, "MaquinaEstados");
+            maquinaUpdater.setDaemon(true);
+            maquinaUpdater.start();
+            
             // Arrancar clientes em threads separadas
             new Thread(() -> {
                 try {
@@ -83,13 +97,13 @@ public class RoverApp {
                     System.err.println("Erro no cliente TCP: " + e.getMessage());
                 }
             }, "RoverTCP").start(); 
-            
-             
 
             // Shutdown hook para encerramento 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("\n[SHUTDOWN] Encerrando rover...");
                 maquina.getContexto().ativo = false;
+                clienteTCP.stop();
+                clienteUDP.parar();
             }));
             
             System.out.println("Rover iniciado. Pressione CTRL+C para parar.");

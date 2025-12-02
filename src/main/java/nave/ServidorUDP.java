@@ -17,11 +17,6 @@ import lib.mensagens.payloads.*;
  * Servidor UDP da Nave-Mãe (MissionLink).
  * Implementa o protocolo de comunicação fiável para envio de missões.
  * 
- * Fluxo:
- * 1. HELLO → Inicia contato com rover (mission_id)
- * 2. Aguarda RESPONSE do rover
- * 3. MISSION → Envia fragmentos da missão
- * 4. Aguarda ACK → Retransmite fragmentos perdidos se necessário
  */
 
 
@@ -407,17 +402,16 @@ public class ServidorUDP implements Runnable {
                 // Mensagem sem sessão ativa
                 return;
             }
-            /*  nota: nao sei se isto é preciso
-            // Atualizar endpoint da sessão com base no pacote recebido
-            if (sessao != null) {
-                if (pacote.getAddress() != null) {
-                    sessao.enderecoRover = pacote.getAddress();
-                }
-                if (pacote.getPort() > 0) {
-                    sessao.portaRover = pacote.getPort();
-                }
+            
+            // Atualizar endpoint da sessão apenas na primeira mensagem recebida.
+            // Após a primeira mensagem, mantemos o endereço fixo para consistência.
+            if (sessao.enderecoRover == null && pacote.getAddress() != null) {
+                sessao.enderecoRover = pacote.getAddress();
+                sessao.portaRover = pacote.getPort();
+                System.out.println("[ServidorUDP] Endpoint do rover " + idRover + 
+                                 " estabelecido: " + sessao.enderecoRover.getHostAddress() + 
+                                 ":" + sessao.portaRover);
             }
-                */
 
             switch (msg.header.tipo) {
                 case MSG_RESPONSE:
@@ -634,10 +628,14 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Finaliza a sessão de missão.
+     * Em caso de insucesso na comunicação, reverte a missão para pendente.
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
-        if (sucesso) {
-            //TODO: talvez no caso de insucesso, reverter a missao para pendente ou para cancelada, dependendo do caso para ser reatribuida ao mesmo rover ou a outro diferente(implementar isto depois com msg erros)
+        if (!sucesso && !sessao.completedRecebido && !sessao.erroRecebido) {
+            // Falha de comunicação (não recebeu COMPLETED nem ERROR) - reverter missão para pendente
+            estado.reverterMissaoParaPendente(sessao.missao.idMissao);
+            System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                             " revertida para pendente (falha de comunicação)");
         }
         sessoesAtivas.remove(sessao.rover.idRover);
     }

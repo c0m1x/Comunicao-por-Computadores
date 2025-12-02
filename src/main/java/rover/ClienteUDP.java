@@ -51,22 +51,6 @@ public class ClienteUDP implements Runnable {
             socket = new DatagramSocket(porta);
             socket.setSoTimeout(100);
             System.out.println("[ClienteUDP] Rover " + idRover + " iniciado na porta " + porta);
-
-            // Thread que atualiza periodicamente a máquina de estados
-            Thread maquinaUpdater = new Thread(() -> {
-                while (running) {
-                    try {
-                        if (maquina != null) {
-                            maquina.atualizar();
-                        }
-                        Thread.sleep(1000); // Atualizar a cada 1s
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            });
-            maquinaUpdater.setDaemon(true);
-            maquinaUpdater.start();
             
             while (running) {
                 try {
@@ -501,6 +485,7 @@ public class ClienteUDP implements Runnable {
         }
         
         if (sessaoAtual != null && sessaoAtual.aguardandoAck) {
+            //TODO: se a nave mae for de pica, ele chega aqui, da o avisa e continua a tentar enviar progress, talvez arranjar maneira de ao chegar aqui, confirmar se a nave ainda está a ouvir ou não 
             System.out.println("[ClienteUDP] AVISO: Máximo de retransmissões atingido para " + nomeMensagem + " seq=" + seqParaEnviar);
             sessaoAtual.aguardandoAck = false;
         }
