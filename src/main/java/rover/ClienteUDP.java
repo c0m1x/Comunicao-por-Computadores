@@ -662,7 +662,6 @@ public class ClienteUDP implements Runnable {
     /**
      * Envia mensagem COMPLETED para a Nave-Mãe.
      * Implementa retransmissão robusta com validação de seq do ACK.
-     * TODO: REVER - por vezes no CORE o COMPLETED nunca é recebido na nave mãe
      */
     private void enviarCompleted(boolean sucesso) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) return;

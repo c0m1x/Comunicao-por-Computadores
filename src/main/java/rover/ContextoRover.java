@@ -112,7 +112,6 @@ import lib.Rover.EstadoRover;
         }
 
         // Atualiza dinâmica (movimento, bateria, eventos) e progresso temporal
-        //TODO: rever lógica de movimento, ás vezes os rovers nao mudam de sitio
         public void atualizarDuranteMissao() {
                 if (!temMissao || missaoAtual == null) return;
 
@@ -122,13 +121,23 @@ import lib.Rover.EstadoRover;
                 float dx = destinoX - posicaoX;
                 float dy = destinoY - posicaoY;
                 float distancia = (float) Math.sqrt(dx * dx + dy * dy);
-
-                if (distancia > 0.5f) {
-                    float passo = 0.5f;
-                    posicaoX += (dx / distancia) * passo;
-                    posicaoY += (dy / distancia) * passo;
+                
+                if (distancia > 0.1f) {
+                    // Normalizar vetor direção
+                    float dirX = dx / distancia;
+                    float dirY = dy / distancia;
+                    
+                    // Calcular passo baseado na velocidade e deltaTime
+                    float passo = Math.min(VELOCIDADE_ROVER, distancia); // Não ultrapassar o destino
+                    
+                    // Atualizar posição
+                    posicaoX += dirX * passo;
+                    posicaoY += dirY * passo;
                     velocidade = VELOCIDADE_ROVER;
                 } else {
+                    // Chegou ao destino - parar
+                    posicaoX = destinoX;
+                    posicaoY = destinoY;
                     velocidade = 0.0f;
                 }
 
