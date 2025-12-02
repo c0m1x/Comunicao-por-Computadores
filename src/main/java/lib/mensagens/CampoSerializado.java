@@ -7,21 +7,18 @@ import java.nio.charset.StandardCharsets;
  * Representa um campo serializado com metadados para fragmentação.
  * 
  * Permite:
- * - Identificar o campo pelo nome (ex: "idMissao", "tarefa")
+ * - Identificar o campo pelo nome
  * - Fragmentar campos grandes em múltiplas partes
  * - Reconstruir campos independentemente da ordem de chegada
  * 
- *
  */
 
-//TODO: verificar se isto compensa, porque apsear de termos a fragmentaçao por campos, cada campo tem overhead de nome e metadados
 public class CampoSerializado implements Serializable {
     
     public final String nome; //nome do campo 
     public final byte[] dados; //dados serializados do campo (ou parte dele se fragmentado) 
     public final short indiceParte; //indice deste fragmento dentro do campo (0 se não fragmentado)
     public final short totalPartes; //total de partes do campo (1 se não fragmentado)
-    //rever, em vez de short usar byte deve chegar?
     
     /**
      * Construtor para campo completo (não fragmentado).
@@ -36,7 +33,7 @@ public class CampoSerializado implements Serializable {
     public CampoSerializado(String nome, byte[] dados, int indiceParte, int totalPartes) {
         this.nome = nome;
         this.dados = dados;
-        this.indiceParte = (short) indiceParte; //TODO: em vez de fazer o cast aqui, passar ja o short como parametro
+        this.indiceParte = (short) indiceParte;
         this.totalPartes = (short) totalPartes;
     }
     
@@ -51,7 +48,7 @@ public class CampoSerializado implements Serializable {
     }
     
     /**
-     * Tamanho total serializado (para cálculo de empacotamento).
+     * Tamanho total serializado.
      * Inclui overhead do nome e metadados.
      */
     public int tamanhoSerializado() {
