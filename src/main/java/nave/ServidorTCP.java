@@ -12,7 +12,7 @@ import lib.Rover.EstadoRover;
 /**
  * Servidor TCP da Nave-Mãe (TelemetryLink).
  * Recebe telemetria contínua dos rovers via TCP.
- * faz: gestao de sockets, threads, rececao e parsing de mensagens, callback, atualização de estado do river e missao e gestao de reconexoes
+ * faz: gestao de sockets, threads, rececao e parsing de mensagens, atualização de estado do river e missao e gestao de reconexoes
  */
 public class ServidorTCP implements Runnable {
 
@@ -21,25 +21,11 @@ public class ServidorTCP implements Runnable {
     private ServerSocket serverSocket;
     private GestaoEstado estado;
     private boolean running = true;
-    //TODO: meter isto dos callbacks a dar, 
-    //DUVIDA: talvez uar isto dos callbacks na parte de mensagens de erro nas missoesn, quando o rover sabe que nao as consegue concluir, no lado do servidor udp?
-    private TelemetriaCallback callback;
 
     //DUVIDA: talvez implementar mecanismo de heartbeat para detetar rovers desconectados?
 
-    public interface TelemetriaCallback {
-        void onTelemetriaRecebida(int idRover, PayloadTelemetria telemetria);
-        void onBateriaBaixa(int idRover, float nivelBateria);
-        void onRoverDesconectado(int idRover);
-        void onMudancaEstado(int idRover, EstadoRover novoEstado);
-    }
-
     public ServidorTCP(GestaoEstado estado) {
         this.estado = estado;
-    }
-    
-    public void setCallback(TelemetriaCallback callback) {
-        this.callback = callback;
     }
 
     @Override
@@ -105,7 +91,6 @@ public class ServidorTCP implements Runnable {
             try {
                 client.close();
             } catch (Exception e) {
-                // Ignorar
             }
         }
     }
@@ -136,9 +121,6 @@ public class ServidorTCP implements Runnable {
         if (rover != null) {
             System.out.println("[ServidorTCP] Rover " + idRover + " desconectado");
             
-            if (callback != null) {
-                callback.onRoverDesconectado(idRover);
-            }
         }
     }
 
@@ -191,18 +173,6 @@ public class ServidorTCP implements Runnable {
         System.out.printf("[ServidorTCP] Rover %d: pos=(%.2f, %.2f) bat=%.1f%% vel=%.2fm/s estado=%s missao=%d\n",
             idRover, tel.posicaoX, tel.posicaoY, tel.bateria, tel.velocidade, 
             tel.estadoOperacional, rover.idMissaoAtual);
-
-        if (callback != null) {
-            callback.onTelemetriaRecebida(idRover, tel);
-
-            if (tel.bateria < 20.0f && tel.bateria > 0.0f) {
-                callback.onBateriaBaixa(idRover, tel.bateria);
-            }
-
-            if (estadoAnterior != null && !estadoAnterior.equals(tel.estadoOperacional.toString())) {
-                callback.onMudancaEstado(idRover, tel.estadoOperacional);
-            }
-        }
     }
 
     public void parar() {
@@ -211,7 +181,6 @@ public class ServidorTCP implements Runnable {
             try {
                 serverSocket.close();
             } catch (Exception e) {
-                // Ignorar
             }
         }
     }
