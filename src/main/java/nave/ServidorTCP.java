@@ -7,7 +7,6 @@ import java.net.Socket;
 import lib.mensagens.payloads.*;
 import lib.mensagens.*;
 import lib.*;
-import lib.Rover.EstadoRover;
 
 /**
  * Servidor TCP da Nave-Mãe (TelemetryLink).
@@ -50,7 +49,6 @@ public class ServidorTCP implements Runnable {
                 try {
                     serverSocket.close();
                 } catch (Exception e) {
-                    // Ignorar
                 }
             }
             System.out.println("[ServidorTCP] Encerrado");
@@ -59,9 +57,10 @@ public class ServidorTCP implements Runnable {
 
     private void handleClient(Socket client) {
         String remote = client.getRemoteSocketAddress().toString();
-        System.out.println("[ServidorTCP] Nova conexão: " + remote);
+        System.out.println("[ServidorTCP] Nova conexão TCP: " + remote);
         
         Integer idRoverConexao = null;
+        boolean roverIdentificado = false;
 
         try (ObjectInputStream ois = new ObjectInputStream(client.getInputStream())) {
             while (!client.isClosed() && running) {
@@ -70,9 +69,12 @@ public class ServidorTCP implements Runnable {
                 if (obj instanceof MensagemTCP) {
                     MensagemTCP msg = (MensagemTCP) obj;
                     
-                    // Nota: Identificar rover na primeira mensagem, ver se há maneira de isto ser feito so uma vez ao receber a primeira mensagem do socket
-                    idRoverConexao = msg.header.idEmissor;
-                    verificarOuCriarRover(idRoverConexao, remote);
+                    // Identificar rover apenas na primeira mensagem da conexão
+                    if (!roverIdentificado) {
+                        idRoverConexao = msg.header.idEmissor;
+                        registarConexaoRover(idRoverConexao, remote);
+                        roverIdentificado = true;
+                    }
 
                     processarMensagemTCP(msg);
                     
@@ -82,11 +84,11 @@ public class ServidorTCP implements Runnable {
             }
         } catch (Exception e) {
             if (running) {
-                System.out.println("[ServidorTCP] Rover desconectou: " + remote + " (" + e.getMessage() + ")");
+                System.out.println("[ServidorTCP] Conexão perdida: " + remote + " (" + e.getMessage() + ")");
             }
         } finally {
             if (idRoverConexao != null) {
-                marcarRoverDesconectado(idRoverConexao); //NOTA: ver se é preciso dizer que conectou e desconectou de cada vez que manda mensagem
+                marcarRoverDesconectado(idRoverConexao);
             }
             try {
                 client.close();
@@ -95,14 +97,16 @@ public class ServidorTCP implements Runnable {
         }
     }
 
-    private void verificarOuCriarRover(int idRover, String endereco) {
+    private void registarConexaoRover(int idRover, String endereco) {
         Rover rover = estado.obterRover(idRover);
         if (rover == null) {
             rover = new Rover(idRover, 0.0f, 0.0f, extrairHost(endereco));
             estado.adicionarRover(idRover, rover);
-            System.out.println("[ServidorTCP] Rover " + idRover + " registrado no sistema (conexão: " + endereco + ")");
+            System.out.println("[ServidorTCP] Rover " + idRover + " registado (IP: " + extrairHost(endereco) + ")");
         } else {
-            System.out.println("[ServidorTCP] Rover " + idRover + " reconectado (conexão: " + endereco + ")");
+            // Atualizar IP caso tenha mudado
+            rover.enderecoHost = extrairHost(endereco);
+            System.out.println("[ServidorTCP] Rover " + idRover + " reconectado (IP: " + rover.enderecoHost + ")");
         }
     }
 
@@ -147,8 +151,6 @@ public class ServidorTCP implements Runnable {
             System.out.println("[ServidorTCP] Telemetria recebida de rover desconhecido: " + idRover);
             return;
         }
-
-        String estadoAnterior = rover.estadoRover.toString();
 
         rover.posicaoX = tel.posicaoX;
         rover.posicaoY = tel.posicaoY;
