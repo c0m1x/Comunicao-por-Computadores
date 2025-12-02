@@ -267,5 +267,17 @@ public class GestaoEstado {
             rover.estadoRover = Rover.EstadoRover.ESTADO_FALHA;
         }
     }
+
+    /**
+     * Reverte uma missão para o estado PENDENTE.
+     * Usado quando há falha de comunicação e a missão deve ser reatribuída.
+     */
+    public void reverterMissaoParaPendente(int idMissao) {
+        Missao missao = obterMissao(idMissao);
+        if (missao != null && missao.estadoMissao != Missao.EstadoMissao.CONCLUIDA) {
+            missao.estadoMissao = Missao.EstadoMissao.PENDENTE;
+            System.out.println("[GestaoEstado] Missão " + idMissao + " revertida para PENDENTE");
+        }
+    }
 }
 

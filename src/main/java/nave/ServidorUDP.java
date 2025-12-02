@@ -634,10 +634,14 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Finaliza a sessão de missão.
+     * Em caso de insucesso na comunicação, reverte a missão para pendente.
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
-        if (sucesso) {
-            //TODO: talvez no caso de insucesso, reverter a missao para pendente ou para cancelada, dependendo do caso para ser reatribuida ao mesmo rover ou a outro diferente(implementar isto depois com msg erros)
+        if (!sucesso && !sessao.completedRecebido && !sessao.erroRecebido) {
+            // Falha de comunicação (não recebeu COMPLETED nem ERROR) - reverter missão para pendente
+            estado.reverterMissaoParaPendente(sessao.missao.idMissao);
+            System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                             " revertida para pendente (falha de comunicação)");
         }
         sessoesAtivas.remove(sessao.rover.idRover);
     }
