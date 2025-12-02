@@ -17,11 +17,6 @@ import lib.mensagens.payloads.*;
  * Servidor UDP da Nave-Mãe (MissionLink).
  * Implementa o protocolo de comunicação fiável para envio de missões.
  * 
- * Fluxo:
- * 1. HELLO → Inicia contato com rover (mission_id)
- * 2. Aguarda RESPONSE do rover
- * 3. MISSION → Envia fragmentos da missão
- * 4. Aguarda ACK → Retransmite fragmentos perdidos se necessário
  */
 
 
