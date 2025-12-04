@@ -99,6 +99,18 @@ public class GestaoEstado {
         missoes.put(id, missao);
     }
 
+    /**
+     * Adiciona uma nova missão ao estado (via API HTTP)
+     */
+    public synchronized void adicionarMissao(Missao missao) {
+        if (missoes.containsKey(missao.idMissao)) {
+            System.out.println("[Estado] Missão #" + missao.idMissao + " já existe. Substituindo...");
+        }
+
+        missoes.put(missao.idMissao, missao);
+        System.out.println("[Estado] Missão #" + missao.idMissao + " adicionada: " + missao.tarefa);
+    }
+
     /** Remove e devolve a missão associada ao id, ou null se não existir. */
     public Missao removerMissao(int id) {
         return missoes.remove(id);
