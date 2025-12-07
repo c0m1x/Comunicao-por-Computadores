@@ -22,6 +22,7 @@ public class Rover {
     public float velocidade;
     public EstadoRover estadoRover;
     public int idMissaoAtual;
+    public Float progressoMissao; // pode ser null se não estiver em missão
     public boolean temMissao;
 
     // Endpoint opcional do rover (se conhecido/configurado)
@@ -37,6 +38,7 @@ public class Rover {
         this.estadoRover = EstadoRover.ESTADO_DISPONIVEL;
         idMissaoAtual = -1;
         temMissao = false;
+        progressoMissao = null;
         this.enderecoHost = enderecoHost;
         this.portaUdp = null;
     }

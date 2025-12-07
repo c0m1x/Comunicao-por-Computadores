@@ -537,17 +537,21 @@ public class ClienteUDP implements Runnable {
         
         // Iniciar envio de progresso
         System.out.println("[ClienteUDP] Iniciada a execução da missão " + missionId);
-        
         while (running && sessaoAtual != null && sessaoAtual.emExecucao) {
             try {
                 Thread.sleep(sessaoAtual.intervaloAtualizacao);
                 
-                if (sessaoAtual == null || !sessaoAtual.emExecucao) break;
-                
+                if (sessaoAtual == null || !sessaoAtual.emExecucao) {
+                    System.out.println("[ClienteUDP] Sessão terminada - parando reportagem");
+                    break;
+                }
+
                 // Atualizar lógica da missão antes de reportar
                 if (maquina != null) {
                     maquina.atualizar();
                 }
+
+                float progressoPerc = maquina != null ? maquina.getContexto().getProgresso() : 0.0f;
                 
                 // Verificar condições de erro que impedem continuar a missão
                 PayloadErro.CodigoErro erroDetectado = verificarCondicoesErro();
@@ -558,15 +562,17 @@ public class ClienteUDP implements Runnable {
                 }
                 
                 long tempoDecorrido = System.currentTimeMillis() - sessaoAtual.inicioMissao;
-                float progressoPerc = maquina.getContexto().getProgresso();
                 
                 // Enviar PROGRESS
-                if (progressoPerc < 100.0f) {
-                    enviarProgress(progressoPerc, tempoDecorrido);
-                } else {
-                    // Missão concluída
+                if (progressoPerc >= 100.0f) {
+                    // ← MISSÃO CONCLUÍDA
+                    System.out.println("[ClienteUDP] Progresso atingiu 100% - enviando COMPLETED");
                     enviarCompleted(true);
-                    return;
+                    System.out.println("[ClienteUDP] Reportagem terminada com sucesso");
+                    return; // ← PARAR AQUI
+                } else {
+                    // Enviar PROGRESS normal
+                    enviarProgress(progressoPerc, tempoDecorrido);
                 }
                 
             } catch (InterruptedException e) {
@@ -606,8 +612,11 @@ public class ClienteUDP implements Runnable {
      * Implementa retransmissão robusta como o COMPLETED.
      */
     private void enviarErro(PayloadErro.CodigoErro codigoErro, String descricaoExtra) {
-        if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
+        if (sessaoAtual == null || !sessaoAtual.emExecucao) 
+            return;
         
+        sessaoAtual.emExecucao = false;
+
         ContextoRover ctx = maquina.getContexto();
         int seqParaEnviar = ++sessaoAtual.seqAtual;
         
@@ -663,8 +672,10 @@ public class ClienteUDP implements Runnable {
      * Implementa retransmissão robusta com validação de seq do ACK.
      */
     private void enviarCompleted(boolean sucesso) {
-        if (sessaoAtual == null || !sessaoAtual.emExecucao) return;
+        if (sessaoAtual == null || !sessaoAtual.emExecucao) 
+            return;
         
+        sessaoAtual.emExecucao = false;
         int seqParaEnviar = ++sessaoAtual.seqAtual;
         
         MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_COMPLETED, seqParaEnviar, sucesso);
@@ -686,6 +697,9 @@ public class ClienteUDP implements Runnable {
      * Finaliza a missão atual e atualiza a máquina de estados.
      */
     private void finalizarMissaoComEstado(String descricao, EstadoRover novoEstado, EventoRelevante evento) {
+        if (sessaoAtual == null)
+            return;
+
         int missionId = sessaoAtual.idMissao;
         boolean semConfirmacao = sessaoAtual.aguardandoAck;
         
@@ -696,17 +710,14 @@ public class ClienteUDP implements Runnable {
                          (semConfirmacao ? " (sem confirmação ACK)" : ""));
         
         if (maquina != null) {
-            // Limpar dados da missão no contexto (temMissao, idMissaoAtual, etc.)
-            maquina.getContexto().concluirMissao();
             // Transicionar para o novo estado
             maquina.getContexto().transicionarEstado(novoEstado);
             maquina.getContexto().eventoPendente = evento;
             
-            System.out.println("[ClienteUDP] Rover " + maquina.getContexto().idRover + 
-                             " agora em estado " + novoEstado + 
-                             " (temMissao=" + maquina.getContexto().temMissao + ")");
-
             maquina.atualizar(); // atualização imediata
+            System.out.println("[ClienteUDP] Rover " + maquina.getContexto().idRover + 
+            " agora em estado " + novoEstado + 
+            " (temMissao=" + maquina.getContexto().temMissao + ")");
         }
     }
 
