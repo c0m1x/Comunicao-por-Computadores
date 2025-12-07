@@ -8,7 +8,7 @@ clean:
 
 demo-kill:
 	@echo "A matar todos os processos Java anteriores..."
-	- pkill -f "api.gc.GroundControlApp"
+	- pkill -f "gc.GroundControlApp"
 	- pkill -f "nave.NaveMaeApp"
 	- pkill -f "rover.RoverApp"
 	@echo "OK"
