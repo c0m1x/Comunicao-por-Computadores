@@ -32,9 +32,15 @@ public class MaquinaEstados {
                 break;
             case ESTADO_EM_MISSAO:
                 contexto.atualizarDuranteMissao();
+                
                 if (missaoConcluida()) {
                     contexto.transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
                     contexto.eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
+                }
+                if (contexto.bateria <= 0.0f) {
+                    System.out.println("[MaquinaEstados] Bateria esgotada! Missão falhada.");
+                    contexto.transicionarEstado(EstadoRover.ESTADO_FALHA);
+                    contexto.eventoPendente = EventoRelevante.EVENTO_ERRO_MISSAO;
                 }
                 break;
             case ESTADO_CONCLUIDO:

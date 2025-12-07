@@ -35,6 +35,7 @@ import lib.Rover.EstadoRover;
         public volatile long ultimoEnvioTelemetria = 0;
         public volatile EventoRelevante eventoPendente = EventoRelevante.EVENTO_NENHUM; //serve para mandar telemetria quando algum evento acontece além dos intervalos normais
         public volatile EventoRelevante ultimoEvento = EventoRelevante.EVENTO_NENHUM;
+        public volatile int ultimoCheckpoint = 0;
 
         // constantes (ajustar conforme necessário)
         public static final int INTERVALO_KEEPALIVE = 10;
@@ -106,6 +107,7 @@ import lib.Rover.EstadoRover;
                 this.temMissao = (missao != null);
                 this.progressoMissao = 0.0f;
                 this.timestampInicioMissao = Instant.now().getEpochSecond();
+                this.ultimoCheckpoint = 0;
                 this.eventoPendente = EventoRelevante.EVENTO_INICIO_MISSAO;
         }
 
@@ -139,12 +141,14 @@ import lib.Rover.EstadoRover;
                     velocidade = 0.0f;
                 }
 
-                bateria -= 0.1f;
-                if (bateria < 0.0f) bateria = 0.0f;
-
-                if (bateria < 20.0f && ultimoEvento != EventoRelevante.EVENTO_BATERIA_BAIXA) {
-                    eventoPendente = EventoRelevante.EVENTO_BATERIA_BAIXA;
+                // Descarrega mais quando em movimento, menos quando parado
+                if (velocidade > 0.0f) {
+                    bateria -= 0.05f; // Em movimento
+                } else {
+                    bateria -= 0.01f; // Parado
                 }
+                if (bateria < 0.0f) bateria = 0.0f;
+                if (bateria > 100.0f) bateria = 100.0f; // Garantir limite superior
 
                 long agora = Instant.now().getEpochSecond();
                 long decorrido = agora - timestampInicioMissao;
@@ -153,17 +157,23 @@ import lib.Rover.EstadoRover;
                     if (progressoMissao > 100.0f) progressoMissao = 100.0f;
                 }
 
-                int checkpoint = (int) (progressoMissao / 25.0f);
-                if (checkpoint > 0) {
+                int checkpointAtual = (int) (progressoMissao / 25.0f);
+                if (checkpointAtual > ultimoCheckpoint && checkpointAtual <= 3) {
+                    ultimoCheckpoint = checkpointAtual;
                     eventoPendente = EventoRelevante.EVENTO_CHECKPOINT_MISSAO;
+                    System.out.println("[ContextoRover] ✓ Checkpoint: " + (checkpointAtual * 25) + "%");
                 }
         }
 
         public void concluirMissao() {
-                temMissao = false;
-                idMissaoAtual = -1;
-                progressoMissao = 0.0f;
-                missaoAtual = null;
+            temMissao = false;
+            idMissaoAtual = -1;
+            progressoMissao = 0.0f;
+            missaoAtual = null;
+            velocidade = 0.0f;
+            ultimoCheckpoint = 0;
+
+            System.out.println("[ContextoRover] Rover #" + idRover + " agora disponível");
         }
 
         // Preenche payload de telemetria atual

@@ -37,9 +37,9 @@ public class GestaoEstado {
         this.missoesConcluidas = new ConcurrentSkipListSet<>();
 
         // uma missao que ocupe mais de 512 bytes para testar fragmentação
-        Missao m1 = new Missao(1, "Explorar cratera A " + "x".repeat(500), Missao.EstadoMissao.PENDENTE, 30, 5);
-        Missao m2 = new Missao(2, "Coletar amostras do solo", Missao.EstadoMissao.PENDENTE, 50, 5);
-        Missao m3 = new Missao(3, "Analisar atmosfera", Missao.EstadoMissao.PENDENTE, 150, 10);
+        Missao m1 = new Missao(1, "Explorar cratera A " + "x".repeat(500), Missao.EstadoMissao.PENDENTE, 2, 0.0f, 0.0f, 10.0f, 10.0f, 30, 3);
+        Missao m2 = new Missao(2, "Coletar amostras do solo", Missao.EstadoMissao.PENDENTE, 1, 10.0f, 10.0f, 20.0f, 5.0f, 40, 3);
+        Missao m3 = new Missao(3, "Analisar atmosfera", Missao.EstadoMissao.PENDENTE, 3, 20.0f, 5.0f, 15.0f, 15.0f, 25, 2);
 
         this.adicionarMissao(m1.idMissao, m1);
         this.adicionarMissao(m2.idMissao, m2);
@@ -197,11 +197,18 @@ public class GestaoEstado {
     /**
      * Atualiza o progresso de uma missão. Atualiza estado da missao e do rover
      */
-    public void atualizarProgresso(PayloadProgresso p) {
+    public synchronized void atualizarProgresso(PayloadProgresso p) {
         if (p == null) return;
 
         progressoMissoes.put(p.idMissao, p);
 
+        // IMPORTANTE: Atualizar também o progressoMissao do Rover
+        for (Rover rover : rovers.values()) {
+            if (rover.temMissao && rover.idMissaoAtual == p.idMissao) {
+                rover.progressoMissao = p.progressoPercentagem;
+                break;
+            }
+        }
         // atualizar a Missao
         Missao missao = missoes.get(p.idMissao);
         if (missao != null) {
@@ -214,8 +221,6 @@ public class GestaoEstado {
                 missoesConcluidas.add(p.idMissao);
             }
         }
-
-        missao.progressoMissao = p.progressoPercentagem;
     }
 
     /** Atualiza o progresso de uma missão associada a um rover. - funciona como wrapper*/
@@ -241,7 +246,7 @@ public class GestaoEstado {
     }
 
     /** Conclui ou cancela uma missão, atualizando estado do rover e da missão. */
-    public void concluirMissao(int idRover, int idMissao, boolean sucesso) {
+    public synchronized void concluirMissao(int idRover, int idMissao, boolean sucesso) {
         Rover rover = obterRover(idRover);
         Missao missao = obterMissao(idMissao);
         if (rover == null || missao == null) return;
@@ -249,12 +254,13 @@ public class GestaoEstado {
         if (sucesso) {
             missao.estadoMissao = Missao.EstadoMissao.CONCLUIDA;
         } else {
-            missao.estadoMissao = Missao.EstadoMissao.CANCELADA;
+            missao.estadoMissao = Missao.EstadoMissao.FALHADA;
         }
 
         rover.temMissao = false;
         rover.idMissaoAtual = -1;
         rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
+        rover.progressoMissao = 0.0f;
     }
 
     /** 

@@ -45,7 +45,8 @@ tasks.register('runGroundControlApp', JavaExec) {
     group = 'application'
     description = 'Run the GroundControlApp main class'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'api.gc.GroundControlApp'
+    mainClass = 'gc.GroundControlApp'
+    standardInput = System.in
 }
 
 // JAR executável para NaveMae

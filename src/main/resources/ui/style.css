@@ -352,35 +352,56 @@ h1 {
   letter-spacing: 0.5px;
 }
 
+
+.estado.inicial,
 .estado.disponivel {
   background: #0d2818;
   color: #4caf50;
   border-color: #1e5631;
+  font-weight: 600;
 }
 
+.estado.recebendo-missao,
 .estado.em-missao,
-.estado.em_execucao {
+.estado.em_execucao,
+.estado.em_andamento {
   background: #2d1f0d;
   color: #ff9800;
   border-color: #5a3d1a;
+  font-weight: 600;
+  animation: pulse-border 2s ease-in-out infinite;
 }
 
-.estado.erro {
+.estado.erro,
+.estado.falha,
+.estado.falhada {
   background: #2d0d0d;
   color: #f44336;
   border-color: #5a1a1a;
+  font-weight: 600;
+  animation: pulse-border 1s ease-in-out infinite;
 }
 
 .estado.pendente {
   background: #1a1a1a;
   color: #888;
   border-color: #333;
+  font-weight: 600;
 }
 
+.estado.concluida,
 .estado.concluida {
   background: #0d2818;
   color: #4caf50;
   border-color: #1e5631;
+  font-weight: 600;
+}
+
+.estado.cancelada {
+  background: #2d1f0d;
+  color: #888;
+  border-color: #444;
+  font-weight: 600;
 }
 
 /* ========== Priority Badge ========== */

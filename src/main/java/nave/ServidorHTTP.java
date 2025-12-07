@@ -32,15 +32,17 @@ public class ServidorHTTP {
         this.estado = estado;
         this.api = new ObservacaoAPI(estado);
 
+        server = HttpServer.create(new InetSocketAddress(8080), 0);
+
         URL uiURL = ServidorHTTP.class.getClassLoader().getResource("ui");
         System.out.println("uiURL: " + uiURL);
 
-        server = HttpServer.create(new InetSocketAddress(8080), 0);
-
         server.createContext("/rovers", this::handleRovers);
         server.createContext("/missoes", this::handleMissoes);
-        server.createContext("/telemetria", this::handleTelemetria);
+        //especifico antes do generico
         server.createContext("/telemetria/historico", this::handleTelemetriaHistorico);
+        server.createContext("/telemetria", this::handleTelemetria);
+        
         server.createContext("/ui", new StaticFileHandler("ui"));
         server.createContext("/ui/", new StaticFileHandler("ui"));
     }
