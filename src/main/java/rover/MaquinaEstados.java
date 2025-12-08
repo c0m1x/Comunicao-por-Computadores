@@ -32,6 +32,17 @@ public class MaquinaEstados {
             case ESTADO_DISPONIVEL:
                 break;
             case ESTADO_RECEBENDO_MISSAO:
+                // Timeout de 30 segundos para receber missão
+                if (contexto.timestampInicioRecepcao == 0) {
+                    contexto.timestampInicioRecepcao = Instant.now().getEpochSecond();
+                }
+                
+                long tempoEspera = Instant.now().getEpochSecond() - contexto.timestampInicioRecepcao;
+                if (tempoEspera > 30) {
+                    System.out.println("[MaquinaEstados] Timeout ao receber missão. Revertendo para DISPONIVEL.");
+                    contexto.timestampInicioRecepcao = 0;
+                    contexto.transicionarEstado(EstadoRover.ESTADO_DISPONIVEL);
+                }
                 break;
             case ESTADO_EM_MISSAO:
                 contexto.atualizarDuranteMissao();
@@ -76,6 +87,7 @@ public class MaquinaEstados {
         System.out.println("[MaquinaEstados] Rover " + contexto.idRover +
                 " recebeu missão: " + missao);
 
+        contexto.timestampInicioRecepcao = 0;
         contexto.iniciarMissao(missao);
         contexto.transicionarEstado(EstadoRover.ESTADO_EM_MISSAO);
     }
