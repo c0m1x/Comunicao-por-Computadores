@@ -10,8 +10,8 @@ import lib.MetricasUDP;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Arrays;
 
 /**
@@ -78,10 +78,8 @@ public class ClienteUDP implements Runnable {
         } catch (SocketException e) {
             System.err.println("[ClienteUDP] Erro ao criar socket: " + e.getMessage());
         } finally {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-            System.out.println("[ClienteUDP] Rover " + idRover + " encerrado");
+            
+            System.out.println("[ClienteUDP] Rover " + idRover + " - loop principal encerrado");
         }
     }
     
@@ -200,7 +198,7 @@ public class ClienteUDP implements Runnable {
             }
             
             // Enviar ACK de confirmação
-            sessaoAtual.fragmentosPerdidos = new ArrayList<>();
+            sessaoAtual.fragmentosPerdidos = new HashSet<>();
             enviarAck();
             
             System.out.println("[ClienteUDP] SeqAtual após ACK: " + sessaoAtual.seqAtual + 
@@ -351,8 +349,8 @@ public class ClienteUDP implements Runnable {
     /**
      * Identifica quais fragmentos ainda não foram recebidos.
      */
-    private List<Integer> identificarFragmentosPerdidos() {
-        List<Integer> perdidos = new ArrayList<>();
+    private Set<Integer> identificarFragmentosPerdidos() {
+        Set<Integer> perdidos = new HashSet<>();
         
         for (int i = 2; i <= sessaoAtual.totalFragmentos + 1; i++) {
             if (!sessaoAtual.fragmentosRecebidos.containsKey(i)) {
@@ -437,11 +435,23 @@ public class ClienteUDP implements Runnable {
         
         PayloadAck ack = new PayloadAck();
         ack.missingCount = sessaoAtual.fragmentosPerdidos.size();
-        ack.missing = listaParaArray(sessaoAtual.fragmentosPerdidos);
+        ack.missing = setParaArray(sessaoAtual.fragmentosPerdidos);
         msg.payload = ack;
         
-        enviarParaNave(msg);
-        System.out.println("[ClienteUDP] ACK enviado (seq=" + sessaoAtual.seqAtual + 
+        // Enviar ACK 3 vezes para maior robustez 
+        for (int i = 0; i < 3; i++) {
+            enviarParaNave(msg);
+            if (i < 2) {
+                try {
+                    Thread.sleep(100); // 100ms entre envios
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        
+        System.out.println("[ClienteUDP] ACK enviado 3x (seq=" + sessaoAtual.seqAtual + 
                          ", faltam " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos)");
     }
     
@@ -459,6 +469,12 @@ public class ClienteUDP implements Runnable {
      */
     private void enviarMensagem(MensagemUDP msg, InetAddress endereco, int porta) {
         try {
+            // Verificação defensiva
+            if (socket == null) {
+                System.err.println("[ClienteUDP] Socket não inicializado - não é possível enviar");
+                return;
+            }
+            
             byte[] dados = sessaoAtual.serializador.serializarObjeto(msg);
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
             socket.send(pacote);
@@ -535,12 +551,13 @@ public class ClienteUDP implements Runnable {
     // ==================== MÉTODOS AUXILIARES ====================
     
     /**
-     * Converte List<Integer> para int[].
+     * Converte Set<Integer> para int[].
      */
-    private int[] listaParaArray(List<Integer> lista) {
-        int[] array = new int[lista.size()];
-        for (int i = 0; i < lista.size(); i++) {
-            array[i] = lista.get(i);
+    private int[] setParaArray(Set<Integer> set) {
+        int[] array = new int[set.size()];
+        int i = 0;
+        for (Integer valor : set) {
+            array[i++] = valor;
         }
         return array;
     }
@@ -762,6 +779,9 @@ public class ClienteUDP implements Runnable {
     
     public void parar() {
         running = false;
+        if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
     }
     
     public MetricasUDP getMetricas() {

@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lib.*;
@@ -169,7 +171,9 @@ public class ServidorUDP implements Runnable {
             
             // Passo 4: Aguardar ACK e retransmitir se necessário
             if (!aguardarAckCompleto(sessao)) {
-                System.err.println("[ServidorUDP] Falha na confirmação da missão para rover " + sessao.rover.idRover);
+                System.err.println("[ServidorUDP] Timeout: rover " + sessao.rover.idRover + 
+                                 " não confirmou recepção da missão " + sessao.missao.idMissao + 
+                                 " após " + MAX_RETRIES + " tentativas");
                 finalizarSessao(sessao, false);
                 return;
             }
@@ -367,8 +371,8 @@ public class ServidorUDP implements Runnable {
             intervaloAtualizacao = sessao.missao.intervaloAtualizacao * 1000; // converter para ms
         }
         
-        // timeout = 2x intervalo de atualização (podes ajustar este fator)
-        long timeoutProgressMs = intervaloAtualizacao * 2;
+        // timeout = 8x intervalo de atualização (aumentado para tolerar atrasos na rede)
+        long timeoutProgressMs = intervaloAtualizacao * 8;
 
         long inicioJanela = System.currentTimeMillis();
         int ultimoSeq = sessao.ultimoSeq;
@@ -410,7 +414,10 @@ public class ServidorUDP implements Runnable {
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             
             if (sessao == null) {
-                // Mensagem sem sessão ativa
+                // Mensagem sem sessão ativa - pode ser COMPLETED que chegou após timeout
+                System.out.println("[ServidorUDP] Mensagem " + msg.header.tipo + 
+                                 " do rover " + idRover + " ignorada - sessão não existe " +
+                                 "(missão=" + msg.header.idMissao + ", seq=" + msg.header.seq + ")");
                 return;
             }
             
@@ -442,7 +449,9 @@ public class ServidorUDP implements Runnable {
                     
                 case MSG_ACK:
                     sessao.ackRecebido = true;
+                    if (msg.header.seq > sessao.ultimoSeq) {
                     sessao.ultimoSeq = msg.header.seq;
+                    }
                     metricas.incrementarAcksRecebidos();
                     if (msg.payload instanceof PayloadAck) {
                         PayloadAck ack = (PayloadAck) msg.payload;
@@ -509,7 +518,7 @@ public class ServidorUDP implements Runnable {
                              ") - Enviando ACK");
             int seqOriginal = sessao.ultimoSeq;
             sessao.ultimoSeq = seqRecebido;
-            sessao.progressoPerdido = new ArrayList<>();
+            sessao.progressoPerdido = new HashSet<>();
             enviarAckParaRover(sessao);
             if (seqRecebido < seqOriginal) {
                 sessao.ultimoSeq = seqOriginal; // Restaurar para mensagens antigas
@@ -519,7 +528,7 @@ public class ServidorUDP implements Runnable {
 
         // Verificar perdas: seq não é o próximo esperado
         int seqEsperado = sessao.ultimoSeq + 1;
-        sessao.progressoPerdido = new ArrayList<>();
+        sessao.progressoPerdido = new HashSet<>();
         
         if (seqRecebido > seqEsperado) {
             for (int s = seqEsperado; s < seqRecebido; s++) {
@@ -639,7 +648,7 @@ public class ServidorUDP implements Runnable {
         if (temProgressoPerdido) {
             PayloadAck payloadAck = new PayloadAck();
             payloadAck.missingCount = sessao.progressoPerdido.size();
-            payloadAck.missing = listaParaArray(sessao.progressoPerdido);
+            payloadAck.missing = setParaArray(sessao.progressoPerdido);
             ack.payload = payloadAck;
         } else {
             ack.payload = null;
@@ -657,13 +666,24 @@ public class ServidorUDP implements Runnable {
      * Em caso de insucesso na comunicação, reverte a missão para pendente.
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
+
         if (!sucesso && !sessao.completedRecebido && !sessao.erroRecebido) {
-            // Falha de comunicação (não recebeu COMPLETED nem ERROR) - reverter missão para pendente
-            estado.reverterMissaoParaPendente(sessao.missao.idMissao);
-            System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
-                             " revertida para pendente (falha de comunicação)");
+            if (sessao.recebendoProgresso) {
+                // Rover JÁ TINHA COMEÇADO execução - NÃO reverter, fica como falhada, futuramente o rover poderia recomeçar a missão a partir daqui
+                System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                                 " do rover " + sessao.rover.idRover + 
+                                 " perdeu comunicação mas rover já estava a executar - NÃO reverter");
+            } else {
+                // Falha ANTES de começar execução 
+                estado.reverterMissaoParaPendente(sessao.missao.idMissao);
+                System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
+                                 " revertida para pendente (rover " + sessao.rover.idRover + 
+                                 " nunca confirmou/começou execução)");
+            }
         }
-        sessoesAtivas.remove(sessao.rover.idRover);
+        int idRover = sessao.rover.idRover;
+        sessoesAtivas.remove(idRover);
+        System.out.println("[ServidorUDP] Sessão do rover " + idRover + " removida");
     }
     
     /**
@@ -731,13 +751,16 @@ public class ServidorUDP implements Runnable {
     
     // ==================== MÉTODOS AUXILIARES ====================
     
+
+    
     /**
-     * Converte List<Integer> para int[].
+     * Converte Set<Integer> para int[].
      */
-    private int[] listaParaArray(List<Integer> lista) {
-        int[] array = new int[lista.size()];
-        for (int i = 0; i < lista.size(); i++) {
-            array[i] = lista.get(i);
+    private int[] setParaArray(Set<Integer> set) {
+        int[] array = new int[set.size()];
+        int i = 0;
+        for (Integer valor : set) {
+            array[i++] = valor;
         }
         return array;
     }
@@ -783,7 +806,7 @@ public class ServidorUDP implements Runnable {
         
         if (temProgressoPerdido) {
             payloadAck.missingCount = sessao.progressoPerdido.size();
-            payloadAck.missing = listaParaArray(sessao.progressoPerdido);
+            payloadAck.missing = setParaArray(sessao.progressoPerdido);
         } else {
             payloadAck.missingCount = 0;
             payloadAck.missing = new int[0];
