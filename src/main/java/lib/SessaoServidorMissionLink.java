@@ -19,6 +19,8 @@ import lib.mensagens.SerializadorUDP;
 
         public Rover rover;
         public Missao missao;
+
+        public long ultimaAtividade;
         
         // Estado da comunicação
         public boolean responseRecebido = false;
@@ -29,7 +31,6 @@ import lib.mensagens.SerializadorUDP;
         public boolean completedRecebido = false;
         public boolean completedSucesso = false;
         public boolean erroRecebido = false;  // Indica se recebeu MSG_ERROR do rover
-
         
         // Fragmentação (nova versão com campos identificados)
         public int totalFragmentos = 0;
@@ -46,11 +47,19 @@ import lib.mensagens.SerializadorUDP;
             this.rover = rover;
             this.missao = missao;
             this.serializador = new SerializadorUDP();
+            this.ultimaAtividade = System.currentTimeMillis();
             try {
                 this.enderecoRover = InetAddress.getByName(rover.enderecoHost);
             } catch (Exception e) {
                 this.enderecoRover = null;
             }
             this.portaRover = rover.portaUdp != null ? rover.portaUdp : -1;
+        }
+
+        /**
+         * Atualiza timestamp de atividade
+         */
+        public void atualizarAtividade() {
+            this.ultimaAtividade = System.currentTimeMillis();
         }
     }

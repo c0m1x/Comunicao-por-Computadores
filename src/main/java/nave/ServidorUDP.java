@@ -383,18 +383,17 @@ public class ServidorUDP implements Runnable {
     private void processarMensagemRecebida(DatagramPacket pacote) {
         try {
             MensagemUDP msg = deserializarMensagem(pacote.getData(), pacote.getLength());
-            
-            if (msg == null || msg.header == null) {
+            if (msg == null || msg.header == null)
                 return;
-            }
             
             int idRover = msg.header.idEmissor;
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             
-            if (sessao == null) {
+            if (sessao == null)
                 // Mensagem sem sessão ativa
                 return;
-            }
+            
+            sessao.atualizarAtividade();
             
             // Atualizar endpoint da sessão apenas na primeira mensagem recebida.
             // Após a primeira mensagem, mantemos o endereço fixo para consistência.
