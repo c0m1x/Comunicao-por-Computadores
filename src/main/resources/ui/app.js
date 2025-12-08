@@ -18,7 +18,25 @@ let previousData = {
 
 // ========== Initialization ==========
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[Ground Control] Initializing...');
+    console.log('[Ground Control] ============================================');
+    console.log('[Ground Control] Initializing Dashboard...');
+    console.log('[Ground Control] API Base:', API_BASE);
+    console.log('[Ground Control] Current URL:', window.location.href);
+    console.log('[Ground Control] ============================================');
+    
+    // Test if DOM elements exist
+    const requiredElements = [
+        'rovers-container',
+        'missions-container', 
+        'telemetry-stream',
+        'activity-log',
+        'connection-status'
+    ];
+    
+    requiredElements.forEach(id => {
+        const el = document.getElementById(id);
+        console.log(`[DOM Check] Element #${id}:`, el ? '✓ Found' : '✗ NOT FOUND');
+    });
     
     checkConnection();
     loadAllData();
@@ -28,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     addActivity('info', 'Sistema Ground Control iniciado');
     console.log('[Ground Control] Ready');
+    console.log('[Ground Control] ============================================');
 });
 
 // ========== Event Listeners ==========
@@ -613,12 +632,16 @@ function updateLastUpdateTime() {
 }
 
 function normalizeEstado(estado) {
-    const normalized = estado.toLowerCase().replace(/_/g, '-').replace(/\s+/g, '-');
+    // Remover "ESTADO_" do início se existir
+    const normalized = estado.toLowerCase()
+        .replace('estado_', '')
+        .replace(/_/g, '-')
+        .replace(/\s+/g, '-');
     
-    if (normalized.includes('disponivel')) return 'disponivel';
-    if (normalized.includes('missao') || normalized.includes('execucao')) return 'em-missao';
+    if (normalized.includes('disponivel') || normalized.includes('inicial')) return 'disponivel';
+    if (normalized.includes('missao') || normalized.includes('execucao') || normalized.includes('andamento')) return 'em-missao';
     if (normalized.includes('erro') || normalized.includes('falha')) return 'erro';
-    if (normalized.includes('pendente')) return 'pendente';
+    if (normalized.includes('pendente') || normalized.includes('recebendo')) return 'pendente';
     if (normalized.includes('conclu')) return 'concluida';
     
     return normalized;

@@ -29,14 +29,18 @@ public class CriarJson {
     public static String rover(Rover r) {
         if (r == null) return "null";
 
+        // Normalizar estado do rover (remover "ESTADO_" do início)
+        String estadoNormalizado = r.estadoRover.toString().replace("ESTADO_", "");
+
         return "{"
                 + "\"idRover\":" + r.idRover + ","
                 + "\"posicaoX\":" + r.posicaoX + ","
                 + "\"posicaoY\":" + r.posicaoY + ","
                 + "\"bateria\":" + r.bateria + ","
                 + "\"velocidade\":" + r.velocidade + ","
-                + "\"estadoOperacional\":\"" + escape(r.estadoRover.toString()) + "\","
+                + "\"estadoOperacional\":\"" + escape(estadoNormalizado) + "\","
                 + "\"idMissaoAtual\":" + r.idMissaoAtual + ","
+                + "\"progressoMissao\":" + (r.progressoMissao != null ? r.progressoMissao : 0.0f) + ","
                 + "\"temMissao\":" + r.temMissao
                 + "}";
     }
@@ -60,10 +64,13 @@ public class CriarJson {
     public static String missao(Missao m) {
         if (m == null) return "null";
 
+        // Converter estado para formato consistente
+        String estado = m.estadoMissao != null ? m.estadoMissao.toString() : m.estadoMissao.toString();
+        
         return "{"
                 + "\"idMissao\":" + m.idMissao + ","
                 + "\"tarefa\":\"" + escape(m.tarefa) + "\","
-                + "\"estado\":\"" + m.estadoMissao + "\","
+                + "\"estado\":\"" + estado + "\","
                 + "\"x1\":" + m.x1 + ","
                 + "\"y1\":" + m.y1 + ","
                 + "\"x2\":" + m.x2 + ","
@@ -101,10 +108,13 @@ public class CriarJson {
     public static String telemetria(PayloadTelemetria p) {
         if (p == null) return "null";
 
+        // Normalizar estado (remover "ESTADO_" se existir)
+        String estadoNormalizado = p.estadoOperacional.toString().replace("ESTADO_", "");
+        
         return "{"
                 + "\"posicaoX\":" + p.posicaoX + ","
                 + "\"posicaoY\":" + p.posicaoY + ","
-                + "\"estadoOperacional\":\"" + escape(p.estadoOperacional.toString()) + "\","
+                + "\"estadoOperacional\":\"" + escape(estadoNormalizado) + "\","
                 + "\"bateria\":" + p.bateria + ","
                 + "\"velocidade\":" + p.velocidade
                 + "}";
@@ -130,6 +140,9 @@ public class CriarJson {
     private static String escape(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")
-                .replace("\"", "\\\"");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }
