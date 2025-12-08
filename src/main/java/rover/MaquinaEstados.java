@@ -1,6 +1,9 @@
 package rover;
 
 import lib.mensagens.payloads.*;
+
+import java.time.Instant;
+
 import lib.Rover.EstadoRover;
 
 /**
@@ -32,15 +35,14 @@ public class MaquinaEstados {
                 break;
             case ESTADO_EM_MISSAO:
                 contexto.atualizarDuranteMissao();
-                
-                if (missaoConcluida()) {
-                    contexto.transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
-                    contexto.eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
-                }
                 if (contexto.bateria <= 0.0f) {
                     System.out.println("[MaquinaEstados] Bateria esgotada! Missão falhada.");
                     contexto.transicionarEstado(EstadoRover.ESTADO_FALHA);
                     contexto.eventoPendente = EventoRelevante.EVENTO_ERRO_MISSAO;
+                }
+                if (missaoConcluida()) {
+                    contexto.transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
+                    contexto.eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
                 }
                 break;
             case ESTADO_CONCLUIDO:
@@ -48,12 +50,18 @@ public class MaquinaEstados {
                 contexto.transicionarEstado(EstadoRover.ESTADO_DISPONIVEL);
                 break;
             case ESTADO_FALHA:
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
+                // Usar timestamp para controlar recuperação
+                if (contexto.timestampEntradaFalha == 0) {
+                    contexto.timestampEntradaFalha = Instant.now().getEpochSecond();
+                    System.out.println("[MaquinaEstados] Rover em estado de falha.");
                 }
-                contexto.transicionarEstado(EstadoRover.ESTADO_DISPONIVEL);
+
+                long tempoEmFalha = Instant.now().getEpochSecond() - contexto.timestampEntradaFalha;
+                if (tempoEmFalha >= 5) {
+                    contexto.timestampEntradaFalha = 0;
+                    contexto.transicionarEstado(EstadoRover.ESTADO_DISPONIVEL);
+                    System.out.println("[MaquinaEstados] Rover recuperado.");
+                }
                 break;
         }
     }

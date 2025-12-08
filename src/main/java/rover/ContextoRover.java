@@ -36,6 +36,7 @@ import lib.Rover.EstadoRover;
         public volatile EventoRelevante eventoPendente = EventoRelevante.EVENTO_NENHUM; //serve para mandar telemetria quando algum evento acontece além dos intervalos normais
         public volatile EventoRelevante ultimoEvento = EventoRelevante.EVENTO_NENHUM;
         public volatile int ultimoCheckpoint = 0;
+        public volatile long timestampEntradaFalha = 0;
 
         // constantes (ajustar conforme necessário)
         public static final int INTERVALO_KEEPALIVE = 10;
