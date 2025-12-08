@@ -91,15 +91,13 @@ public class ServidorUDP implements Runnable {
                 // Procurar missão pendente
                 Missao missao = estado.obterMissaoNaoAtribuida();
                 if (missao == null){
-                    System.out.println("[ServidorUDP] Nenhuma missão pendente encontrada.");
                     continue;
                 }
-                
                 System.out.println("[ServidorUDP] Missão pendente encontrada: " + missao);
 
                 // Procurar rover disponível
                 Rover roverDisponivel = estado.obterRoverDisponivel();
-                if (roverDisponivel == null) {
+                if (roverDisponivel == null || !roverPodeReceberMissao(roverDisponivel)) {
                     System.out.println("[ServidorUDP] Nenhum rover disponível no momento.");
                     continue;
                 } else {
@@ -110,6 +108,9 @@ public class ServidorUDP implements Runnable {
                 
             } catch (InterruptedException e) {
                 break;
+            } catch (Exception e) {
+                System.err.println("[ServidorUDP] Erro no iniciador de missões: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
@@ -174,22 +175,15 @@ public class ServidorUDP implements Runnable {
                 finalizarSessao(sessao, false);
                 return;
             }
+            
+            System.out.println("[ServidorUDP] Sessão de missão " + sessao.missao.idMissao + 
+            " para rover " + sessao.rover.idRover + " concluída com sucesso");
 
-            //Passo 6: Enviar ACK final 3 vezes para maior robustez (99.9% de entrega assumindo perda independente de 10%)
-            for (int i = 0; i < 3; i++) {
-                enviarAckFinalParaRover(sessao);
-                try {
-                    Thread.sleep(200); // 200ms entre repetições
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            
-            finalizarSessao(sessao, true);
-            
         } catch (Exception e) {
             System.err.println("[ServidorUDP] Erro na sessão: " + e.getMessage());
-            finalizarSessao(sessao, false);
+            if (sessoesAtivas.containsKey(sessao.rover.idRover)) {
+                finalizarSessao(sessao, false);
+            }
         }
     }
     
@@ -702,6 +696,36 @@ public class ServidorUDP implements Runnable {
         }
     }
     
+    /**
+     * Verifica se rover está realmente disponível para receber missão.
+     * Considera estado do rover E existência de sessão ativa.
+     */
+    private boolean roverPodeReceberMissao(Rover rover) {
+        if (rover == null) {
+            return false;
+        }
+        int idRover = rover.idRover;
+
+        if (rover.estadoRover != Rover.EstadoRover.ESTADO_DISPONIVEL) {
+            System.out.println("[ServidorUDP] Rover " + idRover + 
+                             " não está disponível: " + rover.estadoRover);
+            return false;
+        }
+
+        if (rover.temMissao) {
+            System.out.println("[ServidorUDP] Rover " + idRover + 
+                             " já tem missão ativa: " + rover.idMissaoAtual);
+            return false;
+        }
+
+        // Verificar sessões ativas (fallback para detectar inconsistências)
+        if (sessoesAtivas.containsKey(idRover)) {
+            System.out.println("[ServidorUDP] AVISO: Rover " + idRover + 
+                             " tem sessão ativa mas estado é DISPONIVEL - possível bug!");
+        }
+
+        return true;
+    }
     // ==================== MÉTODOS DE SERIALIZAÇÃO ====================
     
     /**
