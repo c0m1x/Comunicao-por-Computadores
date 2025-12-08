@@ -657,7 +657,7 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Finaliza a sessão de missão.
-     * Em caso de insucesso na comunicação, reverte a missão para pendente.
+     * Em caso de insucesso na comunicação, reverte a missão E estado do rover
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
         if (!sucesso && !sessao.completedRecebido && !sessao.erroRecebido) {
@@ -665,6 +665,14 @@ public class ServidorUDP implements Runnable {
             estado.reverterMissaoParaPendente(sessao.missao.idMissao);
             System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
                              " revertida para pendente (falha de comunicação)");
+            
+            // Reverter estado do rover para DISPONIVEL
+            Rover rover = estado.obterRover(sessao.rover.idRover);
+            if (rover != null && rover.estadoRover == Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO) {
+                rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
+                System.out.println("[ServidorUDP] Rover " + sessao.rover.idRover + 
+                                 " revertido para ESTADO_DISPONIVEL");
+            }
         }
         sessoesAtivas.remove(sessao.rover.idRover);
     }
@@ -753,21 +761,45 @@ public class ServidorUDP implements Runnable {
             SessaoServidorMissionLink sessao = entry.getValue();
             Rover rover = estado.obterRover(idRover);
 
-            // Remover se:
-            // 1. Rover está DISPONIVEL (não devia ter sessão)
-            // 2. Sessão sem atividade há mais de 30 segundos
-            boolean roverDisponivel = (rover != null && 
-                                      rover.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL &&
-                                      !rover.temMissao);
-            
+            if (rover == null) {
+                paraRemover.add(idRover);
+                continue;
+            }
+
             long inatividade = agora - sessao.ultimaAtividade;
-            boolean sessoInativa = inatividade > 30000; // 30 segundos
-            
-            if (roverDisponivel || sessoInativa) {
+
+            // Remover se sessão está inativa há mais de 30 segundos
+            if (inatividade > 30000) {
                 paraRemover.add(idRover);
                 System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
-                                 " (roverDisponivel=" + roverDisponivel + 
-                                 ", inatividade=" + (inatividade/1000) + "s)");
+                                 " (inatividade=" + (inatividade/1000) + "s)");
+
+                // Reverter estado do rover para DISPONIVEL
+                if (rover.estadoRover == Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO) {
+                    rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
+                    System.out.println("[ServidorUDP] Rover " + idRover + 
+                                     " revertido para ESTADO_DISPONIVEL");
+                }
+            }
+
+            //Detectar inconsistência (rover disponível mas com sessão)
+            boolean roverDisponivel = (rover.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL && 
+                                      !rover.temMissao);
+            if (roverDisponivel) {
+                paraRemover.add(idRover);
+                System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
+                                 " (rover está DISPONIVEL mas tem sessão)");
+            }
+        }
+
+        // Também verificar rovers em RECEBENDO_MISSAO sem sessão
+        for (Rover rover : estado.listarRovers()) {
+            if (rover.estadoRover == Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO && 
+                !sessoesAtivas.containsKey(rover.idRover)) {
+                
+                System.out.println("[ServidorUDP] Rover " + rover.idRover + 
+                                 " está em RECEBENDO_MISSAO mas sem sessão - revertendo");
+                rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
             }
         }
 
