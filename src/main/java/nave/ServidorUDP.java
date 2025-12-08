@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lib.*;
@@ -84,10 +85,18 @@ public class ServidorUDP implements Runnable {
      * para atribuir a rovers "disponivel".
      */
     private void iniciadorMissoes() {
+        long ultimaLimpeza = System.currentTimeMillis();
+
         while (running) {
             try {
                 Thread.sleep(2000); // Verifica a cada 2 segundos
                 
+                // Limpar sessões órfãs a cada 10 segundos
+                if (System.currentTimeMillis() - ultimaLimpeza > 10000) {
+                    limparSessoesOrfas();
+                    ultimaLimpeza = System.currentTimeMillis();
+                }
+
                 // Procurar missão pendente
                 Missao missao = estado.obterMissaoNaoAtribuida();
                 if (missao == null){
@@ -724,6 +733,46 @@ public class ServidorUDP implements Runnable {
         }
 
         return true;
+    }
+
+    /**
+     * Remove sessões órfãs (rovers disponíveis mas com sessão ativa).
+     * Chame periodicamente para prevenir bloqueios.
+     */
+    private void limparSessoesOrfas() {
+        long agora = System.currentTimeMillis();
+        List<Integer> paraRemover = new ArrayList<>();
+
+        for (Map.Entry<Integer, SessaoServidorMissionLink> entry : sessoesAtivas.entrySet()) {
+            int idRover = entry.getKey();
+            SessaoServidorMissionLink sessao = entry.getValue();
+            Rover rover = estado.obterRover(idRover);
+
+            // Remover se:
+            // 1. Rover está DISPONIVEL (não devia ter sessão)
+            // 2. Sessão sem atividade há mais de 30 segundos
+            boolean roverDisponivel = (rover != null && 
+                                      rover.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL &&
+                                      !rover.temMissao);
+            
+            long inatividade = agora - sessao.ultimaAtividade;
+            boolean sessoInativa = inatividade > 30000; // 30 segundos
+            
+            if (roverDisponivel || sessoInativa) {
+                paraRemover.add(idRover);
+                System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
+                                 " (roverDisponivel=" + roverDisponivel + 
+                                 ", inatividade=" + (inatividade/1000) + "s)");
+            }
+        }
+
+        for (int idRover : paraRemover) {
+            sessoesAtivas.remove(idRover);
+        }
+
+        if (!paraRemover.isEmpty()) {
+            System.out.println("[ServidorUDP] Sessões órfãs removidas: " + paraRemover);
+        }
     }
     // ==================== MÉTODOS DE SERIALIZAÇÃO ====================
     
