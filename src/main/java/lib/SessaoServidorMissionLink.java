@@ -37,7 +37,7 @@ import lib.mensagens.SerializadorUDP;
         public Set<Integer> fragmentosPerdidos = new HashSet<>();
 
         // Progresso perdido (seqs de PROGRESS não recebidos)
-        public List<Integer> progressoPerdido = null;
+        public Set<Integer> progressoPerdido = null;
         
         // Serializador para serialização/desserialização
         public SerializadorUDP serializador;

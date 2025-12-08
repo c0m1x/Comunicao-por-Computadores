@@ -104,6 +104,12 @@ public class RoverApp {
                 maquina.getContexto().ativo = false;
                 clienteTCP.stop();
                 clienteUDP.parar();
+                
+                // Exportar métricas UDP
+                if (clienteUDP.getMetricas() != null) {
+                    clienteUDP.getMetricas().imprimirResumo();
+                    clienteUDP.getMetricas().exportarParaFicheiro("metricas-rover-" + maquina.getContexto().idRover + ".txt");
+                }
             }));
             
             System.out.println("Rover iniciado. Pressione CTRL+C para parar.");
