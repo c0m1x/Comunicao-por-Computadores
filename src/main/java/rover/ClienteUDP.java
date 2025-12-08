@@ -6,6 +6,7 @@ import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
 import lib.Rover.EstadoRover;
+import lib.MetricasUDP;
 
 import java.io.*;
 import java.net.*;
@@ -39,10 +40,14 @@ public class ClienteUDP implements Runnable {
     // Controle da sessão completa da missão 
     private SessaoClienteMissionLink sessaoAtual = null;
     
+    // Métricas de comunicação
+    private MetricasUDP metricas;
+    
     public ClienteUDP(int idRover, int porta, MaquinaEstados maquina) {
         this.idRover = idRover;
         this.porta = porta;
         this.maquina = maquina;
+        this.metricas = new MetricasUDP("ClienteUDP-" + idRover);
     }
     
     @Override
@@ -94,6 +99,8 @@ public class ClienteUDP implements Runnable {
             return;
         }
 
+        metricas.incrementarMensagensRecebidas();
+
         InetAddress endereco = pacote.getAddress();
         int porta = pacote.getPort();
 
@@ -123,6 +130,7 @@ public class ClienteUDP implements Runnable {
         // Proteção contra HELLO duplicado para a mesma missão
         if (sessaoAtual != null && sessaoAtual.idMissao == msg.header.idMissao) {
             System.out.println("[ClienteUDP] HELLO duplicado para missão " + msg.header.idMissao + " - Reenviando RESPONSE");
+            metricas.incrementarMensagensDuplicadas();
             // Reenviar RESPONSE (servidor pode não ter recebido)
             enviarResponse(!sessaoAtual.emExecucao);
             return;
@@ -276,6 +284,7 @@ public class ClienteUDP implements Runnable {
             return;
         }
         
+        metricas.incrementarAcksRecebidos();
         int seqRecebido = msg.header.seq;
         
         // PRIORITY: Verificar se é ACK final (para COMPLETED/ERROR)
@@ -302,6 +311,7 @@ public class ClienteUDP implements Runnable {
                 PayloadAck ack = (PayloadAck) msg.payload;
                 if (ack.missing != null && ack.missing.length > 0) {
                     System.out.println("[ClienteUDP] Servidor pediu reenvio de PROGRESS perdidos: " + Arrays.toString(ack.missing));
+                    metricas.incrementarMensagensPerdidas(ack.missing.length);
                     for (int seq : ack.missing) {
                         reenviarProgress(seq);
                     }
@@ -333,6 +343,7 @@ public class ClienteUDP implements Runnable {
         MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_PROGRESS, seq, true);
         msg.payload = progresso;
 
+        metricas.incrementarMensagensRetransmitidas();
         enviarParaNave(msg);
         System.out.println("[ClienteUDP] PROGRESS reenviado (seq=" + seq + ")");
     }
@@ -347,6 +358,9 @@ public class ClienteUDP implements Runnable {
             if (!sessaoAtual.fragmentosRecebidos.containsKey(i)) {
                 perdidos.add(i);
             }
+        }
+        if (perdidos.size() > 0) {
+            metricas.incrementarMensagensPerdidas(perdidos.size());
         }
         return perdidos;
     }
@@ -448,6 +462,31 @@ public class ClienteUDP implements Runnable {
             byte[] dados = sessaoAtual.serializador.serializarObjeto(msg);
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
             socket.send(pacote);
+            
+            metricas.incrementarMensagensEnviadas();
+            // Incrementar contadores específicos por tipo
+            switch (msg.header.tipo) {
+                case MSG_RESPONSE:
+                    // RESPONSE não tem contador específico de envio (apenas recepção no servidor)
+                    break;
+                case MSG_ACK:
+                    metricas.incrementarAcksEnviados();
+                    break;
+                case MSG_PROGRESS:
+                    metricas.incrementarProgressEnviados();
+                    break;
+                case MSG_COMPLETED:
+                    metricas.incrementarCompletedEnviados();
+                    break;
+                case MSG_ERROR:
+                    metricas.incrementarErrorEnviados();
+                    break;
+                case MSG_HELLO:
+                case MSG_MISSION:
+                case MSG_TELEMETRY:
+                    // Não enviados pelo cliente
+                    break;
+            }
         } catch (IOException e) {
             System.err.println("[ClienteUDP] Erro ao enviar mensagem: " + e.getMessage());
         }
@@ -468,6 +507,7 @@ public class ClienteUDP implements Runnable {
             if (tentativas == 0) {
                 System.out.println("[ClienteUDP] " + nomeMensagem + " enviado (seq=" + seqParaEnviar + ")");
             } else {
+                metricas.incrementarMensagensRetransmitidas();
                 System.out.println("[ClienteUDP] " + nomeMensagem + " retransmitido (seq=" + seqParaEnviar + 
                                  ", tentativa " + tentativas + ")");
             }
@@ -722,6 +762,10 @@ public class ClienteUDP implements Runnable {
     
     public void parar() {
         running = false;
+    }
+    
+    public MetricasUDP getMetricas() {
+        return metricas;
     }
     
 }

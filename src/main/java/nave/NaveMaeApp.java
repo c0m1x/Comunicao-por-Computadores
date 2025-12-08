@@ -18,6 +18,13 @@ public class NaveMaeApp {
                 servidorUDP.parar();
                 servidorTCP.parar();
                 servidorHTTP.parar();
+                
+                // Exportar métricas UDP
+                if (servidorUDP.getMetricas() != null) {
+                    servidorUDP.getMetricas().imprimirResumo();
+                    servidorUDP.getMetricas().exportarParaFicheiro("metricas-nave.txt");
+                }
+                
                 System.out.println("[NaveMaeApp] Todos os servidores encerrados.");
             }));
             

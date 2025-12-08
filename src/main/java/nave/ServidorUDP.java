@@ -12,6 +12,7 @@ import lib.Condicao;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
+import lib.MetricasUDP;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -35,10 +36,14 @@ public class ServidorUDP implements Runnable {
     // Controlo de sessões ativas (idRover -> sessão)
     private ConcurrentHashMap<Integer, SessaoServidorMissionLink> sessoesAtivas;
     
+    // Métricas de comunicação
+    private MetricasUDP metricas;
+    
     public ServidorUDP(GestaoEstado estado) {
         this.estado = estado;
         this.sessoesAtivas = new ConcurrentHashMap<>();
         this.running = true;
+        this.metricas = new MetricasUDP("ServidorUDP");
     }
     
     @Override
@@ -233,8 +238,11 @@ public class ServidorUDP implements Runnable {
                 return sessao.responseSucesso;
             }
             // Timeout sem resposta - retry
-            if (tentativas + 1 < MAX_RETRIES && !enviarHello(sessao)) {
-                return false;
+            if (tentativas + 1 < MAX_RETRIES) {
+                metricas.incrementarMensagensRetransmitidas();
+                if (!enviarHello(sessao)) {
+                    return false;
+                }
             }
         }
         return false;
@@ -333,6 +341,7 @@ public class ServidorUDP implements Runnable {
                     // Retransmitir fragmentos perdidos
                     System.out.println("[ServidorUDP] Retransmitindo " + 
                                      sessao.fragmentosPerdidos.size() + " fragmentos perdidos");
+                    metricas.incrementarMensagensRetransmitidas();
                     for (int seq : sessao.fragmentosPerdidos) {
                         enviarFragmento(sessao, seq);
                     }
@@ -395,6 +404,8 @@ public class ServidorUDP implements Runnable {
                 return;
             }
             
+            metricas.incrementarMensagensRecebidas();
+            
             int idRover = msg.header.idEmissor;
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             
@@ -418,11 +429,13 @@ public class ServidorUDP implements Runnable {
                     // Proteção contra RESPONSE duplicado
                     if (sessao.responseRecebido) {
                         System.out.println("[ServidorUDP] RESPONSE duplicado ignorado do rover " + idRover);
+                        metricas.incrementarMensagensDuplicadas();
                         break;
                     }
                     sessao.responseRecebido = true;
                     sessao.responseSucesso = msg.header.flagSucesso;
                     sessao.ultimoSeq = msg.header.seq;
+                    metricas.incrementarResponseRecebidos();
                     System.out.println("[ServidorUDP] RESPONSE recebido do rover " + idRover + 
                                      " (sucesso=" + msg.header.flagSucesso + ", seq=" + msg.header.seq + ")");
                     break;
@@ -430,6 +443,7 @@ public class ServidorUDP implements Runnable {
                 case MSG_ACK:
                     sessao.ackRecebido = true;
                     sessao.ultimoSeq = msg.header.seq;
+                    metricas.incrementarAcksRecebidos();
                     if (msg.payload instanceof PayloadAck) {
                         PayloadAck ack = (PayloadAck) msg.payload;
                         sessao.fragmentosPerdidos.clear();
@@ -437,6 +451,7 @@ public class ServidorUDP implements Runnable {
                             for (int seq : ack.missing) {
                                 sessao.fragmentosPerdidos.add(seq);
                             }
+                            metricas.incrementarMensagensPerdidas(ack.missing.length);
                         }
                         System.out.println("[ServidorUDP] ACK recebido do rover " + idRover + 
                                          " (faltam " + ack.missing.length + " fragmentos" + ", seq=" + msg.header.seq + ")");
@@ -484,6 +499,11 @@ public class ServidorUDP implements Runnable {
         // Tratamento de duplicados ou mensagens antigas - SEMPRE enviar ACK
         if (seqRecebido <= sessao.ultimoSeq) {
             String tipo = (seqRecebido == sessao.ultimoSeq) ? "duplicado" : "antigo";
+            if (seqRecebido == sessao.ultimoSeq) {
+                metricas.incrementarMensagensDuplicadas();
+            } else {
+                metricas.incrementarMensagensEmAtraso();
+            }
             System.out.println("[ServidorUDP] PROGRESS " + tipo + " (seq=" + seqRecebido + 
                              (seqRecebido < sessao.ultimoSeq ? ", último=" + sessao.ultimoSeq : "") + 
                              ") - Enviando ACK");
@@ -505,10 +525,12 @@ public class ServidorUDP implements Runnable {
             for (int s = seqEsperado; s < seqRecebido; s++) {
                 sessao.progressoPerdido.add(s);
             }
+            metricas.incrementarMensagensPerdidas(sessao.progressoPerdido.size());
             System.out.println("[ServidorUDP] PROGRESS perdido detectado: seqs " + sessao.progressoPerdido);
         }
 
         // Atualizar estado da missão
+        metricas.incrementarProgressRecebidos();
         estado.atualizarProgresso(progresso);
         sessao.recebendoProgresso = true;
         sessao.ultimoSeq = seqRecebido;
@@ -525,6 +547,7 @@ public class ServidorUDP implements Runnable {
         if (sessao != null && sessao.completedRecebido) {
             System.out.println("[ServidorUDP] COMPLETED duplicado do rover " + idRover + 
                              " (seq=" + msg.header.seq + ") - Reenviando ACK");
+            metricas.incrementarMensagensDuplicadas();
             sessao.ultimoSeq = msg.header.seq;
             enviarAckParaRover(sessao);
             return;
@@ -533,6 +556,7 @@ public class ServidorUDP implements Runnable {
         System.out.println("[ServidorUDP] COMPLETED recebido do rover " + idRover + 
                          " (seq=" + msg.header.seq + ", missão=" + msg.header.idMissao + 
                          ", sucesso=" + msg.header.flagSucesso + ")");
+        metricas.incrementarCompletedRecebidos();
         // Atualizar estado via GestaoEstado
         estado.concluirMissao(idRover, msg.header.idMissao, msg.header.flagSucesso);
         
@@ -554,11 +578,13 @@ public class ServidorUDP implements Runnable {
         if (sessao != null && sessao.erroRecebido) {
             System.out.println("[ServidorUDP] ERROR duplicado do rover " + idRover + 
                              " (seq=" + msg.header.seq + ") - Reenviar ACK final");
+            metricas.incrementarMensagensDuplicadas();
             sessao.ultimoSeq = msg.header.seq;
             enviarAckFinalParaRover(sessao);
             return;
         }
 
+        metricas.incrementarErrorRecebidos();
         // Extrair detalhes do erro 
         String descricaoErro = "Erro desconhecido";
         int codigoErro = 0;
@@ -671,6 +697,20 @@ public class ServidorUDP implements Runnable {
             DatagramPacket pacote = new DatagramPacket(dados, dados.length, endereco, porta);
             socket.send(pacote);
 
+            metricas.incrementarMensagensEnviadas();
+            // Incrementar contadores específicos por tipo
+            switch (msg.header.tipo) {
+                case MSG_HELLO:
+                    metricas.incrementarHelloEnviados();
+                    break;
+                case MSG_MISSION:
+                    metricas.incrementarMissionEnviados();
+                    break;
+                case MSG_ACK:
+                    metricas.incrementarAcksEnviados();
+                    break;
+            }
+            
             System.out.println("[ServidorUDP] Enviada mensagem " + msg.header.tipo +
                                " para rover " + sessao.rover.idRover + " (seq=" + msg.header.seq + ")");
             return true;
@@ -707,6 +747,10 @@ public class ServidorUDP implements Runnable {
         if (socket != null && !socket.isClosed()) {
                 socket.close();
         }
+    }
+    
+    public MetricasUDP getMetricas() {
+        return metricas;
     }
     
     // ==================== MÉTODOS DE CRIAÇÃO DE MENSAGENS ====================
