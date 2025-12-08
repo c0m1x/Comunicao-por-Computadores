@@ -145,13 +145,7 @@ import lib.Rover.EstadoRover;
                 }
 
                 // Descarrega mais quando em movimento, menos quando parado
-                if (velocidade > 0.0f) {
-                    bateria -= 0.05f; // Em movimento
-                } else {
-                    bateria -= 0.01f; // Parado
-                }
-                if (bateria < 0.0f) bateria = 0.0f;
-                if (bateria > 100.0f) bateria = 100.0f; // Garantir limite superior
+                bateria = Math.max(0.0f, bateria - (velocidade > 0.0f ? 0.05f : 0.01f));
 
                 long agora = Instant.now().getEpochSecond();
                 long decorrido = agora - timestampInicioMissao;

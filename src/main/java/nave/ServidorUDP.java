@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import lib.*;
 import lib.mensagens.CampoSerializado;
-import lib.Condicao;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
@@ -514,7 +513,9 @@ public class ServidorUDP implements Runnable {
         sessao.ultimoSeq = seqRecebido;
         
         enviarAckParaRover(sessao);
-    }    /**
+    }   
+    
+    /**
      * Processa mensagem COMPLETED do rover.
      * Trata duplicados reenviando ACK (rover pode não ter recebido).
      */
@@ -540,6 +541,22 @@ public class ServidorUDP implements Runnable {
             sessao.completedRecebido = true;
             sessao.completedSucesso = msg.header.flagSucesso;
             sessao.ultimoSeq = msg.header.seq;
+            
+            // Enviar ACK final 3 vezes para garantir entrega
+            for (int i = 0; i < 3; i++) {
+                enviarAckFinalParaRover(sessao);
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            // Remover sessão IMEDIATAMENTE após enviar ACKs
+            sessoesAtivas.remove(idRover);
+            System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
+                             " removida (missão " + msg.header.idMissao + " concluída)");
+            System.out.println("[ServidorUDP] Sessões ativas restantes: " + sessoesAtivas.keySet());
         }
     }
     
@@ -599,6 +616,11 @@ public class ServidorUDP implements Runnable {
                     Thread.currentThread().interrupt();
                 }
             }
+            // Remover sessão IMEDIATAMENTE após enviar ACKs
+            sessoesAtivas.remove(idRover);
+            System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
+                             " removida (missão " + msg.header.idMissao + " falhou com erro)");
+            System.out.println("[ServidorUDP] Sessões ativas restantes: " + sessoesAtivas.keySet());
         }
 
     }

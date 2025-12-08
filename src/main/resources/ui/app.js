@@ -642,7 +642,8 @@ function normalizeEstado(estado) {
     if (normalized.includes('missao') || normalized.includes('execucao') || normalized.includes('andamento')) return 'em-missao';
     if (normalized.includes('erro') || normalized.includes('falha')) return 'erro';
     if (normalized.includes('pendente') || normalized.includes('recebendo')) return 'pendente';
-    if (normalized.includes('conclu')) return 'concluida';
+    if (normalized.includes('conclui')) return 'concluida';
+    if (normalized.includes('recebendo')) return 'pendente';
     
     return normalized;
 }
