@@ -656,9 +656,6 @@ public class ClienteUDP implements Runnable {
     private void enviarErro(PayloadErro.CodigoErro codigoErro, String descricaoExtra) {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) 
             return;
-        
-        sessaoAtual.emExecucao = false;
-
         ContextoRover ctx = maquina.getContexto();
         int seqParaEnviar = ++sessaoAtual.seqAtual;
         
@@ -717,7 +714,6 @@ public class ClienteUDP implements Runnable {
         if (sessaoAtual == null || !sessaoAtual.emExecucao) 
             return;
         
-        sessaoAtual.emExecucao = false;
         int seqParaEnviar = ++sessaoAtual.seqAtual;
         
         MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_COMPLETED, seqParaEnviar, sucesso);
