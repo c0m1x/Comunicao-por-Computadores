@@ -373,6 +373,14 @@ public class ServidorUDP implements Runnable {
         // Continua enquanto NÃO recebeu COMPLETED E NÃO recebeu ERROR
         while (!sessao.completedRecebido && !sessao.erroRecebido) {
             //NOTA: SE o progresso viesse fragmentado podia aproveitar que era por campos e se não recebesse todos os campos mesmo depois de retries e cenas, guadava o progresso das informações que tivesse
+            
+            //Verificar se sessão ainda existe (pode ter sido removida em processarCompleted)
+            if (!sessoesAtivas.containsKey(sessao.rover.idRover)) {
+                System.out.println("[ServidorUDP] Sessão do rover " + sessao.rover.idRover + 
+                                 " foi removida (COMPLETED/ERROR recebido em outro handler)");
+                return true; //missão foi concluída
+            }
+
             // Se chegou novo progresso, reinicia janela
             if (sessao.ultimoSeq != ultimoSeq) {
                 ultimoSeq = sessao.ultimoSeq;
@@ -382,12 +390,15 @@ public class ServidorUDP implements Runnable {
             if (System.currentTimeMillis() - inicioJanela > timeoutProgressMs) {
                 return false; // Falhou aguardar progress/completed
             }
+
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
                 return false;
             }
         }
+        System.out.println("[ServidorUDP] " + (sessao.completedRecebido ? "COMPLETED" : "ERROR") + 
+                        " recebido para rover " + sessao.rover.idRover);
         return true; // COMPLETED ou ERROR recebido
     }
     
