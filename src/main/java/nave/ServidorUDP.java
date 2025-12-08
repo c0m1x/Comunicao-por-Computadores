@@ -491,13 +491,23 @@ public class ServidorUDP implements Runnable {
         PayloadProgresso progresso = (PayloadProgresso) msg.payload;
         int seqRecebido = msg.header.seq;
         
-        System.out.println("[ServidorUDP] PROGRESS recebido do rover " + idRover + 
-                         " (seq=" + seqRecebido + ", missão=" + progresso.idMissao + 
-                         ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
-
         SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         if (sessao == null) return;
         
+        //Verificar se é da missão correta
+        if (progresso.idMissao != sessao.missao.idMissao) return;
+    
+        // Verificar se já recebeu COMPLETED (race condition)
+        if (sessao.completedRecebido || sessao.erroRecebido) {
+            System.out.println("[ServidorUDP] PROGRESS ignorado - rover " + idRover + 
+                             " já enviou " + (sessao.completedRecebido ? "COMPLETED" : "ERROR"));
+            return;
+        }
+
+        System.out.println("[ServidorUDP] PROGRESS recebido do rover " + idRover + 
+                     " (seq=" + seqRecebido + ", missão=" + progresso.idMissao + 
+                     ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
+    
         // Tratamento de duplicados ou mensagens antigas - SEMPRE enviar ACK
         if (seqRecebido <= sessao.ultimoSeq) {
             String tipo = (seqRecebido == sessao.ultimoSeq) ? "duplicado" : "antigo";
@@ -507,6 +517,7 @@ public class ServidorUDP implements Runnable {
             int seqOriginal = sessao.ultimoSeq;
             sessao.ultimoSeq = seqRecebido;
             sessao.progressoPerdido = new ArrayList<>();
+            
             enviarAckParaRover(sessao);
             if (seqRecebido < seqOriginal) {
                 sessao.ultimoSeq = seqOriginal; // Restaurar para mensagens antigas
