@@ -32,10 +32,6 @@ public class MaquinaEstados {
                 break;
             case ESTADO_EM_MISSAO:
                 contexto.atualizarDuranteMissao();
-                if (missaoConcluida()) {
-                    contexto.transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
-                    contexto.eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
-                }
                 break;
             case ESTADO_CONCLUIDO:
                 contexto.concluirMissao();
