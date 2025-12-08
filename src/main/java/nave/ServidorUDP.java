@@ -135,6 +135,11 @@ public class ServidorUDP implements Runnable {
             return;
         }
         
+        //Mudar estado AQUI, quando realmente vai iniciar envio
+        rover.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
+        System.out.println("[ServidorUDP] Rover " + rover.idRover + 
+                     " mudou para ESTADO_RECEBENDO_MISSAO");
+      
         // Criar nova sessão
         SessaoServidorMissionLink sessao = new SessaoServidorMissionLink(rover, missao);
         sessoesAtivas.put(rover.idRover, sessao);
