@@ -194,7 +194,6 @@ public class ServidorUDP implements Runnable {
                     Thread.currentThread().interrupt();
                 }
             }
-            
             finalizarSessao(sessao, true);
             
         } catch (Exception e) {
@@ -552,13 +551,13 @@ public class ServidorUDP implements Runnable {
     private void processarCompleted(MensagemUDP msg, int idRover, DatagramPacket pacote) {
         SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         
-        // Proteção contra COMPLETED duplicado - reenviar ACK
+        // Proteção contra COMPLETED duplicado - reenviar ACK FINAL
         if (sessao != null && sessao.completedRecebido) {
             System.out.println("[ServidorUDP] COMPLETED duplicado do rover " + idRover + 
-                             " (seq=" + msg.header.seq + ") - Reenviando ACK");
+                             " (seq=" + msg.header.seq + ") - Reenviando ACK FINAL");
             metricas.incrementarMensagensDuplicadas();
             sessao.ultimoSeq = msg.header.seq;
-            enviarAckParaRover(sessao);
+            enviarAckFinalParaRover(sessao);
             return;
         }
         
@@ -583,10 +582,10 @@ public class ServidorUDP implements Runnable {
     private void processarErro(MensagemUDP msg, int idRover, DatagramPacket pacote) {
         SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         
-        // Proteção contra ERROR duplicado - reenviar ACK
+        // Proteção contra ERROR duplicado - reenviar ACK FINAL
         if (sessao != null && sessao.erroRecebido) {
             System.out.println("[ServidorUDP] ERROR duplicado do rover " + idRover + 
-                             " (seq=" + msg.header.seq + ") - Reenviar ACK final");
+                             " (seq=" + msg.header.seq + ") - Reenviando ACK FINAL");
             metricas.incrementarMensagensDuplicadas();
             sessao.ultimoSeq = msg.header.seq;
             enviarAckFinalParaRover(sessao);
