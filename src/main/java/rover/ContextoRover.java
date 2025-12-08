@@ -1,8 +1,10 @@
 package rover;
 
 import java.time.Instant;
-import lib.mensagens.payloads.*;
+
 import lib.Rover.EstadoRover;
+import lib.mensagens.payloads.PayloadMissao;
+import lib.mensagens.payloads.PayloadTelemetria;
 
     /**
      * Contexto interno do Rover — contém lógica da máquina de estados e
@@ -38,7 +40,7 @@ import lib.Rover.EstadoRover;
 
         // constantes (ajustar conforme necessário)
         public static final int INTERVALO_KEEPALIVE = 10;
-        public static final int INTERVALO_TELEMETRIA_BASE = 5;
+        public static final int INTERVALO_TELEMETRIA_BASE = 10;
         public static final float VELOCIDADE_ROVER = 2.0f;
 
         public ContextoRover(int id, float posX, float posY) {
