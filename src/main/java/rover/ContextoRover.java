@@ -33,7 +33,6 @@ import lib.mensagens.payloads.PayloadTelemetria;
         public volatile float velocidade;
         
         // timing / eventos
-        public volatile long ultimoEnvioMensagem = 0; // nota: ver se é preciso isto para manter a nave a saber que o rover está ativo
         public volatile long ultimoEnvioTelemetria = 0;
         public volatile EventoRelevante eventoPendente = EventoRelevante.EVENTO_NENHUM; //serve para mandar telemetria quando algum evento acontece além dos intervalos normais
         public volatile EventoRelevante ultimoEvento = EventoRelevante.EVENTO_NENHUM;

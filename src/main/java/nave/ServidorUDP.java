@@ -377,7 +377,6 @@ public class ServidorUDP implements Runnable {
         int ultimoSeq = sessao.ultimoSeq;
         // Continua enquanto NÃO recebeu COMPLETED E NÃO recebeu ERROR
         while (!sessao.completedRecebido && !sessao.erroRecebido) {
-            //NOTA: SE o progresso viesse fragmentado podia aproveitar que era por campos e se não recebesse todos os campos mesmo depois de retries e cenas, guadava o progresso das informações que tivesse
             // Se chegou novo progresso, reinicia janela
             if (sessao.ultimoSeq != ultimoSeq) {
                 ultimoSeq = sessao.ultimoSeq;
