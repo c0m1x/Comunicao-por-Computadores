@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//TODO: NÃO UTILIZAR OBJECTOUTPUTSTREAM PARA PODER SER LIDO EM OUTRAS LINGUAGENS, USAR PRÓPRIA SERIALIZAÇÃO BINÁRIA
 
 
 /**
