@@ -11,10 +11,10 @@ import lib.mensagens.payloads.PayloadTCP;
 
     public CabecalhoTCP header;
     public PayloadTCP payload;
-    //NOTA: REVER O CONSTRUTOR E TALVEZ METER SETERS/GETTERS
 
     public MensagemTCP() {
         this.header = new CabecalhoTCP();
+        this.payload = null;
     }
 
     @Override

@@ -5,8 +5,8 @@ import lib.mensagens.payloads.FragmentoPayload;
 import lib.mensagens.SerializadorUDP;
 
 import java.net.InetAddress;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -23,7 +23,7 @@ import java.util.HashMap;
         // Recepção de missão (nova versão com campos identificados)
         public int totalFragmentos;
         public Map<Integer, FragmentoPayload> fragmentosRecebidos;
-        public List<Integer> fragmentosPerdidos;
+        public Set<Integer> fragmentosPerdidos;
         
         // Serializador para serialização/desserialização
         public SerializadorUDP serializador;
@@ -53,7 +53,7 @@ import java.util.HashMap;
             this.fragmentosRecebidos = new HashMap<>();
             this.serializador = new SerializadorUDP();
             this.progressosEnviados = new HashMap<>();
-            this.fragmentosPerdidos = new ArrayList<>();
+            this.fragmentosPerdidos = new HashSet<>();
         }
 
     }

@@ -1,8 +1,10 @@
 package rover;
 
 import java.time.Instant;
-import lib.mensagens.payloads.*;
+
 import lib.Rover.EstadoRover;
+import lib.mensagens.payloads.PayloadMissao;
+import lib.mensagens.payloads.PayloadTelemetria;
 
     /**
      * Contexto interno do Rover — contém lógica da máquina de estados e
@@ -31,7 +33,6 @@ import lib.Rover.EstadoRover;
         public volatile float velocidade;
         
         // timing / eventos
-        public volatile long ultimoEnvioMensagem = 0; // nota: ver se é preciso isto para manter a nave a saber que o rover está ativo
         public volatile long ultimoEnvioTelemetria = 0;
         public volatile EventoRelevante eventoPendente = EventoRelevante.EVENTO_NENHUM; //serve para mandar telemetria quando algum evento acontece além dos intervalos normais
         public volatile EventoRelevante ultimoEvento = EventoRelevante.EVENTO_NENHUM;
@@ -42,7 +43,7 @@ import lib.Rover.EstadoRover;
 
         // constantes (ajustar conforme necessário)
         public static final int INTERVALO_KEEPALIVE = 10;
-        public static final int INTERVALO_TELEMETRIA_BASE = 5;
+        public static final int INTERVALO_TELEMETRIA_BASE = 10;
         public static final float VELOCIDADE_ROVER = 2.0f;
 
         public ContextoRover(int id, float posX, float posY) {

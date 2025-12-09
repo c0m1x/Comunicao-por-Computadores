@@ -18,8 +18,8 @@ public class PayloadMissao extends PayloadUDP {
     // tempos em segundos
     public long duracaoMissao;          // duração da missão em segundos
     public long intervaloAtualizacao;   // intervalo de atualização em segundos
-    public long inicioMissao;           // instante de início em segundos (epoch)
-    public int prioridade; // 1-5
+    public long inicioMissao;           // instante de início em segundos (epoch) 
+    public int prioridade; // 1-5.  //implementar isto no gestaoestado, escolher primeiro missoes prioritarias ou apagar isto
 
     @Override
     public List<CampoSerializado> serializarCampos() {

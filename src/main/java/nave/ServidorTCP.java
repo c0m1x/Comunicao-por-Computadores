@@ -21,7 +21,6 @@ public class ServidorTCP implements Runnable {
     private GestaoEstado estado;
     private boolean running = true;
 
-    //DUVIDA: talvez implementar mecanismo de heartbeat para detetar rovers desconectados?
 
     public ServidorTCP(GestaoEstado estado) {
         this.estado = estado;
