@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -422,7 +423,6 @@ public class ServidorUDP implements Runnable {
             MensagemUDP msg = deserializarMensagem(pacote.getData(), pacote.getLength());
             if (msg == null || msg.header == null)
                 return;
-            }
             
             metricas.incrementarMensagensRecebidas();
             
