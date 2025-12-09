@@ -150,15 +150,17 @@ public class GestaoEstado {
         
         for (Missao missao : missoes.values()) {
             if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
-                if (missao.prioridade > maior || (missao.prioridade == maior && missao.idMissao < menorID)) {
-                    missaoSelecioanda = missao;
-                    maior = missao.prioridade;
-                    menorID = missao.idMissao;
+                if (missao.prioridade > maiorPrioridade) {
+                    missaoSelecionada = missao;
+                    maiorPrioridade = missao.prioridade;
+                    menorId = missao.idMissao;
+                } else if (missao.prioridade == maiorPrioridade && missao.idMissao < menorId) {
+                    missaoSelecionada = missao;
+                    menorId = missao.idMissao;
                 }
-                return missao;
             }
         }
-        return null;
+        return missaoSelecionada;
     }
     /** Insere a missão apenas se não existir já uma com o mesmo id. Retorna true se inseriu. */
     public boolean inserirMissaoSeAusente(int id, Missao missao) {

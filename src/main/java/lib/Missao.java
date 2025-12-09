@@ -45,7 +45,7 @@ public class Missao implements Serializable {
         this.tarefa = tarefa;
         this.estadoMissao = estadoMissao;
         this.prioridade = prioridade;
-        this.x1 = 0.0f; this.y1 = 0.0f; this.x2 = 0.0f; this.y2 = 0.0f;
+        this.x1 = x1; this.y1 = y1; this.x2 = x2; this.y2 = y2;
         if (duracaoMissao <= 0) {
             this.duracaoMissao = 60; // 60s por omissão
         } else {
