@@ -144,23 +144,24 @@ public class GestaoEstado {
 
     /** Devolve uma missão que ainda não tenha sido atribuida. */
     public Missao obterMissaoNaoAtribuida() {
-        Missao missaoSelecioanda = null;
-        int maior = int;
-        int menorID = int;
+        Missao missaoSelecionada = null;
+        int maiorPrioridade = Integer.MIN_VALUE;
+        int menorId = Integer.MAX_VALUE;
         
         for (Missao missao : missoes.values()) {
             if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
-                if (missao.prioridade > maior || (missao.prioridade == maior && missao.idMissao < menorID)) {
-                    missaoSelecioanda = missao;
-                    maior = missao.prioridade;
-                    menorID = missao.idMissao;
+                if (missao.prioridade > maiorPrioridade) {
+                    missaoSelecionada = missao;
+                    maiorPrioridade = missao.prioridade;
+                    menorId = missao.idMissao;
+                } else if (missao.prioridade == maiorPrioridade && missao.idMissao < menorId) {
+                    missaoSelecionada = missao;
+                    menorId = missao.idMissao;
                 }
-                return missao;
             }
         }
-        return null;
+        return missaoSelecionada;
     }
-
     /** Insere a missão apenas se não existir já uma com o mesmo id. Retorna true se inseriu. */
     public boolean inserirMissaoSeAusente(int id, Missao missao) {
         if (missao == null) throw new NullPointerException("missao não pode ser null");
