@@ -85,7 +85,6 @@ public class GestaoEstado {
     public Rover obterRoverDisponivel() {
         for (Rover r : rovers.values()) {
             if (!r.temMissao && r.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL) {
-                r.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
                 return r;
             }
         }

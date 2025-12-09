@@ -38,6 +38,9 @@ import lib.mensagens.payloads.PayloadTelemetria;
         public volatile EventoRelevante ultimoEvento = EventoRelevante.EVENTO_NENHUM;
         public volatile int ultimoCheckpoint = 0;
 
+        public volatile long timestampEntradaFalha = 0;
+        public volatile long timestampInicioRecepcao = 0;
+
         // constantes (ajustar conforme necessário)
         public static final int INTERVALO_KEEPALIVE = 10;
         public static final int INTERVALO_TELEMETRIA_BASE = 10;
@@ -143,13 +146,7 @@ import lib.mensagens.payloads.PayloadTelemetria;
                 }
 
                 // Descarrega mais quando em movimento, menos quando parado
-                if (velocidade > 0.0f) {
-                    bateria -= 0.05f; // Em movimento
-                } else {
-                    bateria -= 0.01f; // Parado
-                }
-                if (bateria < 0.0f) bateria = 0.0f;
-                if (bateria > 100.0f) bateria = 100.0f; // Garantir limite superior
+                bateria = Math.max(0.0f, bateria - (velocidade > 0.0f ? 0.05f : 0.01f));
 
                 long agora = Instant.now().getEpochSecond();
                 long decorrido = agora - timestampInicioMissao;
