@@ -145,8 +145,17 @@ public class GestaoEstado {
 
     /** Devolve uma missão que ainda não tenha sido atribuida. */
     public Missao obterMissaoNaoAtribuida() {
+        Missao missaoSelecioanda = null;
+        int maior = int;
+        int menorID = int;
+        
         for (Missao missao : missoes.values()) {
             if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
+                if (missao.prioridade > maior || (missao.prioridade == maior && missao.idMissao < menorID)) {
+                    missaoSelecioanda = missao;
+                    maior = missao.prioridade;
+                    menorID = missao.idMissao;
+                }
                 return missao;
             }
         }

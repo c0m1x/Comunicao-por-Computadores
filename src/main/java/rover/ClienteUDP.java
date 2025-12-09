@@ -564,7 +564,6 @@ public class ClienteUDP implements Runnable {
     
     /**
      * Inicia a reportagem da missão
-     * TODO: ver se o progresso também deverá ter em conta fragmentação porque por exemplo se o rover tiver que enviar imagens pode utltrapassar tamanho do pacote
      */
     private void reportarMissao() {
         // Atualizar sessão 
