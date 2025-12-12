@@ -587,7 +587,14 @@ public class ServidorUDP implements Runnable {
                              " (seq=" + msg.header.seq + ") - Reenviando ACK FINAL");
             metricas.incrementarMensagensDuplicadas();
             sessao.ultimoSeq = msg.header.seq;
-            enviarAckFinalParaRover(sessao);
+            // Marcar que estamos a reenviar ACK final para evitar que a
+            // rotina de limpeza remova a sessão enquanto fazemos retransmissões.
+            sessao.finalAckPending = true;
+            try {
+                enviarAckFinalParaRover(sessao);
+            } finally {
+                sessao.finalAckPending = false;
+            }
             return;
         }
         
@@ -604,13 +611,18 @@ public class ServidorUDP implements Runnable {
             sessao.ultimoSeq = msg.header.seq;
             
             // Enviar ACK final 3 vezes para garantir entrega
-            for (int i = 0; i < 3; i++) {
-                enviarAckFinalParaRover(sessao);
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+            sessao.finalAckPending = true;
+            try {
+                for (int i = 0; i < 3; i++) {
+                    enviarAckFinalParaRover(sessao);
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
+            } finally {
+                sessao.finalAckPending = false;
             }
 
         }
@@ -664,16 +676,24 @@ public class ServidorUDP implements Runnable {
         if (sessao != null) {
             sessao.erroRecebido = true;
             sessao.ultimoSeq = msg.header.seq;
-            
-            // Enviar ACK final 3 vezes para garantir que rover recebe
-            for (int i = 0; i < 3; i++) {
-                enviarAckFinalParaRover(sessao);
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+
+            // Marcar que estamos a enviar ACK final; evitar que a rotina
+            // de limpeza remova a sessão enquanto enviamos retransmissões.
+            sessao.finalAckPending = true;
+            try {
+                // Enviar ACK final 3 vezes para garantir que rover recebe
+                for (int i = 0; i < 3; i++) {
+                    enviarAckFinalParaRover(sessao);
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
+            } finally {
+                sessao.finalAckPending = false;
             }
+
             // Remover sessão IMEDIATAMENTE após enviar ACKs
             sessoesAtivas.remove(idRover);
             System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
@@ -844,9 +864,16 @@ public class ServidorUDP implements Runnable {
             boolean sessaoFinalizada = sessao.completedRecebido || sessao.erroRecebido;
 
             if (roverDisponivel && sessaoFinalizada) {
+                // Não remover se ainda estivermos a enviar ACK final para este rover,
+                // para evitar remoção concorrente antes de terminar retransmissões.
+                if (sessao.finalAckPending) {
+                    System.out.println("[ServidorUDP] Mantendo sessão do rover " + idRover + 
+                                     " porque ACK final está em trânsito");
+                } else {
                     paraRemover.add(idRover);
                     System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
                                      " (sessão já finalizada: COMPLETED/ERROR)");
+                }
             }
         }
 

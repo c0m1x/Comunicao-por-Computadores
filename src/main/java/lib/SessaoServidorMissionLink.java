@@ -46,6 +46,10 @@ import lib.mensagens.SerializadorUDP;
         
         // Serializador para serialização/desserialização
         public SerializadorUDP serializador;
+        // Indica que o servidor está a enviar ACK final (COMPLETED/ERROR)
+        // para este rover. Quando true, não devemos remover a sessão
+        // na limpeza de sessões órfãs até as retransmissões finais terminarem.
+        public boolean finalAckPending = false;
         
         public SessaoServidorMissionLink(Rover rover, Missao missao) {
             this.rover = rover;
