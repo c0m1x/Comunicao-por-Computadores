@@ -51,10 +51,6 @@ public class MaquinaEstados {
                     contexto.transicionarEstado(EstadoRover.ESTADO_FALHA);
                     contexto.eventoPendente = EventoRelevante.EVENTO_ERRO_MISSAO;
                 }
-                if (missaoConcluida()) {
-                    contexto.transicionarEstado(EstadoRover.ESTADO_CONCLUIDO);
-                    contexto.eventoPendente = EventoRelevante.EVENTO_FIM_MISSAO;
-                }
                 break;
             case ESTADO_CONCLUIDO:
                 contexto.concluirMissao();

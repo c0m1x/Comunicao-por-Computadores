@@ -14,7 +14,6 @@ import lib.mensagens.CampoSerializado;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
-import lib.MetricasUDP;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -113,7 +112,7 @@ public class ServidorUDP implements Runnable {
 
                 // Procurar rover disponível
                 Rover roverDisponivel = estado.obterRoverDisponivel();
-                if (roverDisponivel == null || !roverPodeReceberMissao(roverDisponivel)) {
+                if (!roverPodeReceberMissao(roverDisponivel)) {
                     System.out.println("[ServidorUDP] Nenhum rover disponível no momento.");
                     continue;
                 } else {
@@ -143,6 +142,7 @@ public class ServidorUDP implements Runnable {
         }
         
         //Mudar estado AQUI, quando realmente vai iniciar envio
+        missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
         rover.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
         System.out.println("[ServidorUDP] Rover " + rover.idRover + 
                      " mudou para ESTADO_RECEBENDO_MISSAO");
@@ -198,6 +198,9 @@ public class ServidorUDP implements Runnable {
                 finalizarSessao(sessao, false);
                 return;
             }
+
+            // Finalizar sessão com sucesso
+            finalizarSessao(sessao, true);
             
             System.out.println("[ServidorUDP] Sessão de missão " + sessao.missao.idMissao + 
             " para rover " + sessao.rover.idRover + " concluída com sucesso");
@@ -387,7 +390,7 @@ public class ServidorUDP implements Runnable {
         while (!sessao.completedRecebido && !sessao.erroRecebido) {
             //NOTA: SE o progresso viesse fragmentado podia aproveitar que era por campos e se não recebesse todos os campos mesmo depois de retries e cenas, guadava o progresso das informações que tivesse
             
-            //Verificar se sessão ainda existe (pode ter sido removida em processarCompleted)
+            //Verificar se sessão ainda existe 
             if (!sessoesAtivas.containsKey(sessao.rover.idRover)) {
                 System.out.println("[ServidorUDP] Sessão do rover " + sessao.rover.idRover + 
                                  " foi removida (COMPLETED/ERROR recebido em outro handler)");
@@ -529,10 +532,6 @@ public class ServidorUDP implements Runnable {
             return;
         }
 
-        System.out.println("[ServidorUDP] PROGRESS recebido do rover " + idRover + 
-                     " (seq=" + seqRecebido + ", missão=" + progresso.idMissao + 
-                     ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
-    
         // Tratamento de duplicados ou mensagens antigas - SEMPRE enviar ACK
         if (seqRecebido <= sessao.ultimoSeq) {
             String tipo = (seqRecebido == sessao.ultimoSeq) ? "duplicado" : "antigo";
@@ -588,7 +587,14 @@ public class ServidorUDP implements Runnable {
                              " (seq=" + msg.header.seq + ") - Reenviando ACK FINAL");
             metricas.incrementarMensagensDuplicadas();
             sessao.ultimoSeq = msg.header.seq;
-            enviarAckFinalParaRover(sessao);
+            // Marcar que estamos a reenviar ACK final para evitar que a
+            // rotina de limpeza remova a sessão enquanto fazemos retransmissões.
+            sessao.finalAckPending = true;
+            try {
+                enviarAckFinalParaRover(sessao);
+            } finally {
+                sessao.finalAckPending = false;
+            }
             return;
         }
         
@@ -605,20 +611,20 @@ public class ServidorUDP implements Runnable {
             sessao.ultimoSeq = msg.header.seq;
             
             // Enviar ACK final 3 vezes para garantir entrega
-            for (int i = 0; i < 3; i++) {
-                enviarAckFinalParaRover(sessao);
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+            sessao.finalAckPending = true;
+            try {
+                for (int i = 0; i < 3; i++) {
+                    enviarAckFinalParaRover(sessao);
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
+            } finally {
+                sessao.finalAckPending = false;
             }
 
-            // Remover sessão IMEDIATAMENTE após enviar ACKs
-            sessoesAtivas.remove(idRover);
-            System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
-                             " removida (missão " + msg.header.idMissao + " concluída)");
-            System.out.println("[ServidorUDP] Sessões ativas restantes: " + sessoesAtivas.keySet());
         }
     }
     
@@ -670,16 +676,24 @@ public class ServidorUDP implements Runnable {
         if (sessao != null) {
             sessao.erroRecebido = true;
             sessao.ultimoSeq = msg.header.seq;
-            
-            // Enviar ACK final 3 vezes para garantir que rover recebe
-            for (int i = 0; i < 3; i++) {
-                enviarAckFinalParaRover(sessao);
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+
+            // Marcar que estamos a enviar ACK final; evitar que a rotina
+            // de limpeza remova a sessão enquanto enviamos retransmissões.
+            sessao.finalAckPending = true;
+            try {
+                // Enviar ACK final 3 vezes para garantir que rover recebe
+                for (int i = 0; i < 3; i++) {
+                    enviarAckFinalParaRover(sessao);
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
+            } finally {
+                sessao.finalAckPending = false;
             }
+
             // Remover sessão IMEDIATAMENTE após enviar ACKs
             sessoesAtivas.remove(idRover);
             System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
@@ -801,18 +815,6 @@ public class ServidorUDP implements Runnable {
         }
         int idRover = rover.idRover;
 
-        if (rover.estadoRover != Rover.EstadoRover.ESTADO_DISPONIVEL) {
-            System.out.println("[ServidorUDP] Rover " + idRover + 
-                             " não está disponível: " + rover.estadoRover);
-            return false;
-        }
-
-        if (rover.temMissao) {
-            System.out.println("[ServidorUDP] Rover " + idRover + 
-                             " já tem missão ativa: " + rover.idMissaoAtual);
-            return false;
-        }
-
         // Verificar sessões ativas (fallback para detectar inconsistências)
         if (sessoesAtivas.containsKey(idRover)) {
             System.out.println("[ServidorUDP] AVISO: Rover " + idRover + 
@@ -827,7 +829,6 @@ public class ServidorUDP implements Runnable {
      * Chame periodicamente para prevenir bloqueios.
      */
     private void limparSessoesOrfas() {
-        long agora = System.currentTimeMillis();
         List<Integer> paraRemover = new ArrayList<>();
 
         for (Map.Entry<Integer, SessaoServidorMissionLink> entry : sessoesAtivas.entrySet()) {
@@ -840,10 +841,11 @@ public class ServidorUDP implements Runnable {
                 continue;
             }
 
+            long agora = System.currentTimeMillis();
             long inatividade = agora - sessao.ultimaAtividade;
 
             // Remover se sessão está inativa há mais de 30 segundos
-            if (inatividade > 30000) {
+            if (inatividade > sessao.limiteInatividade) {
                 paraRemover.add(idRover);
                 System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
                                  " (inatividade=" + (inatividade/1000) + "s)");
@@ -859,10 +861,19 @@ public class ServidorUDP implements Runnable {
             //Detectar inconsistência (rover disponível mas com sessão)
             boolean roverDisponivel = (rover.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL && 
                                       !rover.temMissao);
-            if (roverDisponivel) {
-                paraRemover.add(idRover);
-                System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
-                                 " (rover está DISPONIVEL mas tem sessão)");
+            boolean sessaoFinalizada = sessao.completedRecebido || sessao.erroRecebido;
+
+            if (roverDisponivel && sessaoFinalizada) {
+                // Não remover se ainda estivermos a enviar ACK final para este rover,
+                // para evitar remoção concorrente antes de terminar retransmissões.
+                if (sessao.finalAckPending) {
+                    System.out.println("[ServidorUDP] Mantendo sessão do rover " + idRover + 
+                                     " porque ACK final está em trânsito");
+                } else {
+                    paraRemover.add(idRover);
+                    System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
+                                     " (sessão já finalizada: COMPLETED/ERROR)");
+                }
             }
         }
 
