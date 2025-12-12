@@ -14,7 +14,6 @@ import lib.mensagens.CampoSerializado;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
-import lib.MetricasUDP;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -143,6 +142,7 @@ public class ServidorUDP implements Runnable {
         }
         
         //Mudar estado AQUI, quando realmente vai iniciar envio
+        missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
         rover.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
         System.out.println("[ServidorUDP] Rover " + rover.idRover + 
                      " mudou para ESTADO_RECEBENDO_MISSAO");
