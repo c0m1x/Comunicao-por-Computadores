@@ -22,6 +22,10 @@ import lib.mensagens.SerializadorUDP;
 
         public long ultimaAtividade;
         
+        // Limite de inatividade para considerar sessão órfã (ms)
+        // Calculado a partir do intervalo de atualização da missão vezes um multiplicador.
+        public long limiteInatividade;
+        
         // Estado da comunicação
         public boolean responseRecebido = false;
         public boolean responseSucesso = false;
@@ -42,12 +46,26 @@ import lib.mensagens.SerializadorUDP;
         
         // Serializador para serialização/desserialização
         public SerializadorUDP serializador;
+        // Indica que o servidor está a enviar ACK final (COMPLETED/ERROR)
+        // para este rover. Quando true, não devemos remover a sessão
+        // na limpeza de sessões órfãs até as retransmissões finais terminarem.
+        public boolean finalAckPending = false;
         
         public SessaoServidorMissionLink(Rover rover, Missao missao) {
             this.rover = rover;
             this.missao = missao;
             this.serializador = new SerializadorUDP();
             this.ultimaAtividade = System.currentTimeMillis();
+            // Inicializar limite de inatividade com base no intervalo de atualização
+            // da missão (em segundos). Usamos um multiplicador conservador para
+            // tolerar perdas e jitter de rede. Se não houver intervalo definido,
+            // usa-se 30s como default.
+            int multiplicador = 8;
+            if (this.missao != null && this.missao.intervaloAtualizacao > 0) {
+                this.limiteInatividade = this.missao.intervaloAtualizacao * 1000 * multiplicador;
+            } else {
+                this.limiteInatividade = 30000;
+            }
             try {
                 this.enderecoRover = InetAddress.getByName(rover.enderecoHost);
             } catch (Exception e) {
