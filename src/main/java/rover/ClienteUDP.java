@@ -125,7 +125,7 @@ public class ClienteUDP implements Runnable {
     private void processarHello(MensagemUDP msg, InetAddress endereco, int porta) {
         System.out.println("[ClienteUDP] HELLO recebido - Missão ID: " + msg.header.idMissao);
         
-        // Proteção contra HELLO duplicado para a mesma missão
+        // Proteção contra HELLO duplicado 
         if (sessaoAtual != null && sessaoAtual.idMissao == msg.header.idMissao) {
             System.out.println("[ClienteUDP] HELLO duplicado para missão " + msg.header.idMissao + " - Reenviando RESPONSE");
             metricas.incrementarMensagensDuplicadas();
@@ -148,8 +148,16 @@ public class ClienteUDP implements Runnable {
             return;
         }
         
-        boolean disponivel = (maquina != null && maquina.getEstadoAtual() == EstadoRover.ESTADO_DISPONIVEL);
+        boolean disponivel = (maquina != null && 
+                              maquina.getEstadoAtual() == EstadoRover.ESTADO_DISPONIVEL);
         
+        // Log detalhado para debug
+        if (!disponivel && maquina != null) {
+            System.out.println("[ClienteUDP] Rover NÃO disponível - Estado atual: " + 
+                             maquina.getEstadoAtual() + ", temMissao: " + 
+                             maquina.getContexto().temMissao);
+        }
+
         if (disponivel){
             // Criar nova sessão de missão
             sessaoAtual = new SessaoClienteMissionLink(msg.header.idMissao, endereco, porta);
@@ -162,8 +170,6 @@ public class ClienteUDP implements Runnable {
             sessaoTemp.seqAtual = msg.header.seq;
             sessaoAtual = sessaoTemp;
         }
-        
-        // Enviar RESPONSE
         enviarResponse(disponivel);
     }
     
@@ -564,7 +570,6 @@ public class ClienteUDP implements Runnable {
     
     /**
      * Inicia a reportagem da missão
-     * TODO: ver se o progresso também deverá ter em conta fragmentação porque por exemplo se o rover tiver que enviar imagens pode utltrapassar tamanho do pacote
      */
     private void reportarMissao() {
         // Atualizar sessão 

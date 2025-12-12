@@ -32,7 +32,9 @@ public class ServidorHTTP {
         this.estado = estado;
         this.api = new ObservacaoAPI(estado);
 
-        server = HttpServer.create(new InetSocketAddress(8080), 0);
+        // Usar InetSocketAddress com "0.0.0.0" para aceitar conexões de qualquer IP
+        // Isto permite que tanto localhost quanto 10.0.0.1 funcionem
+        server = HttpServer.create(new InetSocketAddress("0.0.0.0", 8080), 0);
 
         URL uiURL = ServidorHTTP.class.getClassLoader().getResource("ui");
         System.out.println("uiURL: " + uiURL);
@@ -49,8 +51,12 @@ public class ServidorHTTP {
 
     public void run() {
         System.out.println("[HTTP] Servidor HTTP ativo na porta 8080...");
-        System.out.println("[HTTP] UI disponível em: http://localhost:8080/ui/");
-        System.out.println("[HTTP] API disponível em: http://localhost:8080/rovers, /missoes, /telemetria");
+        System.out.println("[HTTP] ════════════════════════════════════════");
+        System.out.println("[HTTP] Interfaces disponíveis:");
+        System.out.println("[HTTP]   - Local:    http://localhost:8080/ui/");
+        System.out.println("[HTTP]   - Rede:     http://10.0.0.1:8080/ui/");
+        System.out.println("[HTTP]   - API:      http://<IP>:8080/rovers");
+        System.out.println("[HTTP] ════════════════════════════════════════");
         server.start();
     }
 

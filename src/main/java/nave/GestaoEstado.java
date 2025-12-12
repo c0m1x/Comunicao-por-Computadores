@@ -85,7 +85,6 @@ public class GestaoEstado {
     public Rover obterRoverDisponivel() {
         for (Rover r : rovers.values()) {
             if (!r.temMissao && r.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL) {
-                r.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
                 return r;
             }
         }
@@ -145,14 +144,24 @@ public class GestaoEstado {
 
     /** Devolve uma missão que ainda não tenha sido atribuida. */
     public Missao obterMissaoNaoAtribuida() {
+        Missao missaoSelecionada = null;
+        int maiorPrioridade = Integer.MIN_VALUE;
+        int menorId = Integer.MAX_VALUE;
+        
         for (Missao missao : missoes.values()) {
             if (missao.estadoMissao == Missao.EstadoMissao.PENDENTE) {
-                return missao;
+                if (missao.prioridade > maiorPrioridade) {
+                    missaoSelecionada = missao;
+                    maiorPrioridade = missao.prioridade;
+                    menorId = missao.idMissao;
+                } else if (missao.prioridade == maiorPrioridade && missao.idMissao < menorId) {
+                    missaoSelecionada = missao;
+                    menorId = missao.idMissao;
+                }
             }
         }
-        return null;
+        return missaoSelecionada;
     }
-
     /** Insere a missão apenas se não existir já uma com o mesmo id. Retorna true se inseriu. */
     public boolean inserirMissaoSeAusente(int id, Missao missao) {
         if (missao == null) throw new NullPointerException("missao não pode ser null");

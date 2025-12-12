@@ -4,13 +4,13 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lib.*;
 import lib.mensagens.CampoSerializado;
-import lib.Condicao;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
 import lib.mensagens.payloads.*;
@@ -92,22 +92,28 @@ public class ServidorUDP implements Runnable {
      * para atribuir a rovers "disponivel".
      */
     private void iniciadorMissoes() {
+        long ultimaLimpeza = System.currentTimeMillis();
+
         while (running) {
             try {
                 Thread.sleep(2000); // Verifica a cada 2 segundos
                 
+                // Limpar sessões órfãs a cada 10 segundos
+                if (System.currentTimeMillis() - ultimaLimpeza > 10000) {
+                    limparSessoesOrfas();
+                    ultimaLimpeza = System.currentTimeMillis();
+                }
+
                 // Procurar missão pendente
                 Missao missao = estado.obterMissaoNaoAtribuida();
                 if (missao == null){
-                    System.out.println("[ServidorUDP] Nenhuma missão pendente encontrada.");
                     continue;
                 }
-                
                 System.out.println("[ServidorUDP] Missão pendente encontrada: " + missao);
 
                 // Procurar rover disponível
                 Rover roverDisponivel = estado.obterRoverDisponivel();
-                if (roverDisponivel == null) {
+                if (roverDisponivel == null || !roverPodeReceberMissao(roverDisponivel)) {
                     System.out.println("[ServidorUDP] Nenhum rover disponível no momento.");
                     continue;
                 } else {
@@ -118,6 +124,9 @@ public class ServidorUDP implements Runnable {
                 
             } catch (InterruptedException e) {
                 break;
+            } catch (Exception e) {
+                System.err.println("[ServidorUDP] Erro no iniciador de missões: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
@@ -133,6 +142,11 @@ public class ServidorUDP implements Runnable {
             return;
         }
         
+        //Mudar estado AQUI, quando realmente vai iniciar envio
+        rover.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
+        System.out.println("[ServidorUDP] Rover " + rover.idRover + 
+                     " mudou para ESTADO_RECEBENDO_MISSAO");
+      
         // Criar nova sessão
         SessaoServidorMissionLink sessao = new SessaoServidorMissionLink(rover, missao);
         sessoesAtivas.put(rover.idRover, sessao);
@@ -184,21 +198,15 @@ public class ServidorUDP implements Runnable {
                 finalizarSessao(sessao, false);
                 return;
             }
-
-            //Passo 6: Enviar ACK final 3 vezes para maior robustez (99.9% de entrega assumindo perda independente de 10%)
-            for (int i = 0; i < 3; i++) {
-                enviarAckFinalParaRover(sessao);
-                try {
-                    Thread.sleep(200); // 200ms entre repetições
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            finalizarSessao(sessao, true);
             
+            System.out.println("[ServidorUDP] Sessão de missão " + sessao.missao.idMissao + 
+            " para rover " + sessao.rover.idRover + " concluída com sucesso");
+
         } catch (Exception e) {
             System.err.println("[ServidorUDP] Erro na sessão: " + e.getMessage());
-            finalizarSessao(sessao, false);
+            if (sessoesAtivas.containsKey(sessao.rover.idRover)) {
+                finalizarSessao(sessao, false);
+            }
         }
     }
     
@@ -378,6 +386,14 @@ public class ServidorUDP implements Runnable {
         // Continua enquanto NÃO recebeu COMPLETED E NÃO recebeu ERROR
         while (!sessao.completedRecebido && !sessao.erroRecebido) {
             //NOTA: SE o progresso viesse fragmentado podia aproveitar que era por campos e se não recebesse todos os campos mesmo depois de retries e cenas, guadava o progresso das informações que tivesse
+            
+            //Verificar se sessão ainda existe (pode ter sido removida em processarCompleted)
+            if (!sessoesAtivas.containsKey(sessao.rover.idRover)) {
+                System.out.println("[ServidorUDP] Sessão do rover " + sessao.rover.idRover + 
+                                 " foi removida (COMPLETED/ERROR recebido em outro handler)");
+                return true; //missão foi concluída
+            }
+
             // Se chegou novo progresso, reinicia janela
             if (sessao.ultimoSeq != ultimoSeq) {
                 ultimoSeq = sessao.ultimoSeq;
@@ -387,12 +403,15 @@ public class ServidorUDP implements Runnable {
             if (System.currentTimeMillis() - inicioJanela > timeoutProgressMs) {
                 return false; // Falhou aguardar progress/completed
             }
+
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
                 return false;
             }
         }
+        System.out.println("[ServidorUDP] " + (sessao.completedRecebido ? "COMPLETED" : "ERROR") + 
+                        " recebido para rover " + sessao.rover.idRover);
         return true; // COMPLETED ou ERROR recebido
     }
     
@@ -402,23 +421,19 @@ public class ServidorUDP implements Runnable {
     private void processarMensagemRecebida(DatagramPacket pacote) {
         try {
             MensagemUDP msg = deserializarMensagem(pacote.getData(), pacote.getLength());
-            
-            if (msg == null || msg.header == null) {
+            if (msg == null || msg.header == null)
                 return;
-            }
             
             metricas.incrementarMensagensRecebidas();
             
             int idRover = msg.header.idEmissor;
             SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
             
-            if (sessao == null) {
-                // Mensagem sem sessão ativa - pode ser COMPLETED que chegou após timeout
-                System.out.println("[ServidorUDP] Mensagem " + msg.header.tipo + 
-                                 " do rover " + idRover + " ignorada - sessão não existe " +
-                                 "(missão=" + msg.header.idMissao + ", seq=" + msg.header.seq + ")");
+            if (sessao == null)
+                // Mensagem sem sessão ativa
                 return;
-            }
+            
+            sessao.atualizarAtividade();
             
             // Atualizar endpoint da sessão apenas na primeira mensagem recebida.
             // Após a primeira mensagem, mantemos o endereço fixo para consistência.
@@ -504,6 +519,20 @@ public class ServidorUDP implements Runnable {
         SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         if (sessao == null) return;
         
+        //Verificar se é da missão correta
+        if (progresso.idMissao != sessao.missao.idMissao) return;
+    
+        // Verificar se já recebeu COMPLETED (race condition)
+        if (sessao.completedRecebido || sessao.erroRecebido) {
+            System.out.println("[ServidorUDP] PROGRESS ignorado - rover " + idRover + 
+                             " já enviou " + (sessao.completedRecebido ? "COMPLETED" : "ERROR"));
+            return;
+        }
+
+        System.out.println("[ServidorUDP] PROGRESS recebido do rover " + idRover + 
+                     " (seq=" + seqRecebido + ", missão=" + progresso.idMissao + 
+                     ", progresso=" + String.format("%.2f", progresso.progressoPercentagem) + "%%)");
+    
         // Tratamento de duplicados ou mensagens antigas - SEMPRE enviar ACK
         if (seqRecebido <= sessao.ultimoSeq) {
             String tipo = (seqRecebido == sessao.ultimoSeq) ? "duplicado" : "antigo";
@@ -544,7 +573,9 @@ public class ServidorUDP implements Runnable {
         sessao.ultimoSeq = seqRecebido;
         
         enviarAckParaRover(sessao);
-    }    /**
+    }   
+    
+    /**
      * Processa mensagem COMPLETED do rover.
      * Trata duplicados reenviando ACK (rover pode não ter recebido).
      */
@@ -572,6 +603,22 @@ public class ServidorUDP implements Runnable {
             sessao.completedRecebido = true;
             sessao.completedSucesso = msg.header.flagSucesso;
             sessao.ultimoSeq = msg.header.seq;
+            
+            // Enviar ACK final 3 vezes para garantir entrega
+            for (int i = 0; i < 3; i++) {
+                enviarAckFinalParaRover(sessao);
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            // Remover sessão IMEDIATAMENTE após enviar ACKs
+            sessoesAtivas.remove(idRover);
+            System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
+                             " removida (missão " + msg.header.idMissao + " concluída)");
+            System.out.println("[ServidorUDP] Sessões ativas restantes: " + sessoesAtivas.keySet());
         }
     }
     
@@ -633,6 +680,11 @@ public class ServidorUDP implements Runnable {
                     Thread.currentThread().interrupt();
                 }
             }
+            // Remover sessão IMEDIATAMENTE após enviar ACKs
+            sessoesAtivas.remove(idRover);
+            System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
+                             " removida (missão " + msg.header.idMissao + " falhou com erro)");
+            System.out.println("[ServidorUDP] Sessões ativas restantes: " + sessoesAtivas.keySet());
         }
 
     }
@@ -662,7 +714,7 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Finaliza a sessão de missão.
-     * Em caso de insucesso na comunicação, reverte a missão para pendente.
+     * Em caso de insucesso na comunicação, reverte a missão E estado do rover
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
 
@@ -739,6 +791,100 @@ public class ServidorUDP implements Runnable {
         }
     }
     
+    /**
+     * Verifica se rover está realmente disponível para receber missão.
+     * Considera estado do rover E existência de sessão ativa.
+     */
+    private boolean roverPodeReceberMissao(Rover rover) {
+        if (rover == null) {
+            return false;
+        }
+        int idRover = rover.idRover;
+
+        if (rover.estadoRover != Rover.EstadoRover.ESTADO_DISPONIVEL) {
+            System.out.println("[ServidorUDP] Rover " + idRover + 
+                             " não está disponível: " + rover.estadoRover);
+            return false;
+        }
+
+        if (rover.temMissao) {
+            System.out.println("[ServidorUDP] Rover " + idRover + 
+                             " já tem missão ativa: " + rover.idMissaoAtual);
+            return false;
+        }
+
+        // Verificar sessões ativas (fallback para detectar inconsistências)
+        if (sessoesAtivas.containsKey(idRover)) {
+            System.out.println("[ServidorUDP] AVISO: Rover " + idRover + 
+                             " tem sessão ativa mas estado é DISPONIVEL - possível bug!");
+        }
+
+        return true;
+    }
+
+    /**
+     * Remove sessões órfãs (rovers disponíveis mas com sessão ativa).
+     * Chame periodicamente para prevenir bloqueios.
+     */
+    private void limparSessoesOrfas() {
+        long agora = System.currentTimeMillis();
+        List<Integer> paraRemover = new ArrayList<>();
+
+        for (Map.Entry<Integer, SessaoServidorMissionLink> entry : sessoesAtivas.entrySet()) {
+            int idRover = entry.getKey();
+            SessaoServidorMissionLink sessao = entry.getValue();
+            Rover rover = estado.obterRover(idRover);
+
+            if (rover == null) {
+                paraRemover.add(idRover);
+                continue;
+            }
+
+            long inatividade = agora - sessao.ultimaAtividade;
+
+            // Remover se sessão está inativa há mais de 30 segundos
+            if (inatividade > 30000) {
+                paraRemover.add(idRover);
+                System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
+                                 " (inatividade=" + (inatividade/1000) + "s)");
+
+                // Reverter estado do rover para DISPONIVEL
+                if (rover.estadoRover == Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO) {
+                    rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
+                    System.out.println("[ServidorUDP] Rover " + idRover + 
+                                     " revertido para ESTADO_DISPONIVEL");
+                }
+            }
+
+            //Detectar inconsistência (rover disponível mas com sessão)
+            boolean roverDisponivel = (rover.estadoRover == Rover.EstadoRover.ESTADO_DISPONIVEL && 
+                                      !rover.temMissao);
+            if (roverDisponivel) {
+                paraRemover.add(idRover);
+                System.out.println("[ServidorUDP] Limpando sessão órfã do rover " + idRover + 
+                                 " (rover está DISPONIVEL mas tem sessão)");
+            }
+        }
+
+        // Também verificar rovers em RECEBENDO_MISSAO sem sessão
+        for (Rover rover : estado.listarRovers()) {
+            if (rover.estadoRover == Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO && 
+                !sessoesAtivas.containsKey(rover.idRover)) {
+                
+                System.out.println("[ServidorUDP] Rover " + rover.idRover + 
+                                 " está em RECEBENDO_MISSAO mas sem sessão - revertendo");
+                rover.estadoRover = Rover.EstadoRover.ESTADO_DISPONIVEL;
+            }
+        }
+
+        for (int idRover : paraRemover) {
+            sessoesAtivas.remove(idRover);
+        }
+
+        if (!paraRemover.isEmpty()) {
+            System.out.println("[ServidorUDP] Sessões órfãs removidas: " + paraRemover);
+        }
+    }
     // ==================== MÉTODOS DE SERIALIZAÇÃO ====================
     
     /**

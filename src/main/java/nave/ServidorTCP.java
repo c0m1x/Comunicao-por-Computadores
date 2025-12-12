@@ -21,7 +21,6 @@ public class ServidorTCP implements Runnable {
     private GestaoEstado estado;
     private boolean running = true;
 
-    //DUVIDA: talvez implementar mecanismo de heartbeat para detetar rovers desconectados?
 
     public ServidorTCP(GestaoEstado estado) {
         this.estado = estado;
@@ -156,8 +155,13 @@ public class ServidorTCP implements Runnable {
         rover.posicaoY = tel.posicaoY;
         rover.bateria = tel.bateria;
         rover.velocidade = tel.velocidade;
-        rover.estadoRover = tel.estadoOperacional;
-
+        
+        if (rover.estadoRover == Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO) {
+            // Rover está recebendo missão - não sobrescrever com telemetria antiga
+            System.out.println("[ServidorTCP] Estado RECEBENDO_MISSAO mantido (ignorando telemetria de " + tel.estadoOperacional + ")");
+        } else {
+            rover.estadoRover = tel.estadoOperacional;
+        }
         estado.atualizarTelemetria(idRover, tel);
 
         // Atualizar estado da missão com base na telemetria
