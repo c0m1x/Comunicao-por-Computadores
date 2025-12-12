@@ -10,10 +10,10 @@
     <div class="container">
         <!-- Header -->
         <header>
-            <h1>Ground Control</h1>
+            <h1>Ground Control Station</h1>
             <div class="status-bar">
                 <div class="status-item" id="connection-status">
-                    <span id="status-indicator"></span> <span id="status-text">Conectando...</span>
+                    <span id="status-indicator">●</span> <span id="status-text">Conectando...</span>
                 </div>
                 <div class="status-item">
                     <span class="label">API:</span> http://localhost:8080
@@ -79,8 +79,11 @@
                     <div class="section-controls">
                         <button class="filter-btn active" data-filter="all">Todas</button>
                         <button class="filter-btn" data-filter="pendente">Pendentes</button>
-                        <button class="filter-btn" data-filter="em_execucao">Em Execução</button>
+                        <button class="filter-btn" data-filter="em_execucao">Em Andamento</button>
                         <button class="filter-btn" data-filter="concluida">Concluídas</button>
+                        <button class="icon-btn create-btn" onclick="showCreateMissionModal()" title="Criar Missão">
+                            <span>+</span>
+                        </button>
                         <button class="icon-btn" onclick="refreshMissions()" title="Atualizar">
                             <span>↻</span>
                         </button>
@@ -96,7 +99,7 @@
         <div class="section timeline-section">
             <div class="section-header">
                 <h2>Progresso das Missões Ativas</h2>
-                <button class="icon-btn" onclick="refreshMissions()" title="Atualizar">
+                <button class="icon-btn" onclick="loadAllData()" title="Atualizar">
                     <span>↻</span>
                 </button>
             </div>
@@ -105,7 +108,7 @@
             </div>
         </div>
 
-        <!-- Telemetry Section (Full Width) -->
+        <!-- Telemetry Section -->
         <div class="section telemetry-section">
             <div class="section-header">
                 <h2>Telemetria em Tempo Real</h2>
@@ -127,16 +130,94 @@
         <!-- Activity Log -->
         <div class="section activity-section">
             <div class="section-header">
-                <h2>Registro de Atividades</h2>
+                <h2>Registo de Atividades</h2>
                 <button class="icon-btn" onclick="clearActivityLog()" title="Limpar">
                     <span>✕</span>
                 </button>
             </div>
             <div class="activity-log" id="activity-log">
-                <div class="activity-item">
+                <div class="activity-item info">
                     <span class="activity-time">--:--:--</span>
                     <span class="activity-message">Sistema iniciado</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Criar Missão -->
+    <div id="mission-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Criar Nova Missão</h2>
+                <span class="modal-close" onclick="closeCreateMissionModal()">&times;</span>
+            </div>
+            <form id="mission-form" onsubmit="createMission(event)">
+                <div class="form-group">
+                    <label for="mission-id">ID da Missão *</label>
+                    <input type="number" id="mission-id" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="mission-task">Tarefa *</label>
+                    <input type="text" id="mission-task" required placeholder="Ex: Explorar cratera X">
+                </div>
+                <div class="form-group">
+                    <label for="mission-priority">Prioridade *</label>
+                    <select id="mission-priority" required>
+                        <option value="1">Baixa</option>
+                        <option value="2" selected>Normal</option>
+                        <option value="3">Alta</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mission-x1">Coordenada X Inicial *</label>
+                        <input type="number" id="mission-x1" step="0.1" required value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="mission-y1">Coordenada Y Inicial *</label>
+                        <input type="number" id="mission-y1" step="0.1" required value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mission-x2">Coordenada X Final *</label>
+                        <input type="number" id="mission-x2" step="0.1" required value="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="mission-y2">Coordenada Y Final *</label>
+                        <input type="number" id="mission-y2" step="0.1" required value="10">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateMissionModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">✓ Criar Missão</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Detalhes de Rover -->
+    <div id="rover-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="rover-modal-title">Rover #1</h2>
+                <span class="modal-close" onclick="closeRoverModal()">&times;</span>
+            </div>
+            <div id="rover-modal-body" class="modal-body">
+                <div class="loading-state">Carregando...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Detalhes de Missão -->
+    <div id="mission-detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="mission-modal-title">Missão #1</h2>
+                <span class="modal-close" onclick="closeMissionModal()">&times;</span>
+            </div>
+            <div id="mission-modal-body" class="modal-body">
+                <div class="loading-state">Carregando...</div>
             </div>
         </div>
     </div>
