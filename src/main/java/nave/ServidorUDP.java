@@ -150,7 +150,6 @@ public class ServidorUDP implements Runnable {
 
         // Verificar se já existe sessão ativa para este rover
         if (sessoesAtivas.containsKey(rover.idRover)) {
-            System.out.println("[ServidorUDP] Rover " + rover.idRover + " já tem sessão ativa! Possivel problema no ML.");
             return;
         }
         
@@ -384,18 +383,32 @@ public class ServidorUDP implements Runnable {
                     for (int seq : sessao.fragmentosPerdidos) {
                         enviarFragmento(sessao, seq);
                     }
-                    // Reset para aguardar novo ACK
+                    // Reset para aguardar novo ACK (NÃO limpar fragmentosPerdidos ainda)
                     sessao.ackRecebido = false;
-                    sessao.fragmentosPerdidos.clear();
+                    // Não incrementar tentativas - aguardar novo ACK na próxima iteração
+                    tentativas--;
                 }
             } else {
-                // Timeout sem ACK - retransmitir TODA a missão
-                if (tentativas + 1 < MAX_RETRIES) {
-                    System.out.println("[ServidorUDP] Timeout aguardando ACK - retransmitindo missão completa (tentativa " + 
-                                     (tentativas + 2) + "/" + MAX_RETRIES + ")");
+                // Timeout sem ACK - verificar se temos fragmentos conhecidos para reenviar
+                if (!sessao.fragmentosPerdidos.isEmpty()) {
+                    // Reenviar os mesmos fragmentos
+                    System.out.println("[ServidorUDP] Timeout - retransmitindo " + 
+                                     sessao.fragmentosPerdidos.size() + " fragmentos perdidos");
                     metricas.incrementarMensagensRetransmitidas();
-                    if (!enviarFragmentosMissao(sessao)) {
-                        return false;
+                    for (int seq : sessao.fragmentosPerdidos) {
+                        enviarFragmento(sessao, seq);
+                    }
+                    sessao.ackRecebido = false;
+                    tentativas--; // Não consumir tentativa
+                } else {
+                    // Reenviar missão completa
+                    if (tentativas + 1 < MAX_RETRIES) {
+                        System.out.println("[ServidorUDP] Timeout aguardando ACK - retransmitindo missão completa (tentativa " + 
+                                         (tentativas + 2) + "/" + MAX_RETRIES + ")");
+                        metricas.incrementarMensagensRetransmitidas();
+                        if (!enviarFragmentosMissao(sessao)) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -448,8 +461,7 @@ public class ServidorUDP implements Runnable {
                 return false;
             }
         }
-        System.out.println("[ServidorUDP] " + (sessao.completedRecebido ? "COMPLETED" : "ERROR") + 
-                        " recebido para rover " + sessao.rover.idRover);
+
         return true; // COMPLETED ou ERROR recebido
     }
     
@@ -768,6 +780,15 @@ public class ServidorUDP implements Runnable {
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
 
+        while (sessao.finalAckPending) {
+            // Aguardar até que o ACK final seja enviado, se aplicável
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
         if (!sucesso && !sessao.completedRecebido && !sessao.erroRecebido) {
             if (sessao.recebendoProgresso) {
                 // Rover JÁ TINHA COMEÇADO execução - NÃO reverter, fica como falhada, futuramente o rover poderia recomeçar a missão a partir daqui
@@ -853,8 +874,7 @@ public class ServidorUDP implements Runnable {
 
         // Verificar sessões ativas (fallback para detectar inconsistências)
         if (sessoesAtivas.containsKey(idRover)) {
-            System.out.println("[ServidorUDP] AVISO: Rover " + idRover + 
-                             " tem sessão ativa mas estado é DISPONIVEL - possível bug!");
+            return false;
         }
 
         return true;

@@ -28,7 +28,8 @@ import java.util.Arrays;
  */
 public class ClienteUDP implements Runnable {
     
-    private static final int TIMEOUT_MS = 3000; // Reduzido para responder mais rápido a perdas
+    private static final int TIMEOUT_MS = 3000; // Timeout para ACKs de PROGRESS/COMPLETED
+    private static final int TIMEOUT_FRAGMENTOS_MS = 2000; // Timeout para solicitar fragmentos perdidos (menor que timeout da nave de 5000ms)
     private static final int MAX_RETRIES = 5;   // Aumentado para maior tolerância a perdas
     
     private int idRover;
@@ -67,7 +68,8 @@ public class ClienteUDP implements Runnable {
                     processarMensagem(pacote);
                     
                 } catch (SocketTimeoutException e) {
-                    // Normal, continuar
+                    // Timeout normal - aproveitar para verificar se estamos esperando fragmentos
+                    verificarTimeoutFragmentos();
                 } catch (IOException e) {
                     if (running) {
                         System.err.println("[ClienteUDP] Erro ao receber: " + e.getMessage());
@@ -221,6 +223,7 @@ public class ClienteUDP implements Runnable {
         // Atualizar total de fragmentos se necessário (primeira vez que recebemos um MISSION)
         if (sessaoAtual.totalFragmentos == 0 && msg.header.totalFragm >= 1) {
             sessaoAtual.totalFragmentos = msg.header.totalFragm;
+            sessaoAtual.ultimoFragmentoRecebido = System.currentTimeMillis(); // Iniciar contagem de tempo
             System.out.println("[ClienteUDP] Total de fragmentos atualizado: " + sessaoAtual.totalFragmentos);
         }
         
@@ -235,7 +238,19 @@ public class ClienteUDP implements Runnable {
         FragmentoPayload fragmento = (FragmentoPayload) msg.payload;
         
         if (fragmento.temDados()) {
+            // Verificar se é fragmento duplicado
+            boolean fragmentoDuplicado = sessaoAtual.fragmentosRecebidos.containsKey(seq);
+            
+            if (fragmentoDuplicado) {
+                System.out.println("[ClienteUDP] Fragmento duplicado ignorado: seq=" + seq);
+                metricas.incrementarMensagensDuplicadas();
+                return; // Ignorar fragmento duplicado
+            }
+            
             sessaoAtual.fragmentosRecebidos.put(seq, fragmento);
+            // Atualizar timestamp do último fragmento recebido
+            sessaoAtual.ultimoFragmentoRecebido = System.currentTimeMillis();
+            
             // Manter o maior seq recebido
             if (seq > sessaoAtual.seqAtual) {
                 sessaoAtual.seqAtual = seq;
@@ -251,7 +266,8 @@ public class ClienteUDP implements Runnable {
         
         System.out.println("[ClienteUDP] Progresso: " + fragmentosRecebidos + "/" + fragmentosEsperados);
         
-        // Após receber alguns fragmentos, enviar ACK
+        // Após receber fragmentos, verificar se deve enviar ACK
+        // Envia ACK quando: recebeu todos OU múltiplos de 5 fragmentos
         if (fragmentosEsperados > 0 && 
             (fragmentosRecebidos >= fragmentosEsperados || 
              (fragmentosRecebidos > 0 && fragmentosRecebidos % 5 == 0))) {
@@ -275,6 +291,8 @@ public class ClienteUDP implements Runnable {
             } else {
                 System.out.println("[ClienteUDP] Solicitando retransmissão de " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos");
                 enviarAck();
+                // Atualizar timestamp para evitar envios repetidos imediatos
+                sessaoAtual.ultimoFragmentoRecebido = System.currentTimeMillis();
             }
         }
     }
@@ -786,6 +804,54 @@ public class ClienteUDP implements Runnable {
             }
         }
         return false; // Timeout
+    }
+    
+    /**
+     * Verifica periodicamente se estamos esperando fragmentos há muito tempo.
+     * Envia ACK solicitando fragmentos perdidos se timeout for atingido.
+     */
+    private void verificarTimeoutFragmentos() {
+        // Só verificar se temos sessão ativa que ainda não está em execução
+        if (sessaoAtual == null || sessaoAtual.emExecucao) {
+            return;
+        }
+        
+        // Se não sabemos quantos fragmentos esperar, não há nada a fazer
+        if (sessaoAtual.totalFragmentos == 0) {
+            return;
+        }
+        
+        int fragmentosRecebidos = sessaoAtual.fragmentosRecebidos.size();
+        
+        // Se já temos todos, não precisa verificar timeout
+        if (fragmentosRecebidos >= sessaoAtual.totalFragmentos) {
+            return;
+        }
+        
+        // Se não recebemos nenhum fragmento ainda, não há timeout
+        if (fragmentosRecebidos == 0 || sessaoAtual.ultimoFragmentoRecebido == 0) {
+            return;
+        }
+        
+        // Verificar se passou tempo suficiente desde o último fragmento
+        long tempoDecorrido = System.currentTimeMillis() - sessaoAtual.ultimoFragmentoRecebido;
+        
+        if (tempoDecorrido > TIMEOUT_FRAGMENTOS_MS) {
+            System.out.println("[ClienteUDP] Timeout aguardando fragmentos (" + tempoDecorrido + 
+                             "ms) - " + fragmentosRecebidos + "/" + sessaoAtual.totalFragmentos + " recebidos");
+            
+            // Identificar fragmentos perdidos
+            sessaoAtual.fragmentosPerdidos = identificarFragmentosPerdidos();
+            
+            if (!sessaoAtual.fragmentosPerdidos.isEmpty()) {
+                System.out.println("[ClienteUDP] Solicitando retransmissão de " + 
+                                 sessaoAtual.fragmentosPerdidos.size() + " fragmentos perdidos");
+                enviarAck();
+                
+                // Atualizar timestamp para evitar envios repetidos imediatos
+                sessaoAtual.ultimoFragmentoRecebido = System.currentTimeMillis();
+            }
+        }
     }
     
     public void parar() {
