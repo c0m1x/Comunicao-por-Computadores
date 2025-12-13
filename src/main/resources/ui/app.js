@@ -396,7 +396,7 @@ function renderTimelineItem(rover) {
                     <span class="timeline-rover-badge">Rover ${rover.idRover}</span>
                     <span class="priority ${priority}">${getPriorityLabel(mission.prioridade)}</span>
                 </div>
-                <span class="estado em_execucao">EM EXECUÇÃO</span>
+                <span class="estado em_andamento">EM ANDAMENTO</span>
             </div>
             <div class="timeline-progress">
                 <div class="timeline-progress-bar">
