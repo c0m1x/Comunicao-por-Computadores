@@ -20,14 +20,15 @@ import java.util.HashMap;
         public InetAddress enderecoNave;
         public int portaNave;
         
-    // Recepção de missão (nova versão com campos identificados)
+    // Recepção de missão 
     public int totalFragmentos;
     public Map<Integer, FragmentoPayload> fragmentosRecebidos;
     public Set<Integer> fragmentosPerdidos;
     public long ultimoFragmentoRecebido; // timestamp do último fragmento recebido
     
     // Serializador para serialização/desserialização
-    public SerializadorUDP serializador;        // Reportagem do progresso da missão
+    public SerializadorUDP serializador;        
+    
         public boolean emExecucao = false;
         public int seqAtual;
         public long intervaloAtualizacao; // em ms

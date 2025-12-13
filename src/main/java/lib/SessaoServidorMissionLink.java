@@ -36,7 +36,7 @@ import lib.mensagens.payloads.FragmentoPayload;
         public boolean completedSucesso = false;
         public boolean erroRecebido = false;  // Indica se recebeu MSG_ERROR do rover
         
-        // Fragmentação (nova versão com campos identificados)
+        // Fragmentação 
         public int totalFragmentos = 0;
         public List<FragmentoPayload> fragmentosPayload;
         public Set<Integer> fragmentosPerdidos = new HashSet<>();
