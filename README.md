@@ -22,15 +22,13 @@ Sistema completo de gestão de missões espaciais que simula a comunicação ent
 
 - **Java**: JDK 17 ou superior
 - **Gradle**: 7.0+ (wrapper incluído)
-- **Make**: GNU Make 4.0+
-- **Navegador**: Chrome/Firefox (para Ground Control)
-- **CORE**: 9.1.0+ (opcional, para emulação de rede)
+- **Navegador**: Firefox (para Ground Control)
+- **CORE**: 9.1.0+ 
 
 ### Sistema Operativo
 
 - Linux (Ubuntu 20.04+, Debian 11+)
 - macOS 11+
-- Windows 10+ (com WSL2)
 
 ### Dependências
 
@@ -47,7 +45,6 @@ dependencies {
 ### 1. Clonar o Repositório
 ```bash
 git clone <url-do-repositorio>
-cd comunicacoes-tp2
 ```
 
 ### 2. Compilar o Projeto
@@ -57,12 +54,6 @@ make build
 
 # Ou diretamente com Gradle
 ./gradlew build
-```
-
-### 3. Verificar Compilação
-```bash
-# Deve aparecer: BUILD SUCCESSFUL
-./gradlew tasks
 ```
 
 ---
@@ -88,7 +79,7 @@ make run-rover2
 make run-rover3
 ```
 
-**Sintaxe personalizada:**
+**Sintaxe personalizada - se pretendido:**
 ```bash
 make run-rover ARGS="<id> <posX> <posY> <ipNave> <portaTcpNave> <portaUdpRover>"
 
@@ -136,6 +127,3 @@ make demo-kill
 - **Alice Soares** - A106804
 - **Beatriz Freitas** - A106853
 - **Tiago Martins** - A106927
-
-**Universidade do Minho**  
-**2025/2026**
