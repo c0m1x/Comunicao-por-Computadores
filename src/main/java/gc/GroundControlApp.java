@@ -13,12 +13,25 @@ public class GroundControlApp {
 
     public static void main(String[] args) {
 
-        GroundControlAPI api = new GroundControlAPI("http://localhost:8080");
+        // Detectar endpoint da API:
+        // - Se fornecido como argumento: usar esse
+        // - Caso contrário: usar localhost:8080
+        String apiEndpoint = "http://localhost:8080";
+        
+        if (args.length > 0) {
+            apiEndpoint = args[0];
+            // Adicionar http:// se não tiver protocolo
+            if (!apiEndpoint.contains("://")) {
+                apiEndpoint = "http://" + apiEndpoint;
+            }
+        }
+        
+        GroundControlAPI api = new GroundControlAPI(apiEndpoint);
         Scanner sc = new Scanner(System.in);
 
         System.out.println("╔════════════════════════════════════════╗");
         System.out.println("║      Ground Control - Interface        ║");
-        System.out.println("║   Conectado a: http://localhost:8080   ║");
+        System.out.println("║   Conectado a: " + String.format("%-23s", apiEndpoint) + "║");
         System.out.println("╚════════════════════════════════════════╝\n");
 
         while (true) {

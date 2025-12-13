@@ -167,6 +167,7 @@ make run-ground-control
 
 **Configuração padrão:**
 - Porta HTTP: `8080`
+- API Endpoint: `http://localhost:8080` (local)
 
 #### 4. Aceder à Interface Web
 
@@ -264,7 +265,9 @@ cd Dockerized-Coreemu-Template-main
 
 **No nó do Ground Control:**
 ```bash
-./run-ground-control.sh
+./run-ground-control.sh <endpoint>
+#Exemplo 
+#./run-ground-control.sh 10.0.0.1:8080
 ```
 
 #### **Aceder à Interface no CORE**
@@ -273,6 +276,7 @@ cd Dockerized-Coreemu-Template-main
    ```bash
    firefox
 
+   # Alternativa
    firefox --safe-mode
    ```
 2. Aceda a: `http://<IP-Nave-Mae>:8080/ui/`

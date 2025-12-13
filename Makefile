@@ -31,7 +31,7 @@ run-nave:
 	gradle runNaveMaeApp
 
 run-ground-control:
-	gradle runGroundControlApp
+	gradle runGroundControlApp --args="$(API)"
 
 run-demo:
 	(gradle runNaveMaeApp &) ; \

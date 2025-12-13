@@ -17,17 +17,12 @@ function detectApiBase() {
     const hostname = window.location.hostname;
     console.log('[Config] Hostname detectado:', hostname);
 
-    // Ambiente CORE
-    if (hostname.startsWith('10.0.')) {
-        const coreApi = 'http://10.0.0.1:8080';
-        console.log('[Config] Ambiente CORE detectado →', coreApi);
-        return coreApi;
-    }
-
-    // Ambiente local (fallback)
-    const local = 'http://localhost:8080';
-    console.log('[Config] Ambiente local →', local);
-    return local;
+    // Usar sempre o hostname atual + porta 8080
+    // Funciona em qualquer ambiente (CORE com qualquer IP, localhost, etc)
+    const apiUrl = `http://${hostname}:8080`;
+    
+    console.log('[Config] API configurada →', apiUrl);
+    return apiUrl;
 }
 
 

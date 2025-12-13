@@ -45,7 +45,6 @@ public class ServidorHTTP {
         server.createContext("/telemetria/historico", this::handleTelemetriaHistorico);
         server.createContext("/telemetria", this::handleTelemetria);
         
-        server.createContext("/ui", new StaticFileHandler("ui"));
         server.createContext("/ui/", new StaticFileHandler("ui"));
     }
 
