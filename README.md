@@ -324,6 +324,9 @@ gradle build
 ---
 
 
+## Relatório
+
+O relatório deste projeto encontra-se em CC_TP2_PL4_G7.pdf
 
 ## Autores
 
