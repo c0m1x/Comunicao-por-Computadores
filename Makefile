@@ -40,11 +40,19 @@ run-demo:
 	sleep 1 ; \
 	(gradle runRoverApp --args="1 0.0 0.0 127.0.0.1 5001 9011" &)
 
+run-deploy:
+	gradle jarNaveMae jarRover jarGroundControl
+	cp build/libs/NaveMae.jar Dockerized-Coreemu-Template-main/volume/
+	cp build/libs/Rover.jar Dockerized-Coreemu-Template-main/volume/
+	cp build/libs/GroundControl.jar Dockerized-Coreemu-Template-main/volume/
+	@echo "JARs deployed to Dockerized-Coreemu-Template-main/volume/"
+
 run-test-api:
 	@echo "Testing /rovers:" ; \
 	curl -s http://localhost:8080/rovers | jq .
 	
-	
+test-frag:
+	gradle cleanTest test
 # Clean and build
 all: clean build
 
