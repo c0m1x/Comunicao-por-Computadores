@@ -86,12 +86,6 @@ make build
 gradle build
 ```
 
-**O que acontece durante a compilação:**
--  Compila todo o código Java (`src/main/java`)
--  Gera JARs executáveis em `build/libs/`
--  Copia recursos (HTML, CSS, JS) para `build/resources/`
-
-
 ### 4. Limpar Build (opcional)
 
 Para recompilar do zero:
