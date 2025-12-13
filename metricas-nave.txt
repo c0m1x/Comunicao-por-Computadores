@@ -88,3 +88,96 @@ ESTATÍSTICAS:
   Taxa de Perda:            0.00%
   Taxa de Retransmissão:    0.00%
 
+========================================
+MÉTRICAS UDP - ServidorUDP
+Data: 2025-12-13 19:33:33
+Duração: 58s
+========================================
+
+CONTADORES GERAIS:
+  Mensagens Enviadas:       28
+  Mensagens Recebidas:      29
+  Mensagens Retransmitidas: 0
+  Mensagens Duplicadas:     0
+  Mensagens Em Atraso:      0
+  Mensagens Perdidas:       0
+
+CONTADORES POR TIPO:
+  HELLO enviados:           2
+  RESPONSE recebidos:       2
+  MISSION enviados:         3
+  ACK enviados:             23
+  ACK recebidos:            6
+  PROGRESS enviados:        0
+  PROGRESS recebidos:       20
+  COMPLETED enviados:       0
+  COMPLETED recebidos:      1
+  ERROR enviados:           0
+  ERROR recebidos:          0
+
+ESTATÍSTICAS:
+  Taxa de Perda:            0.00%
+  Taxa de Retransmissão:    0.00%
+
+========================================
+MÉTRICAS UDP - ServidorUDP
+Data: 2025-12-13 19:57:11
+Duração: 461s
+========================================
+
+CONTADORES GERAIS:
+  Mensagens Enviadas:       291
+  Mensagens Recebidas:      290
+  Mensagens Retransmitidas: 0
+  Mensagens Duplicadas:     0
+  Mensagens Em Atraso:      0
+  Mensagens Perdidas:       0
+
+CONTADORES POR TIPO:
+  HELLO enviados:           4
+  RESPONSE recebidos:       4
+  MISSION enviados:         5
+  ACK enviados:             282
+  ACK recebidos:            12
+  PROGRESS enviados:        0
+  PROGRESS recebidos:       270
+  COMPLETED enviados:       0
+  COMPLETED recebidos:      4
+  ERROR enviados:           0
+  ERROR recebidos:          0
+
+ESTATÍSTICAS:
+  Taxa de Perda:            0.00%
+  Taxa de Retransmissão:    0.00%
+
+========================================
+MÉTRICAS UDP - ServidorUDP
+Data: 2025-12-13 20:12:57
+Duração: 943s
+========================================
+
+CONTADORES GERAIS:
+  Mensagens Enviadas:       48
+  Mensagens Recebidas:      47
+  Mensagens Retransmitidas: 0
+  Mensagens Duplicadas:     0
+  Mensagens Em Atraso:      0
+  Mensagens Perdidas:       0
+
+CONTADORES POR TIPO:
+  HELLO enviados:           3
+  RESPONSE recebidos:       3
+  MISSION enviados:         4
+  ACK enviados:             41
+  ACK recebidos:            9
+  PROGRESS enviados:        0
+  PROGRESS recebidos:       32
+  COMPLETED enviados:       0
+  COMPLETED recebidos:      3
+  ERROR enviados:           0
+  ERROR recebidos:          0
+
+ESTATÍSTICAS:
+  Taxa de Perda:            0.00%
+  Taxa de Retransmissão:    0.00%
+
