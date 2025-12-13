@@ -2,11 +2,11 @@ package lib;
 
 import java.net.InetAddress;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
-import lib.mensagens.payloads.FragmentoPayload;
 import lib.mensagens.SerializadorUDP;
+import lib.mensagens.payloads.FragmentoPayload;
 
  /**
      * Classe que representa uma sessão de envio de missão no servidor.
@@ -40,6 +40,9 @@ import lib.mensagens.SerializadorUDP;
         public int totalFragmentos = 0;
         public List<FragmentoPayload> fragmentosPayload;
         public Set<Integer> fragmentosPerdidos = new HashSet<>();
+        
+        // Payload completo (para missões sem fragmentação)
+        public lib.mensagens.payloads.PayloadMissao payloadCompleto;
 
         // Progresso perdido (seqs de PROGRESS não recebidos)
         public Set<Integer> progressoPerdido = null;

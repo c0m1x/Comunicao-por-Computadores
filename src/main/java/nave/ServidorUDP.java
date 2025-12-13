@@ -1,19 +1,32 @@
 package nave;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lib.*;
+import lib.Condicao;
+import lib.MetricasUDP;
+import lib.Missao;
+import lib.Rover;
+import lib.SessaoServidorMissionLink;
+import lib.TipoMensagem;
 import lib.mensagens.CampoSerializado;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
-import lib.mensagens.payloads.*;
+import lib.mensagens.payloads.FragmentoPayload;
+import lib.mensagens.payloads.PayloadAck;
+import lib.mensagens.payloads.PayloadErro;
+import lib.mensagens.payloads.PayloadMissao;
+import lib.mensagens.payloads.PayloadProgresso;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -277,6 +290,8 @@ public class ServidorUDP implements Runnable {
                         " não precisa de fragmentação - enviando diretamente");
                 
                 sessao.totalFragmentos = 1;
+                // Armazenar o payload completo para permitir retransmissão
+                sessao.payloadCompleto = payload;
                 
                 MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_MISSION, sessao, 2, false);
                 msg.header.totalFragm = 1;
@@ -331,6 +346,15 @@ public class ServidorUDP implements Runnable {
      * Envia um fragmento específico por índice (para retransmissões).
      */
     private boolean enviarFragmento(SessaoServidorMissionLink sessao, int seq) {
+        // Caso especial: missão completa sem fragmentação (seq=2, totalFragm=1)
+        if (sessao.totalFragmentos == 1 && seq == 2 && sessao.payloadCompleto != null) {
+            MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_MISSION, sessao, seq, false);
+            msg.header.totalFragm = 1;
+            msg.payload = sessao.payloadCompleto;
+            return enviarMensagemUDP(msg, sessao);
+        }
+        
+        // Caso normal: retransmissão de fragmento específico
         int indice = seq - 2; // seq começa em 2, indice em 0
         if (indice < 0 || sessao.fragmentosPayload == null || indice >= sessao.fragmentosPayload.size()) {
             return false;
@@ -341,6 +365,7 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Aguarda ACK completo, retransmitindo fragmentos perdidos se necessário.
+     * Se o ACK não chegar (timeout), retransmite TODA a missão.
      */
     private boolean aguardarAckCompleto(SessaoServidorMissionLink sessao) {
         for (int tentativas = 0; tentativas < MAX_RETRIES; tentativas++) {
@@ -362,6 +387,16 @@ public class ServidorUDP implements Runnable {
                     // Reset para aguardar novo ACK
                     sessao.ackRecebido = false;
                     sessao.fragmentosPerdidos.clear();
+                }
+            } else {
+                // Timeout sem ACK - retransmitir TODA a missão
+                if (tentativas + 1 < MAX_RETRIES) {
+                    System.out.println("[ServidorUDP] Timeout aguardando ACK - retransmitindo missão completa (tentativa " + 
+                                     (tentativas + 2) + "/" + MAX_RETRIES + ")");
+                    metricas.incrementarMensagensRetransmitidas();
+                    if (!enviarFragmentosMissao(sessao)) {
+                        return false;
+                    }
                 }
             }
         }
