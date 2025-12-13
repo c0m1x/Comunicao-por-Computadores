@@ -81,7 +81,7 @@ tasks.register('jarGroundControl', Jar) {
     archiveVersion = ''
     from sourceSets.main.output
     manifest {
-        attributes 'Main-Class': 'api.gc.GroundControlApp'
+        attributes 'Main-Class': 'gc.GroundControlApp'
     }
 }
 
