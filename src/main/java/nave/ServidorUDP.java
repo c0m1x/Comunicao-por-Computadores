@@ -533,6 +533,7 @@ public class ServidorUDP implements Runnable {
         }
 
         // Tratamento de duplicados ou mensagens antigas - SEMPRE enviar ACK
+        //NOTA: se for antigo por retransmissão por perda, deveria meter no historico de progresso
         if (seqRecebido <= sessao.ultimoSeq) {
             String tipo = (seqRecebido == sessao.ultimoSeq) ? "duplicado" : "antigo";
             if (seqRecebido == sessao.ultimoSeq) {

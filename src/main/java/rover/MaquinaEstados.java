@@ -51,6 +51,9 @@ public class MaquinaEstados {
                     contexto.transicionarEstado(EstadoRover.ESTADO_FALHA);
                     contexto.eventoPendente = EventoRelevante.EVENTO_ERRO_MISSAO;
                 }
+                if (contexto.bateria < 10.0f) {
+                    contexto.eventoPendente = EventoRelevante.EVENTO_BATERIA_BAIXA;
+                }
                 break;
             case ESTADO_CONCLUIDO:
                 contexto.concluirMissao();

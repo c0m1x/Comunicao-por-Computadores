@@ -3,129 +3,129 @@
   <networks/>
   <devices>
     <device id="4" name="n4" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="476.0" y="161.0" lat="47.57770295669644" lon="-122.12591024762136" alt="2.0"/>
+      <position x="470.8591003417969" y="143.6157684326172" lat="47.577860977623104" lon="-122.12597951985242" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="5" name="n5" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="312.0" y="245.0" lat="47.57693939837613" lon="-122.1281201032203" alt="2.0"/>
+      <position x="312.843505859375" y="210.4160919189453" lat="47.5772537667575" lon="-122.12810873720721" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="6" name="n6" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="647.0" y="241.0" lat="47.576975758548635" lon="-122.12360606891761" alt="2.0"/>
+      <position x="619.1641845703125" y="202.19854736328125" lat="47.57732846411608" lon="-122.1239811489943" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="7" name="n7" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="692.0" y="349.0" lat="47.57599402502847" lon="-122.12299970610081" alt="2.0"/>
+      <position x="673.2481689453125" y="343.0954284667969" lat="47.57604769879854" lon="-122.12325238194744" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="8" name="n8" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="257.0" y="354.0" lat="47.57594857395674" lon="-122.12886121332971" alt="2.0"/>
+      <position x="270.9054870605469" y="348.9389343261719" lat="47.575994580128295" lon="-122.1286738406563" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="9" name="n9" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="312.0" y="458.0" lat="47.57500318271994" lon="-122.1281201032203" alt="2.0"/>
+      <position x="317.0610656738281" y="475.7137145996094" lat="47.574842158032666" lon="-122.12805190673058" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="10" name="n10" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="644.0" y="461.0" lat="47.574975911565595" lon="-122.12364649310538" alt="2.0"/>
+      <position x="625.4428100585938" y="484.6182861328125" lat="47.574761211760716" lon="-122.1238965462157" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="11" name="n11" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="475.0" y="535.0" lat="47.57430321859581" lon="-122.12592372235063" alt="2.0"/>
+      <position x="472.469482421875" y="531.6259765625" lat="47.574333890160126" lon="-122.12595782038989" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="12" name="n12" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
       <position x="650.0" y="574.0" lat="47.573948687742515" lon="-122.12356564472982" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="13" name="GroundControl" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="251.0" y="86.0" lat="47.578384695787456" lon="-122.12894206170527" alt="2.0"/>
+      <position x="280.3282470703125" y="50.85710906982422" lat="47.578704136500214" lon="-122.12854687151626" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="2" name="Rover1" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
       <position x="77.44670867919922" y="348.5982360839844" lat="47.57599767714687" lon="-122.13128064531833" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="14" name="Rover2" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="858.5162353515625" y="350.21759033203125" lat="47.575982956874995" lon="-122.12075594491178" alt="2.0"/>
+      <position x="863.2389526367188" y="339.21112060546875" lat="47.57608300792617" lon="-122.12069230757496" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="3" name="Rover3" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="475.0355529785156" y="699.2824096679688" lat="47.57280978741026" lon="-122.12592324328388" alt="2.0"/>
+      <position x="471.6614990234375" y="704.3434448242188" lat="47.572763778718" lon="-122.12596870774743" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
     <device id="1" name="Nave-Mae" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
-      <position x="471.33795166015625" y="346.140625" lat="47.57602001734239" lon="-122.12597306746055" alt="2.0"/>
+      <position x="473.02496337890625" y="344.45361328125" lat="47.57603535262401" lon="-122.12595033543438" alt="2.0"/>
       <services>
-        <service name="IPForward"/>
         <service name="zebra"/>
-        <service name="OSPFv2"/>
         <service name="OSPFv3"/>
+        <service name="IPForward"/>
+        <service name="OSPFv2"/>
       </services>
     </device>
   </devices>
@@ -287,6 +287,6 @@
     <configuration name="shapes" value="[]"/>
     <configuration name="edges" value="[]"/>
     <configuration name="hidden" value="[12]"/>
-    <configuration name="canvas" value="{&quot;gridlines&quot;: true, &quot;canvases&quot;: [{&quot;id&quot;: 1, &quot;wallpaper&quot;: null, &quot;wallpaper_style&quot;: 1, &quot;fit_image&quot;: false, &quot;dimensions&quot;: [1000, 750]}]}"/>
+    <configuration name="canvas" value="{&quot;gridlines&quot;: false, &quot;canvases&quot;: [{&quot;id&quot;: 1, &quot;wallpaper&quot;: null, &quot;wallpaper_style&quot;: 1, &quot;fit_image&quot;: false, &quot;dimensions&quot;: [1000, 750]}]}"/>
   </session_metadata>
 </scenario>
