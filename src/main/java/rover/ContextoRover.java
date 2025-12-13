@@ -159,7 +159,7 @@ import lib.mensagens.payloads.PayloadTelemetria;
                 if (checkpointAtual > ultimoCheckpoint && checkpointAtual <= 3) {
                     ultimoCheckpoint = checkpointAtual;
                     eventoPendente = EventoRelevante.EVENTO_CHECKPOINT_MISSAO;
-                    System.out.println("[ContextoRover] ✓ Checkpoint: " + (checkpointAtual * 25) + "%");
+                    System.out.println("[ContextoRover]  Checkpoint: " + (checkpointAtual * 25) + "%");
                 }
         }
 

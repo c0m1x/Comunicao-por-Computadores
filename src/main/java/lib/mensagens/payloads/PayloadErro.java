@@ -20,7 +20,6 @@ public class PayloadErro extends PayloadUDP {
         ERRO_BATERIA_CRITICA(1, "Bateria crítica (<10%)"),
         ERRO_BATERIA_BAIXA(2, "Bateria baixa (<20%)"),
         ERRO_OBSTACULO(3, "Obstáculo intransponível"),
-        ERRO_COMUNICACAO(4, "Falha de comunicação"),
         ERRO_HARDWARE(5, "Falha de hardware"),
         ERRO_TIMEOUT(6, "Timeout de missão"),
         ERRO_DESCONHECIDO(99, "Erro desconhecido");

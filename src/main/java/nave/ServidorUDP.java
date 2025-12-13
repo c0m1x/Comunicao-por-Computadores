@@ -1,19 +1,32 @@
 package nave;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lib.*;
+import lib.Condicao;
+import lib.MetricasUDP;
+import lib.Missao;
+import lib.Rover;
+import lib.SessaoServidorMissionLink;
+import lib.TipoMensagem;
 import lib.mensagens.CampoSerializado;
 import lib.mensagens.MensagemUDP;
 import lib.mensagens.SerializadorUDP;
-import lib.mensagens.payloads.*;
+import lib.mensagens.payloads.FragmentoPayload;
+import lib.mensagens.payloads.PayloadAck;
+import lib.mensagens.payloads.PayloadErro;
+import lib.mensagens.payloads.PayloadMissao;
+import lib.mensagens.payloads.PayloadProgresso;
 
 /**
  * Servidor UDP da Nave-Mãe (MissionLink).
@@ -137,7 +150,6 @@ public class ServidorUDP implements Runnable {
 
         // Verificar se já existe sessão ativa para este rover
         if (sessoesAtivas.containsKey(rover.idRover)) {
-            System.out.println("[ServidorUDP] Rover " + rover.idRover + " já tem sessão ativa! Possivel problema no ML.");
             return;
         }
         
@@ -277,6 +289,8 @@ public class ServidorUDP implements Runnable {
                         " não precisa de fragmentação - enviando diretamente");
                 
                 sessao.totalFragmentos = 1;
+                // Armazenar o payload completo para permitir retransmissão
+                sessao.payloadCompleto = payload;
                 
                 MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_MISSION, sessao, 2, false);
                 msg.header.totalFragm = 1;
@@ -331,6 +345,15 @@ public class ServidorUDP implements Runnable {
      * Envia um fragmento específico por índice (para retransmissões).
      */
     private boolean enviarFragmento(SessaoServidorMissionLink sessao, int seq) {
+        // Caso especial: missão completa sem fragmentação (seq=2, totalFragm=1)
+        if (sessao.totalFragmentos == 1 && seq == 2 && sessao.payloadCompleto != null) {
+            MensagemUDP msg = criarMensagemBase(TipoMensagem.MSG_MISSION, sessao, seq, false);
+            msg.header.totalFragm = 1;
+            msg.payload = sessao.payloadCompleto;
+            return enviarMensagemUDP(msg, sessao);
+        }
+        
+        // Caso normal: retransmissão de fragmento específico
         int indice = seq - 2; // seq começa em 2, indice em 0
         if (indice < 0 || sessao.fragmentosPayload == null || indice >= sessao.fragmentosPayload.size()) {
             return false;
@@ -341,6 +364,7 @@ public class ServidorUDP implements Runnable {
     
     /**
      * Aguarda ACK completo, retransmitindo fragmentos perdidos se necessário.
+     * Se o ACK não chegar (timeout), retransmite TODA a missão.
      */
     private boolean aguardarAckCompleto(SessaoServidorMissionLink sessao) {
         for (int tentativas = 0; tentativas < MAX_RETRIES; tentativas++) {
@@ -359,9 +383,33 @@ public class ServidorUDP implements Runnable {
                     for (int seq : sessao.fragmentosPerdidos) {
                         enviarFragmento(sessao, seq);
                     }
-                    // Reset para aguardar novo ACK
+                    // Reset para aguardar novo ACK (NÃO limpar fragmentosPerdidos ainda)
                     sessao.ackRecebido = false;
-                    sessao.fragmentosPerdidos.clear();
+                    // Não incrementar tentativas - aguardar novo ACK na próxima iteração
+                    tentativas--;
+                }
+            } else {
+                // Timeout sem ACK - verificar se temos fragmentos conhecidos para reenviar
+                if (!sessao.fragmentosPerdidos.isEmpty()) {
+                    // Reenviar os mesmos fragmentos
+                    System.out.println("[ServidorUDP] Timeout - retransmitindo " + 
+                                     sessao.fragmentosPerdidos.size() + " fragmentos perdidos");
+                    metricas.incrementarMensagensRetransmitidas();
+                    for (int seq : sessao.fragmentosPerdidos) {
+                        enviarFragmento(sessao, seq);
+                    }
+                    sessao.ackRecebido = false;
+                    tentativas--; // Não consumir tentativa
+                } else {
+                    // Reenviar missão completa
+                    if (tentativas + 1 < MAX_RETRIES) {
+                        System.out.println("[ServidorUDP] Timeout aguardando ACK - retransmitindo missão completa (tentativa " + 
+                                         (tentativas + 2) + "/" + MAX_RETRIES + ")");
+                        metricas.incrementarMensagensRetransmitidas();
+                        if (!enviarFragmentosMissao(sessao)) {
+                            return false;
+                        }
+                    }
                 }
             }
         }
@@ -413,8 +461,7 @@ public class ServidorUDP implements Runnable {
                 return false;
             }
         }
-        System.out.println("[ServidorUDP] " + (sessao.completedRecebido ? "COMPLETED" : "ERROR") + 
-                        " recebido para rover " + sessao.rover.idRover);
+
         return true; // COMPLETED ou ERROR recebido
     }
     
@@ -533,6 +580,7 @@ public class ServidorUDP implements Runnable {
         }
 
         // Tratamento de duplicados ou mensagens antigas - SEMPRE enviar ACK
+        //NOTA: se for antigo por retransmissão por perda, deveria meter no historico de progresso
         if (seqRecebido <= sessao.ultimoSeq) {
             String tipo = (seqRecebido == sessao.ultimoSeq) ? "duplicado" : "antigo";
             if (seqRecebido == sessao.ultimoSeq) {
@@ -732,6 +780,15 @@ public class ServidorUDP implements Runnable {
      */
     private void finalizarSessao(SessaoServidorMissionLink sessao, boolean sucesso) {
 
+        while (sessao.finalAckPending) {
+            // Aguardar até que o ACK final seja enviado, se aplicável
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
         if (!sucesso && !sessao.completedRecebido && !sessao.erroRecebido) {
             if (sessao.recebendoProgresso) {
                 // Rover JÁ TINHA COMEÇADO execução - NÃO reverter, fica como falhada, futuramente o rover poderia recomeçar a missão a partir daqui
@@ -817,8 +874,7 @@ public class ServidorUDP implements Runnable {
 
         // Verificar sessões ativas (fallback para detectar inconsistências)
         if (sessoesAtivas.containsKey(idRover)) {
-            System.out.println("[ServidorUDP] AVISO: Rover " + idRover + 
-                             " tem sessão ativa mas estado é DISPONIVEL - possível bug!");
+            return false;
         }
 
         return true;

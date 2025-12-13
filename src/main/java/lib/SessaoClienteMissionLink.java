@@ -20,15 +20,14 @@ import java.util.HashMap;
         public InetAddress enderecoNave;
         public int portaNave;
         
-        // Recepção de missão (nova versão com campos identificados)
-        public int totalFragmentos;
-        public Map<Integer, FragmentoPayload> fragmentosRecebidos;
-        public Set<Integer> fragmentosPerdidos;
-        
-        // Serializador para serialização/desserialização
-        public SerializadorUDP serializador;
-        
-        // Reportagem do progresso da missão
+    // Recepção de missão (nova versão com campos identificados)
+    public int totalFragmentos;
+    public Map<Integer, FragmentoPayload> fragmentosRecebidos;
+    public Set<Integer> fragmentosPerdidos;
+    public long ultimoFragmentoRecebido; // timestamp do último fragmento recebido
+    
+    // Serializador para serialização/desserialização
+    public SerializadorUDP serializador;        // Reportagem do progresso da missão
         public boolean emExecucao = false;
         public int seqAtual;
         public long intervaloAtualizacao; // em ms
@@ -44,16 +43,15 @@ import java.util.HashMap;
         public Map<Integer, PayloadProgresso> progressosEnviados;
 
 
-        public SessaoClienteMissionLink(int idMissao, InetAddress enderecoNave, int portaNave) {
-            this.idMissao = idMissao;
-            this.enderecoNave = enderecoNave;
-            this.portaNave = portaNave;
-            this.seqAtual = 0;
-            this.totalFragmentos = 0;
-            this.fragmentosRecebidos = new HashMap<>();
-            this.serializador = new SerializadorUDP();
-            this.progressosEnviados = new HashMap<>();
-            this.fragmentosPerdidos = new HashSet<>();
-        }
-
-    }
+    public SessaoClienteMissionLink(int idMissao, InetAddress enderecoNave, int portaNave) {
+        this.idMissao = idMissao;
+        this.enderecoNave = enderecoNave;
+        this.portaNave = portaNave;
+        this.seqAtual = 0;
+        this.totalFragmentos = 0;
+        this.fragmentosRecebidos = new HashMap<>();
+        this.serializador = new SerializadorUDP();
+        this.progressosEnviados = new HashMap<>();
+        this.fragmentosPerdidos = new HashSet<>();
+        this.ultimoFragmentoRecebido = 0;
+    }    }
