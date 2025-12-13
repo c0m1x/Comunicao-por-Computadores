@@ -535,7 +535,6 @@ public class ClienteUDP implements Runnable {
             }
             
             if (aguardarAckParaSeq(seqParaEnviar, TIMEOUT_MS)) {
-                System.out.println("[ClienteUDP] ACK recebido para " + nomeMensagem + " seq=" + seqParaEnviar);
                 return true;
             }
             
