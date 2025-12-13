@@ -1,1 +1,1 @@
-Put your files inside this folder
+Pasta partilhada com o ambiente CORE
