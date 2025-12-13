@@ -38,14 +38,14 @@ const AUTO_REFRESH_INTERVAL = 5000;
 const TELEMETRY_MAX_ITEMS = 20;
 const ACTIVITY_MAX_ITEMS = 50;
 
-console.log('╔════════════════════════════════════════════════╗');
+console.log('╔═══════════════════════════════════════════════╗');
 console.log('║       Ground Control Station - Config         ║');
-console.log('╠════════════════════════════════════════════════╣');
+console.log('╠═══════════════════════════════════════════════╣');
 console.log('  Ambiente  →', window.location.hostname.startsWith('10.0.') ? 'CORE-EMU' : 'Local/Browser');
 console.log('  API Base  →', API_BASE);
 console.log('  Hostname  →', window.location.hostname);
 console.log('  Página    →', window.location.href);
-console.log('╚════════════════════════════════════════════════╝');
+console.log('╚═══════════════════════════════════════════════╝');
 
 
 // ===================== STATE =====================
@@ -227,12 +227,16 @@ function detectMissionChanges(list) {
 const empty = msg => `<div class="empty-state">${msg}</div>`;
 
 function normalizeEstado(s) {
-    const st = s.toLowerCase().replace(/estado_|_/g, '');
+    const st = s.toLowerCase().replace(/estado_/g, '');
+    
+    // Manter underscores para matching com data-filter
     if (st.includes('dispon')) return 'disponivel';
     if (st.includes('exec') || st.includes('miss')) return 'em-missao';
+    if (st.includes('andamento') || st === 'em_andamento') return 'em_andamento';
     if (st.includes('pend')) return 'pendente';
     if (st.includes('concl')) return 'concluida';
     if (st.includes('erro') || st.includes('falha')) return 'erro';
+    
     return st;
 }
 
@@ -421,6 +425,48 @@ function renderTimelineItem(rover) {
 
 // ===================== UTILITIES =====================
 
+function calculateDistance(x1, y1, x2, y2) {
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+function getPriorityClass(p) {
+    if (p >= 3) return 'alta';
+    if (p >= 2) return 'normal';
+    return 'baixa';
+}
+
+function getPriorityLabel(p) {
+    if (p >= 3) return 'Alta';
+    if (p >= 2) return 'Normal';
+    return 'Baixa';
+}
+
+function updateStats() {
+    const rovers = previousData.rovers;
+    const missions = previousData.missions;
+
+    document.getElementById('total-rovers').textContent = rovers.length;
+    document.getElementById('rovers-disponivel').textContent = 
+        rovers.filter(r => normalizeEstado(r.estadoOperacional) === 'disponivel').length;
+    
+    document.getElementById('missoes-ativas').textContent = 
+        missions.filter(m => ['em_execucao', 'em_andamento'].includes(normalizeEstado(m.estado))).length;
+    
+    document.getElementById('missoes-concluidas').textContent = 
+        missions.filter(m => normalizeEstado(m.estado) === 'concluida').length;
+
+    const roversComMissao = rovers.filter(r => r.temMissao);
+    const progressoMedio = roversComMissao.length 
+        ? roversComMissao.reduce((sum, r) => sum + r.progressoMissao, 0) / roversComMissao.length 
+        : 0;
+    document.getElementById('progresso-medio').textContent = progressoMedio.toFixed(0) + '%';
+
+    const bateriaMedia = rovers.length 
+        ? rovers.reduce((sum, r) => sum + r.bateria, 0) / rovers.length 
+        : 0;
+    document.getElementById('bateria-media').textContent = bateriaMedia.toFixed(0) + '%';
+}
+
 function updateLastUpdateTime() {
     document.getElementById('last-update').textContent =
         new Date().toLocaleTimeString('pt-PT');
@@ -435,3 +481,214 @@ function closeAllModals() {
     document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
 }
 
+
+// ===================== FILTERS =====================
+
+function filterRovers() {
+    const filter = currentFilters.rovers;
+    document.querySelectorAll('.rover-card').forEach(card => {
+        const estado = card.dataset.estado;
+        card.classList.toggle('hidden', filter !== 'all' && estado !== filter);
+    });
+}
+
+function filterMissions() {
+    const filter = currentFilters.missions;
+    document.querySelectorAll('.mission-card').forEach(card => {
+        const estado = card.dataset.estado;
+        card.classList.toggle('hidden', filter !== 'all' && estado !== filter);
+    });
+}
+
+
+// ===================== ACTIVITY LOG =====================
+
+function addActivity(type, message) {
+    const time = new Date().toLocaleTimeString('pt-PT');
+    activityLog.unshift({ type, message, time });
+    
+    if (activityLog.length > ACTIVITY_MAX_ITEMS) {
+        activityLog = activityLog.slice(0, ACTIVITY_MAX_ITEMS);
+    }
+    
+    renderActivityLog();
+}
+
+function renderActivityLog() {
+    const container = document.getElementById('activity-log');
+    if (!activityLog.length) {
+        container.innerHTML = '<div class="activity-item info"><span class="activity-time">--:--:--</span><span class="activity-message">Sem atividade</span></div>';
+        return;
+    }
+    
+    container.innerHTML = activityLog.map(a => `
+        <div class="activity-item ${a.type}">
+            <span class="activity-time">${a.time}</span>
+            <span class="activity-message">${a.message}</span>
+        </div>
+    `).join('');
+}
+
+function clearActivityLog() {
+    activityLog = [];
+    renderActivityLog();
+}
+
+
+// ===================== MODALS =====================
+
+function showCreateMissionModal() {
+    document.getElementById('mission-modal').classList.add('show');
+}
+
+function closeCreateMissionModal() {
+    document.getElementById('mission-modal').classList.remove('show');
+    document.getElementById('mission-form').reset();
+}
+
+async function createMission(event) {
+    event.preventDefault();
+    
+    const missao = {
+        idMissao: parseInt(document.getElementById('mission-id').value),
+        tarefa: document.getElementById('mission-task').value,
+        estado: 'PENDENTE',
+        prioridade: parseInt(document.getElementById('mission-priority').value),
+        x1: parseFloat(document.getElementById('mission-x1').value),
+        y1: parseFloat(document.getElementById('mission-y1').value),
+        x2: parseFloat(document.getElementById('mission-x2').value),
+        y2: parseFloat(document.getElementById('mission-y2').value)
+    };
+    
+    try {
+        await apiPost('/missoes', missao);
+        addActivity('success', `Missão #${missao.idMissao} criada com sucesso`);
+        closeCreateMissionModal();
+        loadAllData();
+    } catch (err) {
+        addActivity('error', `Erro ao criar missão: ${err.message}`);
+        console.error(err);
+    }
+}
+
+function showRoverDetails(id) {
+    const modal = document.getElementById('rover-modal');
+    const title = document.getElementById('rover-modal-title');
+    const body = document.getElementById('rover-modal-body');
+    
+    const rover = previousData.rovers.find(r => r.idRover === id);
+    if (!rover) return;
+    
+    title.textContent = `Rover #${rover.idRover}`;
+    
+    body.innerHTML = `
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Estado</div>
+                <div class="detail-value"><span class="estado ${normalizeEstado(rover.estadoOperacional)}">${rover.estadoOperacional}</span></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Bateria</div>
+                <div class="detail-value">${rover.bateria}%</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Posição X</div>
+                <div class="detail-value">${rover.posicaoX.toFixed(2)}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Posição Y</div>
+                <div class="detail-value">${rover.posicaoY.toFixed(2)}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Velocidade</div>
+                <div class="detail-value">${rover.velocidade.toFixed(2)} m/s</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Tem Missão</div>
+                <div class="detail-value">${rover.temMissao ? 'Sim' : 'Não'}</div>
+            </div>
+            ${rover.temMissao ? `
+                <div class="detail-item">
+                    <div class="detail-label">ID Missão</div>
+                    <div class="detail-value">#${rover.idMissaoAtual}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Progresso</div>
+                    <div class="detail-value">${rover.progressoMissao.toFixed(1)}%</div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    modal.classList.add('show');
+}
+
+function closeRoverModal() {
+    document.getElementById('rover-modal').classList.remove('show');
+}
+
+function showMissionDetails(id) {
+    const modal = document.getElementById('mission-detail-modal');
+    const title = document.getElementById('mission-modal-title');
+    const body = document.getElementById('mission-modal-body');
+    
+    const mission = previousData.missions.find(m => m.idMissao === id);
+    if (!mission) return;
+    
+    title.textContent = `Missão #${mission.idMissao}`;
+    
+    const dist = calculateDistance(mission.x1, mission.y1, mission.x2, mission.y2);
+    
+    body.innerHTML = `
+        <div class="detail-grid">
+            <div class="detail-item detail-full">
+                <div class="detail-label">Tarefa</div>
+                <div class="detail-value">${mission.tarefa}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Estado</div>
+                <div class="detail-value"><span class="estado ${normalizeEstado(mission.estado)}">${mission.estado}</span></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Prioridade</div>
+                <div class="detail-value"><span class="priority ${getPriorityClass(mission.prioridade)}">${getPriorityLabel(mission.prioridade)}</span></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Ponto Inicial</div>
+                <div class="detail-value">(${mission.x1.toFixed(2)}, ${mission.y1.toFixed(2)})</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Ponto Final</div>
+                <div class="detail-value">(${mission.x2.toFixed(2)}, ${mission.y2.toFixed(2)})</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Distância</div>
+                <div class="detail-value">${dist.toFixed(2)} unidades</div>
+            </div>
+        </div>
+    `;
+    
+    modal.classList.add('show');
+}
+
+function closeMissionModal() {
+    document.getElementById('mission-detail-modal').classList.remove('show');
+}
+
+
+// ===================== REFRESH FUNCTIONS =====================
+
+function refreshRovers() {
+    addActivity('info', 'Atualizando rovers...');
+    loadAllData();
+}
+
+function refreshMissions() {
+    addActivity('info', 'Atualizando missões...');
+    loadAllData();
+}
+
+function refreshTelemetry() {
+    addActivity('info', 'Atualizando telemetria...');
+    loadAllData();
+}
