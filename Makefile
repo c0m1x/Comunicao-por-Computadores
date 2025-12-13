@@ -40,32 +40,10 @@ run-demo:
 	sleep 1 ; \
 	(gradle runRoverApp --args="1 0.0 0.0 127.0.0.1 5001 9011" &)
 
-run-full:
-	make demo-kill
-	(gradle runNaveMaeApp > logs_nave.txt &) ; \
-	sleep 1 ; \
-	(gradle runGroundControlApp > logs_gc.txt &) ; \
-	sleep 1 ; \
-	(gradle runRoverApp --args="1 0.0 0.0 127.0.0.1 5001 9011" > logs_r1.txt &) ; \
-	(gradle runRoverApp --args="2 5.0 3.0 127.0.0.1 5001 9012" > logs_r2.txt &) ; \
-	echo "Sistema iniciado: Nave + GC + Rovers"
-
-#make build
-#java -cp build/libs/CC.jar api.gc.GroundControlApp
-
-run-deploy:
-	gradle jarNaveMae jarRover jarGroundControl
-	cp build/libs/NaveMae.jar Dockerized-Coreemu-Template-main/volume/
-	cp build/libs/Rover.jar Dockerized-Coreemu-Template-main/volume/
-	cp build/libs/GroundControl.jar Dockerized-Coreemu-Template-main/volume/
-	@echo "JARs deployed to Dockerized-Coreemu-Template-main/volume/"
-
 run-test-api:
 	@echo "Testing /rovers:" ; \
 	curl -s http://localhost:8080/rovers | jq .
 	
-test-frag:
-	gradle cleanTest test
 	
 # Clean and build
 all: clean build
