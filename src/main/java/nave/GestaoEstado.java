@@ -232,7 +232,7 @@ public class GestaoEstado {
         }
     }
 
-    /** Atualiza o progresso de uma missão associada a um rover. - funciona como wrapper*/
+    /** Atualiza o progresso de uma missão associada a um rover.*/
     public void atualizarProgressoMissao(int idRover, int idMissao, float progressoPercent) {
         PayloadProgresso p = new PayloadProgresso(idMissao, 0, progressoPercent);
 

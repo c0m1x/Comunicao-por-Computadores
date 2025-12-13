@@ -68,7 +68,7 @@ public class ClienteUDP implements Runnable {
                     processarMensagem(pacote);
                     
                 } catch (SocketTimeoutException e) {
-                    // Timeout normal - aproveitar para verificar se estamos esperando fragmentos
+                    // Timeout normal, aproveitar para verificar se estamos à espera de fragmentos
                     verificarTimeoutFragmentos();
                 } catch (IOException e) {
                     if (running) {
@@ -276,7 +276,7 @@ public class ClienteUDP implements Runnable {
             sessaoAtual.fragmentosPerdidos = identificarFragmentosPerdidos();
             
             if (sessaoAtual.fragmentosPerdidos.isEmpty()) {
-                // Todos recebidos - reconstruir missão
+                // Todos recebidos
                 if (reconstruirMissao()) {
                     System.out.println("[ClienteUDP] Missão recebida com sucesso!");
                     enviarAck();
@@ -317,7 +317,7 @@ public class ClienteUDP implements Runnable {
                                  ") - parar todas as retransmissões");
                 sessaoAtual.ultimoSeqConfirmado = seqRecebido;
                 sessaoAtual.aguardandoAck = false;
-                return; // Parar imediatamente - não processar missing progress
+                return; // Parar imediatamente, não processar missing progress
             }
         }
         
@@ -340,7 +340,7 @@ public class ClienteUDP implements Runnable {
                 }
             }
         } else if (seqRecebido < sessaoAtual.seqAckEsperado) {
-            // ACK antigo/duplicado - ignorar
+            // ACK antigo/duplicado
             System.out.println("[ClienteUDP] ACK antigo ignorado (recebido=" + seqRecebido + 
                              ", esperado=" + sessaoAtual.seqAckEsperado + ")");
         } else {
@@ -439,6 +439,8 @@ public class ClienteUDP implements Runnable {
         return msg;
     }
     
+    // ==================== MÉTODOS DE COMUNICAÇÃO ====================
+
     /**
      * Envia mensagem RESPONSE.
      */
@@ -479,7 +481,6 @@ public class ClienteUDP implements Runnable {
                          ", faltam " + sessaoAtual.fragmentosPerdidos.size() + " fragmentos)");
     }
     
-    // ==================== MÉTODOS DE COMUNICAÇÃO ====================
     
     /**
      * Envia mensagem UDP para a Nave-Mãe (usando sessão atual).
@@ -564,7 +565,6 @@ public class ClienteUDP implements Runnable {
         }
         
         if (sessaoAtual != null && sessaoAtual.aguardandoAck) {
-            //TODO: se a nave mae for de pica, ele chega aqui, da o avisa e continua a tentar enviar progress, talvez arranjar maneira de ao chegar aqui, confirmar se a nave ainda está a ouvir ou não 
             System.out.println("[ClienteUDP] AVISO: Máximo de retransmissões atingido para " + nomeMensagem + " seq=" + seqParaEnviar);
             sessaoAtual.aguardandoAck = false;
         }
@@ -629,13 +629,11 @@ public class ClienteUDP implements Runnable {
                 
                 // Enviar PROGRESS
                 if (progressoPerc >= 100.0f) {
-                    // ← MISSÃO CONCLUÍDA
                     System.out.println("[ClienteUDP] Progresso atingiu 100% - enviando COMPLETED");
                     enviarCompleted(true);
                     System.out.println("[ClienteUDP] Reportagem terminada com sucesso");
-                    return; // ← PARAR AQUI
+                    return; 
                 } else {
-                    // Enviar PROGRESS normal
                     enviarProgress(progressoPerc, tempoDecorrido);
                 }
                 
@@ -658,7 +656,7 @@ public class ClienteUDP implements Runnable {
         
         ContextoRover ctx = maquina.getContexto();
         
-        // Bateria crítica (<10%) - não consegue terminar
+        // Bateria crítica (<10%) não consegue terminar
         if (ctx.bateria < 10.0f) {
             return PayloadErro.CodigoErro.ERRO_BATERIA_CRITICA;
         }

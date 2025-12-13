@@ -148,7 +148,7 @@ public class SerializadorUDP {
                 tamanhoAtual += melhorCampo.tamanhoSerializado();
                 camposPendentes.remove(melhorIndice);
             } else {
-                // Nenhum campo cabe - fechar fragmento atual e começar novo
+                // Nenhum campo cabe: fechar fragmento atual e começar novo
                 if (fragmentoAtual.temDados()) {
                     fragmentos.add(fragmentoAtual);
                 }

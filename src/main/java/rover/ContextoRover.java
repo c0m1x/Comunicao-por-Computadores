@@ -139,7 +139,7 @@ import lib.mensagens.payloads.PayloadTelemetria;
                     posicaoY += dirY * passo;
                     velocidade = VELOCIDADE_ROVER;
                 } else {
-                    // Chegou ao destino - parar
+                    // Chegou ao destino: parar
                     posicaoX = destinoX;
                     posicaoY = destinoY;
                     velocidade = 0.0f;

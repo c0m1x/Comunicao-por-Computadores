@@ -157,7 +157,7 @@ public class ServidorTCP implements Runnable {
         rover.velocidade = tel.velocidade;
         
         if (rover.estadoRover == Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO) {
-            // Rover está recebendo missão - não sobrescrever com telemetria antiga
+            // Rover está a receber missão, não sobrescrever com telemetria antiga
             System.out.println("[ServidorTCP] Estado RECEBENDO_MISSAO mantido (ignorando telemetria de " + tel.estadoOperacional + ")");
         } else {
             rover.estadoRover = tel.estadoOperacional;

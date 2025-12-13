@@ -72,7 +72,7 @@ public class ServidorUDP implements Runnable {
             iniciadorMissoes.setDaemon(true);
             iniciadorMissoes.start();
             
-            // Loop principal - recebe respostas dos rovers
+            // Loop principal: recebe respostas dos rovers
             while (running) {
                 try {
                     byte[] buffer = new byte[4096];
@@ -153,7 +153,7 @@ public class ServidorUDP implements Runnable {
             return;
         }
         
-        //Mudar estado AQUI, quando realmente vai iniciar envio
+        //Mudar estado aqui, quando realmente vai iniciar envio
         missao.estadoMissao = Missao.EstadoMissao.EM_ANDAMENTO;
         rover.estadoRover = Rover.EstadoRover.ESTADO_RECEBENDO_MISSAO;
         System.out.println("[ServidorUDP] Rover " + rover.idRover + 
@@ -234,8 +234,6 @@ public class ServidorUDP implements Runnable {
         return enviarMensagemUDP(msg, sessao);
     }
     
-        // ==================== MÉTODOS DE ESPERA ====================
-    
     /**
      * Aguarda uma condição ser satisfeita dentro de um timeout.
      * @return true se a condição foi satisfeita, false se timeout
@@ -263,7 +261,7 @@ public class ServidorUDP implements Runnable {
             if (aguardarCondicao(() -> sessao.responseRecebido, TIMEOUT_MS)) {
                 return sessao.responseSucesso;
             }
-            // Timeout sem resposta - retry
+            // Timeout sem resposta
             if (tentativas + 1 < MAX_RETRIES) {
                 metricas.incrementarMensagensRetransmitidas();
                 if (!enviarHello(sessao)) {
@@ -299,7 +297,7 @@ public class ServidorUDP implements Runnable {
                 return enviarMensagemUDP(msg, sessao);
             }
             
-            // Precisa fragmentação - serializar e fragmentar payload
+            // Precisa fragmentação
             List<FragmentoPayload> fragmentos = SerializadorUDP.fragmentarPayload(payload, TAMANHO_FRAGMENTO);
             
             sessao.totalFragmentos = fragmentos.size();
@@ -370,7 +368,7 @@ public class ServidorUDP implements Runnable {
         for (int tentativas = 0; tentativas < MAX_RETRIES; tentativas++) {
             if (aguardarCondicao(() -> sessao.ackRecebido, TIMEOUT_MS)) {
                 if (sessao.fragmentosPerdidos.isEmpty()) {
-                    // ACK completo! Sucesso!
+                    // ACK completo
                     System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
                          " enviada com sucesso para rover " + sessao.rover.idRover);
                     estado.atribuirMissaoARover(sessao.rover.idRover, sessao.missao.idMissao);
@@ -383,13 +381,13 @@ public class ServidorUDP implements Runnable {
                     for (int seq : sessao.fragmentosPerdidos) {
                         enviarFragmento(sessao, seq);
                     }
-                    // Reset para aguardar novo ACK (NÃO limpar fragmentosPerdidos ainda)
+                    // Reset para aguardar novo ACK 
                     sessao.ackRecebido = false;
-                    // Não incrementar tentativas - aguardar novo ACK na próxima iteração
+                    // Não incrementar tentativas; aguardar novo ACK na próxima iteração
                     tentativas--;
                 }
             } else {
-                // Timeout sem ACK - verificar se temos fragmentos conhecidos para reenviar
+                // Timeout sem ACK, verificar se temos fragmentos conhecidos para reenviar
                 if (!sessao.fragmentosPerdidos.isEmpty()) {
                     // Reenviar os mesmos fragmentos
                     System.out.println("[ServidorUDP] Timeout - retransmitindo " + 
@@ -434,10 +432,9 @@ public class ServidorUDP implements Runnable {
 
         long inicioJanela = System.currentTimeMillis();
         int ultimoSeq = sessao.ultimoSeq;
-        // Continua enquanto NÃO recebeu COMPLETED E NÃO recebeu ERROR
+        // Continua enquanto não recebeu COMPLETED nem recebeu ERROR
         while (!sessao.completedRecebido && !sessao.erroRecebido) {
-            //NOTA: SE o progresso viesse fragmentado podia aproveitar que era por campos e se não recebesse todos os campos mesmo depois de retries e cenas, guadava o progresso das informações que tivesse
-            
+
             //Verificar se sessão ainda existe 
             if (!sessoesAtivas.containsKey(sessao.rover.idRover)) {
                 System.out.println("[ServidorUDP] Sessão do rover " + sessao.rover.idRover + 
@@ -569,18 +566,17 @@ public class ServidorUDP implements Runnable {
         SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         if (sessao == null) return;
         
-        //Verificar se é da missão correta
+        // Verificar se é da missão correta
         if (progresso.idMissao != sessao.missao.idMissao) return;
     
-        // Verificar se já recebeu COMPLETED (race condition)
+        // Verificar se já recebeu COMPLETED 
         if (sessao.completedRecebido || sessao.erroRecebido) {
             System.out.println("[ServidorUDP] PROGRESS ignorado - rover " + idRover + 
                              " já enviou " + (sessao.completedRecebido ? "COMPLETED" : "ERROR"));
             return;
         }
 
-        // Tratamento de duplicados ou mensagens antigas - SEMPRE enviar ACK
-        //NOTA: se for antigo por retransmissão por perda, deveria meter no historico de progresso
+        // Tratamento de duplicados ou mensagens antigas 
         if (seqRecebido <= sessao.ultimoSeq) {
             String tipo = (seqRecebido == sessao.ultimoSeq) ? "duplicado" : "antigo";
             if (seqRecebido == sessao.ultimoSeq) {
@@ -629,7 +625,7 @@ public class ServidorUDP implements Runnable {
     private void processarCompleted(MensagemUDP msg, int idRover, DatagramPacket pacote) {
         SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         
-        // Proteção contra COMPLETED duplicado - reenviar ACK FINAL
+        // Proteção contra COMPLETED duplicado
         if (sessao != null && sessao.completedRecebido) {
             System.out.println("[ServidorUDP] COMPLETED duplicado do rover " + idRover + 
                              " (seq=" + msg.header.seq + ") - Reenviando ACK FINAL");
@@ -683,7 +679,7 @@ public class ServidorUDP implements Runnable {
     private void processarErro(MensagemUDP msg, int idRover, DatagramPacket pacote) {
         SessaoServidorMissionLink sessao = sessoesAtivas.get(idRover);
         
-        // Proteção contra ERROR duplicado - reenviar ACK FINAL
+        // Proteção contra ERROR duplicado 
         if (sessao != null && sessao.erroRecebido) {
             System.out.println("[ServidorUDP] ERROR duplicado do rover " + idRover + 
                              " (seq=" + msg.header.seq + ") - Reenviando ACK FINAL");
@@ -725,8 +721,8 @@ public class ServidorUDP implements Runnable {
             sessao.erroRecebido = true;
             sessao.ultimoSeq = msg.header.seq;
 
-            // Marcar que estamos a enviar ACK final; evitar que a rotina
-            // de limpeza remova a sessão enquanto enviamos retransmissões.
+            // Marcar que estamos a enviar ACK final; evitar que o metodo
+            // de limpeza de sessões orfãs remova a sessão enquanto enviamos retransmissões.
             sessao.finalAckPending = true;
             try {
                 // Enviar ACK final 3 vezes para garantir que rover recebe
@@ -742,7 +738,7 @@ public class ServidorUDP implements Runnable {
                 sessao.finalAckPending = false;
             }
 
-            // Remover sessão IMEDIATAMENTE após enviar ACKs
+            // Remover sessão imediatamente após enviar ACKs
             sessoesAtivas.remove(idRover);
             System.out.println("[ServidorUDP] Sessão do rover " + idRover + 
                              " removida (missão " + msg.header.idMissao + " falhou com erro)");
@@ -791,7 +787,7 @@ public class ServidorUDP implements Runnable {
         }
         if (!sucesso && !sessao.completedRecebido && !sessao.erroRecebido) {
             if (sessao.recebendoProgresso) {
-                // Rover JÁ TINHA COMEÇADO execução - NÃO reverter, fica como falhada, futuramente o rover poderia recomeçar a missão a partir daqui
+                // Rover já tinha começado execução: não reverter, fica como falhada, futuramente o rover poderia recomeçar a missão a partir daqui
                 System.out.println("[ServidorUDP] Missão " + sessao.missao.idMissao + 
                                  " do rover " + sessao.rover.idRover + 
                                  " perdeu comunicação mas rover já estava a executar - NÃO reverter");
@@ -816,7 +812,7 @@ public class ServidorUDP implements Runnable {
             InetAddress endereco = sessao.enderecoRover;
             int porta = sessao.portaRover;
 
-            //caso nao esteja em sessao tenta ir busar os dados no rover
+            // Caso não esteja em sessão tenta ir buscar os dados no rover
 
             if (endereco == null && sessao.rover != null && sessao.rover.enderecoHost != null) {
                 endereco = InetAddress.getByName(sessao.rover.enderecoHost);
@@ -962,8 +958,6 @@ public class ServidorUDP implements Runnable {
     }
     
     // ==================== MÉTODOS AUXILIARES ====================
-    
-
     
     /**
      * Converte Set<Integer> para int[].
