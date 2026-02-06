@@ -1,0 +1,116 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // No external dependencies for the simple hello-world mains
+    
+    // JUnit 5 for testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.0'
+}
+
+application {
+    // default main (can be overridden by running specific tasks below)
+    mainClass = 'rover.RoverApp'
+}
+
+// Tasks to run each main class
+tasks.register('runRoverApp', JavaExec) {
+    group = 'application'
+    description = 'Run the RoverApp main class'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rover.RoverApp'
+}
+
+tasks.register('runNaveMaeApp', JavaExec) {
+    group = 'application'
+    description = 'Run the NaveMaeApp main class'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'nave.NaveMaeApp'
+}
+
+tasks.register('runGroundControlApp', JavaExec) {
+    group = 'application'
+    description = 'Run the GroundControlApp main class'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'gc.GroundControlApp'
+    standardInput = System.in
+}
+
+// JAR executável para NaveMae
+tasks.register('jarNaveMae', Jar) {
+    group = 'build'
+    description = 'Creates an executable JAR for NaveMaeApp'
+    archiveBaseName = 'NaveMae'
+    archiveVersion = ''
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'nave.NaveMaeApp'
+    }
+}
+
+// JAR executável para Rover
+tasks.register('jarRover', Jar) {
+    group = 'build'
+    description = 'Creates an executable JAR for RoverApp'
+    archiveBaseName = 'Rover'
+    archiveVersion = ''
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'rover.RoverApp'
+    }
+}
+
+// JAR executável para GroundControl
+tasks.register('jarGroundControl', Jar) {
+    group = 'build'
+    description = 'Creates an executable JAR for GroundControlApp'
+    archiveBaseName = 'GroundControl'
+    archiveVersion = ''
+    from sourceSets.main.output
+    manifest {
+        attributes 'Main-Class': 'gc.GroundControlApp'
+    }
+}
+
+// Configure test task to use JUnit Platform
+test {
+    useJUnitPlatform()
+    
+    // Mostrar resultados dos testes no terminal
+    testLogging {
+        events "passed", "skipped", "failed"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        exceptionFormat "full"
+        
+        // Mostrar output standard dos testes
+        showStandardStreams = false
+        
+        // Formato mais detalhado
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                println "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                println "Resultado: ${result.resultType}"
+                println "Testes: ${result.testCount}"
+                println "   Passed: ${result.successfulTestCount}"
+                println "   Failed: ${result.failedTestCount}"
+                println "   Skipped: ${result.skippedTestCount}"
+                println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            }
+        }
+    }
+}

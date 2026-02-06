@@ -1,0 +1,1 @@
+Pasta partilhada com o ambiente CORE

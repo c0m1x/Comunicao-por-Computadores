@@ -1,0 +1,35 @@
+#!/bin/bash
+case "$OSTYPE" in
+  darwin*)
+    if open -Ra XQuartz; then
+      open -a XQuartz
+    elif open -Ra X11; then
+      open -a X11
+    else
+      echo "XQuartz/X11 not found."
+      exit 1
+    fi
+    sleep 4
+    export DISPLAY=:0
+    xhost +localhost  > /dev/null
+    if which docker-compose &> /dev/null; then
+        docker-compose up -d core-for-mac
+    else
+        docker compose up -d core-for-mac
+    fi
+    sleep 4
+    docker exec -itd core bash -c "mkdir -p /tmp/.X11-unix && socat UNIX-LISTEN:/tmp/.X11-unix/X0,fork,reuseaddr,unlink-early,mode=770 TCP:docker.for.mac.host.internal:6000"
+    ;;
+  *)
+    if which xhost &> /dev/null; then
+        xhost +local:root
+    fi
+    if which docker-compose &> /dev/null; then
+        docker-compose up -d core
+    else
+        docker compose up -d core
+    fi
+    sleep 4
+    ;;
+esac
+docker exec -it core core-gui

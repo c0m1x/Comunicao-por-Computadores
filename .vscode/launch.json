@@ -2,23 +2,23 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
+      "type": "java",
+      "name": "Debug Nave Mãe",
       "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": false,
-      "cwd": "/home/tiago/3ano1sem/CC/CC/src/nave",
-      "program": "/home/tiago/3ano1sem/CC/CC/src/nave/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "mainClass": "nave.NaveMaeApp",
+      "projectName": "Projeto-CC",
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "java",
+      "name": "Debug Rover",
+      "request": "launch",
+      "mainClass": "rover.RoverApp",
+      "projectName": "Projeto-CC",
+      "console": "integratedTerminal"
     }
+
+
   ]
 }
+
